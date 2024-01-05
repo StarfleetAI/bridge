@@ -1,0 +1,44 @@
+name: "[Rust] Lint & Test"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install libwebkit2gtk-4.0-dev libgtk-3-dev
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          components: rustfmt, clippy
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create dummy `./dist`
+        run: |
+          mkdir dist
+          touch dist/index.html
+
+      - name: Run `cargo fmt`
+        working-directory: ./src-tauri
+        run: cargo fmt
+
+      - name: Run `cargo clippy`
+        working-directory: ./src-tauri
+        run: cargo clippy --all-targets --all-features -- -D warnings -W clippy::pedantic
+
+      - name: Run `cargo test`
+        working-directory: ./src-tauri
+        run: cargo test
