@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT agent_id, ability_id FROM agent_abilities",
+  "describe": {
+    "columns": [
+      {
+        "name": "agent_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "ability_id",
+        "ordinal": 1,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "ace8dab73854668ea4b565116f7549b75e760e980e25c727d9c8b8b8d04be5f8"
+}

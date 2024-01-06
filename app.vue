@@ -1,3 +1,6 @@
+<!-- Copyright 2024 StarfleetAI -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 <template>
   <div v-if="loaded" class="flex h-screen p-3 space-x-3">
     <!-- Sidebar -->
@@ -27,7 +30,10 @@
 
 <script lang="ts" setup>
 import { useAbilitiesStore } from '@/store/abilities'
+import { useAgentsStore } from '@/store/agents'
+
 const abilitiesStore = useAbilitiesStore()
+const agentsStore = useAgentsStore()
 
 const loaded = ref(false)
 
@@ -35,7 +41,8 @@ onMounted(async () => {
   await nextTick()
 
   await Promise.all([
-    abilitiesStore.listAbilities()
+    abilitiesStore.listAbilities(),
+    agentsStore.listAgents()
   ])
 
   loaded.value = true

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE agents\n        SET name = $2, description = $3, system_message = $4, updated_at = $5\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a33a8a2455effe79fe96989b2601124f1f83af3ccec0569102698e899bc44ed5"
+}

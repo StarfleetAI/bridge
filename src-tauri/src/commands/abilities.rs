@@ -7,10 +7,13 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as};
+use sqlx::{query, query_as, query_scalar};
 use tauri::State;
 
-use crate::types::{DbMutex, Result};
+use crate::{
+    errors::Error,
+    types::{DbMutex, Result},
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ability {
@@ -22,20 +25,21 @@ pub struct Ability {
     updated_at: NaiveDateTime,
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
-pub struct List {
+pub struct AbilitiesList {
     pub abilities: Vec<Ability>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Create {
+pub struct CreateAbility {
     pub name: String,
     pub description: String,
     pub code: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Update {
+pub struct UpdateAbility {
     pub id: i64,
     pub name: String,
     pub description: String,
@@ -43,7 +47,7 @@ pub struct Update {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Delete {
+pub struct DeleteAbility {
     pub id: i64,
 }
 
@@ -54,7 +58,7 @@ pub struct Delete {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<List> {
+pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesList> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
@@ -66,7 +70,7 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<List> {
     .await
     .with_context(|| "Failed to fetch abilities")?;
 
-    Ok(List { abilities })
+    Ok(AbilitiesList { abilities })
 }
 
 /// Create new ability.
@@ -75,7 +79,10 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<List> {
 ///
 /// Returns error if there was a problem while inserting new ability.
 #[tauri::command]
-pub async fn create_ability(request: Create, pool_mutex: State<'_, DbMutex>) -> Result<Ability> {
+pub async fn create_ability(
+    request: CreateAbility,
+    pool_mutex: State<'_, DbMutex>,
+) -> Result<Ability> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
@@ -106,7 +113,10 @@ pub async fn create_ability(request: Create, pool_mutex: State<'_, DbMutex>) -> 
 /// Returns error if ability with given id does not exist or there was an error
 /// while accessing database.
 #[tauri::command]
-pub async fn update_ability(request: Update, pool_mutex: State<'_, DbMutex>) -> Result<Ability> {
+pub async fn update_ability(
+    request: UpdateAbility,
+    pool_mutex: State<'_, DbMutex>,
+) -> Result<Ability> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
@@ -151,14 +161,34 @@ pub async fn update_ability(request: Update, pool_mutex: State<'_, DbMutex>) -> 
 ///
 /// Returns error if ability with given id does not exist.
 #[tauri::command]
-pub async fn delete_ability(request: Delete, pool_mutex: State<'_, DbMutex>) -> Result<()> {
+pub async fn delete_ability(request: DeleteAbility, pool_mutex: State<'_, DbMutex>) -> Result<()> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+    let agents_count: i32 = query_scalar!(
+        "SELECT COUNT(*) FROM agent_abilities WHERE ability_id = $1",
+        request.id
+    )
+    .fetch_one(&mut *tx)
+    .await
+    .with_context(|| "Failed to count agents")?;
+
+    if agents_count > 0 {
+        return Err(Error::AbilityIsUsedByAgents);
+    }
+
     query!("DELETE FROM abilities WHERE id = $1", request.id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await
         .with_context(|| "Failed to delete ability")?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
 
     Ok(())
 }

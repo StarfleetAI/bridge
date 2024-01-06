@@ -40,14 +40,16 @@ export const useAbilitiesStore = defineStore('abilities', {
   }),
 
   getters: {
-    getById: state => (id: string | undefined) => {
+    getById: state => (id: number | string | undefined): Ability | undefined => {
       if (id === undefined) {
         return undefined
       }
 
-      const parsed = parseInt(id, 10)
+      if (typeof id === 'string') {
+        id = parseInt(id, 10)
+      }
 
-      return state.abilities.find(a => a.id === parsed)
+      return state.abilities.find(a => a.id === id)
     }
   },
 

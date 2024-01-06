@@ -17,7 +17,7 @@ tauri-build = { version = "1.5.1", features = [] }
 [dependencies]
 anyhow = "1.0.79"
 chrono = { version = "0.4.31", features = ["serde"] }
-dotenv = "0.15.0"
+dotenvy = "0.15.7"
 env_logger = "0.10.1"
 log = "0.4.20"
 serde = { version = "1.0", features = ["derive"] }
