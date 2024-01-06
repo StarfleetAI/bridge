@@ -11,6 +11,9 @@ pub enum Error {
     Internal(#[from] anyhow::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error("Ability is used by agents")]
+    AbilityIsUsedByAgents,
 }
 
 impl serde::Serialize for Error {

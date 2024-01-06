@@ -5,7 +5,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use anyhow::Context;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use env_logger::{Builder, Env};
 use log::info;
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
@@ -31,6 +31,10 @@ fn main() -> Result<()> {
             commands::abilities::create_ability,
             commands::abilities::update_ability,
             commands::abilities::delete_ability,
+            commands::agents::list_agents,
+            commands::agents::create_agent,
+            commands::agents::update_agent,
+            commands::agents::delete_agent,
         ])
         .setup(setup_handler)
         .run(tauri::generate_context!())
@@ -39,6 +43,9 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+// We need to relove a local_data_dir in order to create a DB file. The easiest way to do this is
+// using the setup_handler, but it can't be async, so we need to spawn a task to do the actual
+// work.
 fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app_handle = app.handle();
 
@@ -58,7 +65,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     };
 
     let db_url = database_url.clone();
-    tauri::async_runtime::spawn(async move {
+    tauri::async_runtime::block_on(async move {
         if !Sqlite::database_exists(&db_url)
             .await
             .with_context(|| "Failed to check if database exists")?
@@ -70,7 +77,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
         }
 
         Ok::<(), anyhow::Error>(())
-    });
+    })?;
 
     info!("Connecting to a database");
     let pool = tauri::async_runtime::block_on(async move {
