@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                UPDATE messages\n                SET\n                    status = $2,\n                    content = $3,\n                    prompt_tokens = $4,\n                    completion_tokens = $5,\n                    tool_calls = $6\n                WHERE id = $1\n                RETURNING\n                    id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n                    completion_tokens, tool_calls, tool_call_id, created_at\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "chat_id",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "agent_id",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "status",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "role",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "content",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "prompt_tokens",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "completion_tokens",
+        "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "tool_calls",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "tool_call_id",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 10,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "232038c0967f3171e70d44e47f8b558295451b7a3af8aa1b41d0832101784b03"
+}

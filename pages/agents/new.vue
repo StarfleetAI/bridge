@@ -39,7 +39,6 @@
           v-model="req.ability_ids"
           multiple
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700"
-          required="true"
         >
           <option v-for="ability in abilitiesStore.abilities" :key="ability.id" :value="ability.id">
             {{ ability.name }}

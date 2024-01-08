@@ -14,6 +14,7 @@
   "devDependencies": {
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@nuxtjs/tailwindcss": "^6.10.3",
+    "@types/prismjs": "^1.26.3",
     "eslint": "^8.56.0",
     "nuxt": "^3.9.0",
     "vue": "^3.4.3",
@@ -22,6 +23,9 @@
   "dependencies": {
     "@pinia/nuxt": "^0.5.1",
     "@tauri-apps/api": "^1.5.3",
-    "pinia": "^2.1.7"
+    "marked": "^11.1.1",
+    "pinia": "^2.1.7",
+    "prismjs": "^1.29.0",
+    "vue-prism-editor": "alpha"
   }
 }

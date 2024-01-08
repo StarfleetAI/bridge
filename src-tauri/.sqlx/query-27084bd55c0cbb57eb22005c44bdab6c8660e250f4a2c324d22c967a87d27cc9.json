@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO agents_chats (agent_id, chat_id) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "27084bd55c0cbb57eb22005c44bdab6c8660e250f4a2c324d22c967a87d27cc9"
+}

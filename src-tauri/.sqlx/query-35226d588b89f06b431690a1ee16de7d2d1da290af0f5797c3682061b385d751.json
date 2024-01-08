@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, name, description, code, created_at, updated_at FROM abilities ORDER BY id DESC",
+  "query": "\n        SELECT\n            abilities.id as \"id!\", abilities.name, abilities.description, abilities.code,\n            abilities.created_at, abilities.updated_at, abilities.parameters_json\n        FROM abilities\n        INNER JOIN agent_abilities ON abilities.id = agent_abilities.ability_id\n        WHERE agent_abilities.agent_id = $1\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Int64"
       },
@@ -32,12 +32,18 @@
         "name": "updated_at",
         "ordinal": 5,
         "type_info": "Datetime"
+      },
+      {
+        "name": "parameters_json",
+        "ordinal": 6,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -46,5 +52,5 @@
       false
     ]
   },
-  "hash": "cf3761063f42198a66c2ad2e99489aa96b8706913e109e0103bf1a66bd6634e8"
+  "hash": "35226d588b89f06b431690a1ee16de7d2d1da290af0f5797c3682061b385d751"
 }

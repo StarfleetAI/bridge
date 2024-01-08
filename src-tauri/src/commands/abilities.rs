@@ -6,23 +6,28 @@
 
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use sqlx::{query, query_as, query_scalar};
 use tauri::State;
+use tokio::{process::Command, sync::RwLock};
 
 use crate::{
+    clients::openai::{Function, Tool},
     errors::Error,
+    settings::Settings,
     types::{DbMutex, Result},
 };
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ability {
-    id: i64,
-    name: String,
-    description: String,
-    code: String,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
+    pub id: i64,
+    pub name: String,
+    pub description: String,
+    pub code: String,
+    pub parameters_json: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -51,6 +56,57 @@ pub struct DeleteAbility {
     pub id: i64,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetFunctionParameters {
+    pub code: String,
+}
+
+/// Get function parameters by code.
+///
+/// # Errors
+///
+/// Returns error if there was a problem when determining function parameters.
+// TODO: work correctly if there are imports in the code
+pub async fn get_function_parameters(code: &str, python_path: &str) -> Result<Function> {
+    let output = Command::new(python_path)
+        .arg("-c")
+        .arg(format!(
+            r#"
+import json
+from typing import Annotated
+from bridge import Agent
+
+agent = Agent(name='')
+
+@agent.register(description='')
+{code}
+
+print(json.dumps(agent.functions_definitions()[0]))
+"#
+        ))
+        .output()
+        .await
+        .with_context(|| "Failed to execute python script")?;
+
+    debug!("Function definitions script output: {:?}", output);
+
+    let tool: Tool = serde_json::from_slice(&output.stdout)
+        .with_context(|| "Failed to parse python script output")?;
+
+    Ok(tool.function)
+}
+
+/// Preprocess code: trim leading and trailing whitespaces around the code, remove trailing whitespaces
+/// from each line.
+fn preprocess_code(code: &str) -> String {
+    let mut result = String::new();
+    for line in code.lines() {
+        result.push_str(line.trim_end());
+        result.push('\n');
+    }
+    result.trim().to_string()
+}
+
 /// List all abilities.
 ///
 /// # Errors
@@ -64,7 +120,7 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesL
 
     let abilities = query_as!(
         Ability,
-        "SELECT id, name, description, code, created_at, updated_at FROM abilities ORDER BY id DESC"
+        "SELECT id, name, description, code, parameters_json, created_at, updated_at FROM abilities ORDER BY id DESC"
     )
     .fetch_all(pool)
     .await
@@ -82,21 +138,38 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesL
 pub async fn create_ability(
     request: CreateAbility,
     pool_mutex: State<'_, DbMutex>,
+    settings: State<'_, RwLock<Settings>>,
 ) -> Result<Ability> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+
+    let code = preprocess_code(&request.code);
+
+    let settings_guard = settings.read().await;
+    let params = match &settings_guard.python_path {
+        Some(path) => get_function_parameters(&code, path)
+            .await
+            .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
+        None => {
+            return Err(anyhow::anyhow!("Python path is not set").into());
+        }
+    };
+
+    let params_json = serde_json::to_string(&params)
+        .with_context(|| "Failed to serialize function parameters to json")?;
 
     let now = Utc::now();
     let ability = query_as!(
         Ability,
         r#"
-        INSERT INTO abilities (name, description, code, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $4)
-        RETURNING id, name, description, code, created_at, updated_at
+        INSERT INTO abilities (name, description, code, parameters_json, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $4, $5)
+        RETURNING id, name, description, code, parameters_json, created_at, updated_at
         "#,
         request.name,
         request.description,
-        request.code,
+        code,
+        params_json,
         now
     )
     .fetch_one(pool)
@@ -116,21 +189,38 @@ pub async fn create_ability(
 pub async fn update_ability(
     request: UpdateAbility,
     pool_mutex: State<'_, DbMutex>,
+    settings: State<'_, RwLock<Settings>>,
 ) -> Result<Ability> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+
+    let code = preprocess_code(&request.code);
+
+    let settings_guard = settings.read().await;
+    let params = match &settings_guard.python_path {
+        Some(path) => get_function_parameters(&code, path)
+            .await
+            .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
+        None => {
+            return Err(anyhow::anyhow!("Python path is not set").into());
+        }
+    };
+
+    let params_json = serde_json::to_string(&params)
+        .with_context(|| "Failed to serialize function parameters to json")?;
 
     let now = Utc::now();
     query!(
         r#"
         UPDATE abilities
-        SET name = $2, description = $3, code = $4, updated_at = $5
+        SET name = $2, description = $3, code = $4, parameters_json = $5, updated_at = $6
         WHERE id = $1
         "#,
         request.id,
         request.name,
         request.description,
-        request.code,
+        code,
+        params_json,
         now
     )
     .execute(pool)
@@ -142,7 +232,7 @@ pub async fn update_ability(
     let ability = query_as!(
         Ability,
         r#"
-        SELECT id, name, description, code, created_at, updated_at
+        SELECT id, name, description, code, parameters_json, created_at, updated_at
         FROM abilities
         WHERE id = $1
         "#,
