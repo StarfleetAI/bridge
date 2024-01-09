@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO abilities (name, description, code, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $4)\n        RETURNING id, name, description, code, created_at, updated_at\n        ",
+  "query": "SELECT id, name, description, code, parameters_json, created_at, updated_at FROM abilities ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -24,20 +24,26 @@
         "type_info": "Text"
       },
       {
-        "name": "created_at",
+        "name": "parameters_json",
         "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
         "type_info": "Datetime"
       },
       {
         "name": "updated_at",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Datetime"
       }
     ],
     "parameters": {
-      "Right": 4
+      "Right": 0
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -46,5 +52,5 @@
       false
     ]
   },
-  "hash": "fb53d258a2b03cf04e8b7db675a1cd247454f430ac133dc3d9aed28ce8821935"
+  "hash": "c02bf4dd9087b5242db12d97e2e090cc123b2411b01732cad4b2744767d71405"
 }

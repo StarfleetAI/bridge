@@ -29,13 +29,21 @@
 </template>
 
 <script lang="ts" setup>
+import type { UnlistenFn } from '@tauri-apps/api/event'
+import { listen } from '@tauri-apps/api/event'
+
+import type { Message } from './store/messages'
+import { useMessagesStore } from './store/messages'
 import { useAbilitiesStore } from '@/store/abilities'
 import { useAgentsStore } from '@/store/agents'
 
 const abilitiesStore = useAbilitiesStore()
 const agentsStore = useAgentsStore()
+const messagesStore = useMessagesStore()
 
 const loaded = ref(false)
+let msgCreatedUnlisten: Promise<UnlistenFn>
+let msgUpdatedUnlisten: Promise<UnlistenFn>
 
 onMounted(async () => {
   await nextTick()
@@ -45,6 +53,22 @@ onMounted(async () => {
     agentsStore.listAgents()
   ])
 
+  msgCreatedUnlisten = listen('messages:created', (event) => {
+    messagesStore.messages.push(event.payload as Message)
+  })
+
+  msgCreatedUnlisten = listen('messages:updated', (event) => {
+    const msg = event.payload as Message
+    const idx = messagesStore.messages.findIndex(m => m.id === msg.id)
+
+    messagesStore.messages.splice(idx, 1, msg)
+  })
+
   loaded.value = true
+})
+
+onBeforeUnmount(async () => {
+  await msgCreatedUnlisten
+  await msgUpdatedUnlisten
 })
 </script>

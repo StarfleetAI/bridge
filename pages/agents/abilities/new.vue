@@ -22,15 +22,17 @@
           id="description"
           v-model="req.description"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
+          required="true"
         >
       </div>
       <div class="mb-6">
         <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Code</label>
-        <textarea
-          id="code"
+        <prism-editor
           v-model="req.code"
-          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700"
-          required="true"
+          :highlight="highlighter"
+          line-numbers
+          :tab-size="4"
+          class="bg-gray-800 rounded-lg px-3 py-5 font-mono text-sm"
         />
       </div>
       <button
@@ -44,14 +46,31 @@
 </template>
 
 <script lang="ts" setup>
+import { PrismEditor } from 'vue-prism-editor'
+
+import 'vue-prism-editor/dist/prismeditor.min.css'
+
+import { highlight, languages } from 'prismjs'
+import 'prismjs/components/prism-python'
+import 'prismjs/themes/prism-tomorrow.css'
+
 import type { CreateAbility } from '@/store/abilities'
 import { useAbilitiesStore } from '@/store/abilities'
 const abilitiesStore = useAbilitiesStore()
 
+const highlighter = (code: string) => {
+  return highlight(code, languages.python, 'python')
+}
+
 const req = ref<CreateAbility>({
   name: '',
   description: '',
-  code: ''
+  code: `def do_something(
+    arg1: Annotated[str, "String argument"],
+    arg2: Annotated[int, "Integer argument"]
+) -> str:
+    # Do the actual job here
+    return "Something was successful!"`
 })
 const router = useRouter()
 

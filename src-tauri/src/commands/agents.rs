@@ -16,13 +16,13 @@ use crate::types::{DbMutex, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Agent {
-    id: i64,
-    name: String,
-    description: String,
-    system_message: String,
-    ability_ids: Vec<i64>,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
+    pub id: i64,
+    pub name: String,
+    pub description: String,
+    pub system_message: String,
+    pub ability_ids: Vec<i64>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -53,13 +53,13 @@ pub struct DeleteAgent {
     pub id: i64,
 }
 
-struct AgentRow {
-    id: i64,
-    name: String,
-    description: String,
-    system_message: String,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
+pub struct AgentRow {
+    pub id: i64,
+    pub name: String,
+    pub description: String,
+    pub system_message: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 struct AgentAbilityRow {
