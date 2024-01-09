@@ -32,8 +32,8 @@
 import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
 
-import type { Message } from './store/messages'
-import { useMessagesStore } from './store/messages'
+import type { Message } from '@/store/messages'
+import { useMessagesStore } from '@/store/messages'
 import { useAbilitiesStore } from '@/store/abilities'
 import { useAgentsStore } from '@/store/agents'
 
