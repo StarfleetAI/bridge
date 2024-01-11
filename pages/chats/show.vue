@@ -35,8 +35,12 @@
     <!-- Text Input -->
     <div class="border-t-2 border-gray-200 py-3">
       <form @submit.prevent="sendMessage">
-        <input v-model="newMessage.text" type="text" placeholder="Type a message..."
-          class="w-full p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-300 text-gray-700">
+        <input
+          v-model="newMessage.text"
+          type="text"
+          placeholder="Type a message..."
+          class="w-full p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-300 text-gray-700"
+        >
       </form>
     </div>
   </div>

@@ -4,6 +4,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::path::PathBuf;
+
 use anyhow::Context;
 use dotenvy::dotenv;
 use env_logger::{Builder, Env};
@@ -64,15 +66,20 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
         url
     } else {
         info!("DATABASE_URL not set, using default");
-        format!(
-            "{}/db.sqlite3",
+
+        let mut path = PathBuf::new();
+        path.push(
             app_handle
                 .path_resolver()
                 .app_local_data_dir()
                 .expect("Failed to get app local data dir for database")
                 .to_str()
-                .expect("Failed to convert app local data dir to string")
-        )
+                .expect("Failed to convert app local data dir to string"),
+        );
+        path.push("db.sqlite3");
+        path.into_os_string()
+            .into_string()
+            .expect("Failed to convert database path to string")
     };
 
     let db_url = database_url.clone();

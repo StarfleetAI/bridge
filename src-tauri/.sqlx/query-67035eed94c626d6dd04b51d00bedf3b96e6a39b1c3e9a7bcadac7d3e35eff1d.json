@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT agents.*\n        FROM agents\n        INNER JOIN agents_chats ON agents.id = agents_chats.agent_id\n        WHERE agents_chats.chat_id = $1\n        ",
+  "query": "\n        INSERT INTO abilities (name, description, code, parameters_json, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING id, name, description, code, parameters_json, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -19,25 +19,31 @@
         "type_info": "Text"
       },
       {
-        "name": "system_message",
+        "name": "code",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "created_at",
+        "name": "parameters_json",
         "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
         "type_info": "Datetime"
       },
       {
         "name": "updated_at",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Datetime"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 5
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -46,5 +52,5 @@
       false
     ]
   },
-  "hash": "bc68e72c0fbfd10533b397d0c7aa0d458d2340f6919e1dbd6a9f4527d9787728"
+  "hash": "67035eed94c626d6dd04b51d00bedf3b96e6a39b1c3e9a7bcadac7d3e35eff1d"
 }

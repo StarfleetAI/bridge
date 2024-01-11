@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, title, created_at, updated_at FROM chats WHERE id = $1",
+  "query": "SELECT id, title, created_at, updated_at FROM chats WHERE id = $1 LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "db2359dfdb945c370b6ce1e89098905a1a9721edc0ebeffdd720a0a4efe762d2"
+  "hash": "c6c34bfcba3123c83148c4ead4481a2e13db79fb700a69e7e7324a1fe9301027"
 }

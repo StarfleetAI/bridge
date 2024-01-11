@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM agents WHERE id = $1",
+  "query": "\n        SELECT *\n        FROM agents\n        WHERE agents.id = $1\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -46,5 +46,5 @@
       false
     ]
   },
-  "hash": "b7a95da602965906397c8939d990ff1665d24c379897924319de3d9d840a1427"
+  "hash": "e9ee2a7198428c5e1ed4f342ec75488c122cacb6613e0aa20bf49a7d9990691a"
 }

@@ -7,12 +7,17 @@
 use std::collections::BTreeMap;
 
 use anyhow::Context;
-use chrono::{NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as};
 use tauri::State;
 
-use crate::types::{DbMutex, Result};
+use crate::{
+    repo::{
+        self,
+        agents::{CreateParams, UpdateParams},
+    },
+    types::{DbMutex, Result},
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Agent {
@@ -53,20 +58,6 @@ pub struct DeleteAgent {
     pub id: i64,
 }
 
-pub struct AgentRow {
-    pub id: i64,
-    pub name: String,
-    pub description: String,
-    pub system_message: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-struct AgentAbilityRow {
-    agent_id: i64,
-    ability_id: i64,
-}
-
 /// List all agents.
 ///
 /// # Errors
@@ -78,25 +69,9 @@ pub async fn list_agents(pool_mutex: State<'_, DbMutex>) -> Result<AgentsList> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
-    let rows = query_as!(
-        AgentRow,
-        r#"
-        SELECT id, name, description, system_message, created_at, updated_at
-        FROM agents
-        ORDER BY id DESC
-        "#,
-    )
-    .fetch_all(pool)
-    .await
-    .with_context(|| "Failed to fetch agents")?;
+    let rows = repo::agents::list(pool).await?;
 
-    let ability_rows = query_as!(
-        AgentAbilityRow,
-        "SELECT agent_id, ability_id FROM agent_abilities",
-    )
-    .fetch_all(pool)
-    .await
-    .with_context(|| "Failed to fetch agent abilities")?;
+    let ability_rows = repo::agent_abilities::list(pool).await?;
 
     let mut abilities: BTreeMap<i64, Vec<i64>> = BTreeMap::new();
     for row in ability_rows {
@@ -137,32 +112,18 @@ pub async fn create_agent(request: CreateAgent, pool_mutex: State<'_, DbMutex>) 
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let now = Utc::now();
-    let agent = query_as!(
-        AgentRow,
-        r#"
-        INSERT INTO agents (name, description, system_message, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $4)
-        RETURNING id, name, description, system_message, created_at, updated_at
-        "#,
-        request.name,
-        request.description,
-        request.system_message,
-        now,
+    let agent = repo::agents::create(
+        &mut *tx,
+        CreateParams {
+            name: request.name,
+            description: request.description,
+            system_message: request.system_message,
+        },
     )
-    .fetch_one(&mut *tx)
-    .await
-    .with_context(|| "Failed to insert agent")?;
+    .await?;
 
     for ability_id in &request.ability_ids {
-        query!(
-            "INSERT INTO agent_abilities (agent_id, ability_id) VALUES ($1, $2)",
-            agent.id,
-            ability_id,
-        )
-        .execute(&mut *tx)
-        .await
-        .with_context(|| "Failed to insert agent ability")?;
+        repo::agent_abilities::create(&mut *tx, agent.id, *ability_id).await?;
     }
 
     tx.commit()
@@ -196,59 +157,26 @@ pub async fn update_agent(request: UpdateAgent, pool_mutex: State<'_, DbMutex>) 
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let now = Utc::now();
-    query!(
-        r#"
-        UPDATE agents
-        SET name = $2, description = $3, system_message = $4, updated_at = $5
-        WHERE id = $1
-        "#,
-        request.id,
-        request.name,
-        request.description,
-        request.system_message,
-        now,
+    let agent = repo::agents::update(
+        &mut *tx,
+        UpdateParams {
+            id: request.id,
+            name: request.name,
+            description: request.description,
+            system_message: request.system_message,
+        },
     )
-    .execute(&mut *tx)
-    .await
-    .with_context(|| "Failed to update agent")?;
+    .await?;
 
     // TODO(ri-nat): Be more clever here
-    query!(
-        "DELETE FROM agent_abilities WHERE agent_id = $1",
-        request.id,
-    )
-    .execute(&mut *tx)
-    .await
-    .with_context(|| "Failed to delete agent abilities")?;
-
+    repo::agent_abilities::delete_for_agent(&mut *tx, request.id).await?;
     for ability_id in &request.ability_ids {
-        query!(
-            "INSERT INTO agent_abilities (agent_id, ability_id) VALUES ($1, $2)",
-            request.id,
-            ability_id,
-        )
-        .execute(&mut *tx)
-        .await
-        .with_context(|| "Failed to insert agent ability")?;
+        repo::agent_abilities::create(&mut *tx, request.id, *ability_id).await?;
     }
 
     tx.commit()
         .await
         .with_context(|| "Failed to commit transaction")?;
-
-    let agent = query_as!(
-        AgentRow,
-        r#"
-        SELECT id, name, description, system_message, created_at, updated_at
-        FROM agents
-        WHERE id = $1
-        "#,
-        request.id,
-    )
-    .fetch_one(pool)
-    .await
-    .with_context(|| "Failed to fetch agent")?;
 
     Ok(Agent {
         id: agent.id,
@@ -277,18 +205,8 @@ pub async fn delete_agent(request: DeleteAgent, pool_mutex: State<'_, DbMutex>) 
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    query!(
-        "DELETE FROM agent_abilities WHERE agent_id = $1",
-        request.id
-    )
-    .execute(&mut *tx)
-    .await
-    .with_context(|| "Failed to delete agent abilities")?;
-
-    query!("DELETE FROM agents WHERE id = $1", request.id)
-        .execute(&mut *tx)
-        .await
-        .with_context(|| "Failed to delete agent")?;
+    repo::agent_abilities::delete_for_agent(&mut *tx, request.id).await?;
+    repo::agents::delete(&mut *tx, request.id).await?;
 
     tx.commit()
         .await

@@ -45,31 +45,29 @@ pub enum Message {
     },
 }
 
-impl TryFrom<crate::commands::messages::Message> for Message {
+impl TryFrom<crate::repo::messages::Message> for Message {
     type Error = anyhow::Error;
 
-    fn try_from(
-        message: crate::commands::messages::Message,
-    ) -> std::result::Result<Self, Self::Error> {
+    fn try_from(message: crate::repo::messages::Message) -> std::result::Result<Self, Self::Error> {
         Ok(match message.role {
-            crate::commands::messages::Role::System => Message::System {
+            crate::repo::messages::Role::System => Message::System {
                 content: message
                     .content
                     .with_context(|| "Failed to get message content")?,
                 name: None,
             },
-            crate::commands::messages::Role::User => Message::User {
+            crate::repo::messages::Role::User => Message::User {
                 content: message
                     .content
                     .with_context(|| "Failed to get message content")?,
                 name: None,
             },
-            crate::commands::messages::Role::Assistant => Message::Assistant {
+            crate::repo::messages::Role::Assistant => Message::Assistant {
                 content: message.content,
                 name: None,
                 tool_calls: None,
             },
-            crate::commands::messages::Role::Tool => Message::Tool {
+            crate::repo::messages::Role::Tool => Message::Tool {
                 content: message
                     .content
                     .with_context(|| "Failed to get message content")?,

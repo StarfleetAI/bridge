@@ -5,30 +5,18 @@
 #![allow(clippy::used_underscore_binding)]
 
 use anyhow::Context;
-use chrono::{NaiveDateTime, Utc};
 use log::debug;
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as, query_scalar};
 use tauri::State;
 use tokio::{process::Command, sync::RwLock};
 
 use crate::{
     clients::openai::{Function, Tool},
     errors::Error,
+    repo::{self, abilities::Ability},
     settings::Settings,
     types::{DbMutex, Result},
 };
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Ability {
-    pub id: i64,
-    pub name: String,
-    pub description: String,
-    pub code: String,
-    pub parameters_json: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -118,13 +106,7 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesL
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
-    let abilities = query_as!(
-        Ability,
-        "SELECT id, name, description, code, parameters_json, created_at, updated_at FROM abilities ORDER BY id DESC"
-    )
-    .fetch_all(pool)
-    .await
-    .with_context(|| "Failed to fetch abilities")?;
+    let abilities = repo::abilities::list(pool).await?;
 
     Ok(AbilitiesList { abilities })
 }
@@ -150,31 +132,22 @@ pub async fn create_ability(
         Some(path) => get_function_parameters(&code, path)
             .await
             .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
-        None => {
-            return Err(anyhow::anyhow!("Python path is not set").into());
-        }
+        None => return Err(anyhow::anyhow!("Python path is not set").into()),
     };
 
     let params_json = serde_json::to_string(&params)
         .with_context(|| "Failed to serialize function parameters to json")?;
 
-    let now = Utc::now();
-    let ability = query_as!(
-        Ability,
-        r#"
-        INSERT INTO abilities (name, description, code, parameters_json, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $4, $5)
-        RETURNING id, name, description, code, parameters_json, created_at, updated_at
-        "#,
-        request.name,
-        request.description,
-        code,
-        params_json,
-        now
+    let ability = repo::abilities::create(
+        pool,
+        repo::abilities::CreateParams {
+            name: request.name,
+            description: request.description,
+            code,
+            parameters_json: params_json,
+        },
     )
-    .fetch_one(pool)
-    .await
-    .with_context(|| "Failed to create ability")?;
+    .await?;
 
     Ok(ability)
 }
@@ -201,46 +174,23 @@ pub async fn update_ability(
         Some(path) => get_function_parameters(&code, path)
             .await
             .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
-        None => {
-            return Err(anyhow::anyhow!("Python path is not set").into());
-        }
+        None => return Err(anyhow::anyhow!("Python path is not set").into()),
     };
 
     let params_json = serde_json::to_string(&params)
         .with_context(|| "Failed to serialize function parameters to json")?;
 
-    let now = Utc::now();
-    query!(
-        r#"
-        UPDATE abilities
-        SET name = $2, description = $3, code = $4, parameters_json = $5, updated_at = $6
-        WHERE id = $1
-        "#,
-        request.id,
-        request.name,
-        request.description,
-        code,
-        params_json,
-        now
+    let ability = repo::abilities::update(
+        pool,
+        repo::abilities::UpdateParams {
+            id: request.id,
+            name: request.name,
+            description: request.description,
+            code,
+            parameters_json: params_json,
+        },
     )
-    .execute(pool)
-    .await
-    .with_context(|| "Failed to update ability")?;
-
-    // Fetching updated record that way because using `RETURNING` clause
-    // above leads to getting Option<i64> instead of i64.
-    let ability = query_as!(
-        Ability,
-        r#"
-        SELECT id, name, description, code, parameters_json, created_at, updated_at
-        FROM abilities
-        WHERE id = $1
-        "#,
-        request.id
-    )
-    .fetch_one(pool)
-    .await
-    .with_context(|| "Failed to fetch ability")?;
+    .await?;
 
     Ok(ability)
 }
@@ -259,22 +209,14 @@ pub async fn delete_ability(request: DeleteAbility, pool_mutex: State<'_, DbMute
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
-    let agents_count: i32 = query_scalar!(
-        "SELECT COUNT(*) FROM agent_abilities WHERE ability_id = $1",
-        request.id
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .with_context(|| "Failed to count agents")?;
+
+    let agents_count = repo::agent_abilities::get_agents_count(&mut *tx, request.id).await?;
 
     if agents_count > 0 {
         return Err(Error::AbilityIsUsedByAgents);
     }
 
-    query!("DELETE FROM abilities WHERE id = $1", request.id)
-        .execute(&mut *tx)
-        .await
-        .with_context(|| "Failed to delete ability")?;
+    repo::abilities::delete(&mut *tx, request.id).await?;
 
     tx.commit()
         .await

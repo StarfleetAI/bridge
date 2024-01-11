@@ -4,74 +4,27 @@
 // TODO(ri-nat): I don't really know, why Clippy is mad about these here, but let make him quiet for now.
 #![allow(clippy::used_underscore_binding)]
 
+use std::path::PathBuf;
+
 use anyhow::Context;
-use chrono::{NaiveDateTime, Utc};
 use log::debug;
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as};
-use tauri::{Manager, State, Window};
-use tokio::sync::RwLock;
+use serde_json::Value;
+use tauri::{App, Manager, State, Window};
+use tokio::{fs::create_dir_all, process::Command, sync::RwLock};
 
 use crate::{
     clients::openai::{Client, CreateChatCompletionRequest, Tool},
-    commands::agents::AgentRow,
     errors,
+    repo::{
+        self,
+        messages::{
+            CreateParams, ListParams, Message, Role, Status, UpdateWithCompletionResultParams,
+        },
+    },
     settings::Settings,
     types::{DbMutex, Result},
 };
-
-use super::abilities::Ability;
-
-#[derive(Serialize, Deserialize, Debug, sqlx::Type)]
-pub enum Role {
-    System,
-    User,
-    Assistant,
-    Tool,
-}
-
-impl From<String> for Role {
-    fn from(role: String) -> Self {
-        match role.as_str() {
-            "System" => Role::System,
-            "Assistant" => Role::Assistant,
-            "Tool" => Role::Tool,
-            _ => Role::User,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, sqlx::Type)]
-pub enum Status {
-    Writing,
-    WaitingForToolCall,
-    Completed,
-}
-
-impl From<String> for Status {
-    fn from(status: String) -> Self {
-        match status.as_str() {
-            "Writing" => Status::Writing,
-            "WaitingForToolCall" => Status::WaitingForToolCall,
-            _ => Status::Completed,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Message {
-    pub id: i64,
-    pub chat_id: i64,
-    pub agent_id: Option<i64>,
-    pub status: Status,
-    pub role: Role,
-    pub content: Option<String>,
-    pub prompt_tokens: Option<i64>,
-    pub completion_tokens: Option<i64>,
-    pub tool_calls: Option<String>,
-    pub tool_call_id: Option<String>,
-    pub created_at: NaiveDateTime,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(clippy::module_name_repetitions)]
@@ -110,21 +63,13 @@ pub async fn list_messages(
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
 
-    let messages = query_as!(
-        Message,
-        r#"
-        SELECT
-            id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
-        FROM messages
-        WHERE chat_id = $1
-        ORDER BY id ASC
-        "#,
-        request.chat_id
+    let messages = repo::messages::list(
+        pool,
+        ListParams {
+            chat_id: request.chat_id,
+        },
     )
-    .fetch_all(pool)
-    .await
-    .with_context(|| "Failed to fetch messages")?;
+    .await?;
 
     Ok(MessagesList { messages })
 }
@@ -140,11 +85,270 @@ pub async fn list_messages(
 /// Panics if there is an error when converting message from a database row to a API-compatible
 /// message. Should never happen.
 // TODO: refactor this function.
-#[allow(clippy::too_many_lines)]
 #[tauri::command]
 pub async fn create_message(
     window: Window,
     request: CreateMessage,
+    pool_mutex: State<'_, DbMutex>,
+    settings: State<'_, RwLock<Settings>>,
+) -> Result<()> {
+    let pool_guard = pool_mutex.lock().await;
+    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let message = repo::messages::create(
+        &mut *tx,
+        CreateParams {
+            chat_id: request.chat_id,
+            status: Status::Completed,
+            role: Role::User,
+            content: Some(request.text),
+
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    window
+        .emit_all("messages:created", &message)
+        .with_context(|| "Failed to emit event")?;
+
+    drop(pool_guard);
+
+    get_chat_completion(request.chat_id, window, pool_mutex, settings)
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to get chat completion for chat with id {}",
+                request.chat_id
+            )
+        })?;
+
+    Ok(())
+}
+
+/// Approves tool call, actually runs it and sends result to LLM.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while performing tool call.
+// TODO(ri-nat): refactor this function.
+#[allow(clippy::too_many_lines)]
+#[tauri::command]
+pub async fn approve_tool_call(
+    message_id: i64,
+    pool_mutex: State<'_, DbMutex>,
+    settings: State<'_, RwLock<Settings>>,
+    window: Window,
+    app: App,
+) -> Result<()> {
+    let pool_guard = pool_mutex.lock().await;
+    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let mut message = repo::messages::get(&mut *tx, message_id).await?;
+
+    // Check if message is waiting for tool call
+    if message.status != Status::WaitingForToolCall {
+        return Err(anyhow::anyhow!("Message is not waiting for tool call").into());
+    }
+
+    // Check if message is a last message in chat
+    let last_message_id = repo::messages::get_last_message_id(&mut *tx, message.chat_id).await?;
+
+    if message.id != last_message_id {
+        // Mark message as completed
+        repo::messages::update_status(&mut *tx, message.id, Status::Completed).await?;
+
+        // Emit event.
+        message.status = Status::Completed;
+        window
+            .emit_all("messages:updated", &message)
+            .with_context(|| "Failed to emit event")?;
+
+        return Err(anyhow::anyhow!("Message is not a last message in chat").into());
+    }
+
+    // Load agent abilities
+    let ablts = match message.agent_id {
+        Some(agent_id) => repo::abilities::list_for_agent(&mut *tx, agent_id).await?,
+        None => return Err(anyhow::anyhow!("Agent is not set for the message").into()),
+    };
+
+    // Join the abilities code into one string
+    let code = ablts
+        .iter()
+        .map(|ability| ability.code.as_str())
+        .collect::<Vec<&str>>()
+        .join("\n\n");
+
+    let app_handle = app.handle();
+    let app_local_data_dir = app_handle
+        .path_resolver()
+        .app_local_data_dir()
+        .with_context(|| "Failed to get app local data dir")?;
+    let workdir_name = format!("workdir-{}", message.chat_id);
+
+    // Build workdir path
+    let mut workdir = PathBuf::new();
+    workdir.push(app_local_data_dir);
+    workdir.push(workdir_name);
+
+    debug!("Workdir: {:?}", workdir);
+
+    if !workdir.exists() {
+        create_dir_all(&workdir)
+            .await
+            .with_context(|| "Failed to create workdir")?;
+    }
+
+    let Some(tool_calls) = &message.tool_calls else {
+        return Err(anyhow::anyhow!("Tool calls are not set for the message").into());
+    };
+
+    let script_name = format!("script-{}.py", message.id);
+    let content = format!(
+        r#"
+import json
+
+{code}
+
+tool_calls = {tool_calls}
+results = {{}}
+for tool_call in tool_calls:
+    name = tool_call['function']['name']
+    arguments = json.loads(tool_call['function']['arguments'])
+
+    try:
+        results[tool_call.id] = globals()[name](**arguments)
+    except Exception as e:
+        results[tool_call.id] = str(e)
+        break
+
+print(json.dumps(results))
+"#
+    );
+
+    debug!("Script name: {}", script_name);
+    debug!("Script content: {}", content);
+
+    // Write script to workdir
+    let mut script_path = workdir.clone();
+    script_path.push(script_name);
+    debug!("Script path: {:?}", script_path);
+
+    tokio::fs::write(&script_path, content)
+        .await
+        .with_context(|| "Failed to write script to workdir")?;
+
+    // Run script
+    let settings_guard = settings.read().await;
+    let output = match &settings_guard.python_path {
+        Some(path) => Command::new(path)
+            .current_dir(&workdir)
+            .arg(script_path)
+            .output()
+            .await
+            .with_context(|| "Failed to execute tool_calls script")?,
+        None => return Err(anyhow::anyhow!("Python path is not set").into()),
+    };
+
+    debug!("Function call script output: {:?}", output);
+
+    // Ensure that script was executed successfully
+    let results: Value = serde_json::from_slice(&output.stdout)
+        .with_context(|| "Failed to parse tool_calls script output")?;
+    debug!("Parsed results: {:?}", results);
+
+    // Mark message as completed
+    repo::messages::update_status(&mut *tx, message.id, Status::Completed).await?;
+
+    // Emit event
+    message.status = Status::Completed;
+    window
+        .emit_all("messages:updated", &message)
+        .with_context(|| "Failed to emit event")?;
+
+    // Save script output to a new message
+    let content = serde_json::to_string(&results)
+        .with_context(|| "Failed to serialize tool_calls script results")?;
+    let results_message = repo::messages::create(
+        &mut *tx,
+        CreateParams {
+            chat_id: message.chat_id,
+            status: Status::Completed,
+            role: Role::Tool,
+            content: Some(content),
+
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    // Emit event
+    window
+        .emit_all("messages:created", &results_message)
+        .with_context(|| "Failed to emit event")?;
+
+    drop(pool_guard);
+    drop(settings_guard);
+
+    get_chat_completion(message.chat_id, window, pool_mutex, settings)
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to get chat completion for chat with id {}",
+                message.chat_id
+            )
+        })?;
+
+    Ok(())
+}
+
+/// Delete message by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while deleting message.
+#[tauri::command]
+pub async fn delete_message(request: DeleteMessage, pool_mutex: State<'_, DbMutex>) -> Result<()> {
+    let pool_guard = pool_mutex.lock().await;
+    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    repo::messages::delete(&mut *tx, request.id).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(())
+}
+
+/// Does the whole chat completion routine.
+async fn get_chat_completion(
+    chat_id: i64,
+    window: Window,
     pool_mutex: State<'_, DbMutex>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
@@ -157,90 +361,29 @@ pub async fn create_message(
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let now = Utc::now();
-    let message = query_as!(
-        Message,
-        "INSERT INTO messages (
-            chat_id, status, role, content, created_at
-        ) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        request.chat_id,
-        Status::Completed,
-        Role::User,
-        request.text,
-        now
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .with_context(|| "Failed to create message")?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    window
-        .emit_all("messages:created", &message)
-        .with_context(|| "Failed to emit event")?;
-
-    tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let messages: Vec<Message> = query_as!(
-        Message,
-        r#"
-        SELECT
-            id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
-        FROM messages
-        WHERE chat_id = $1
-        ORDER BY id ASC
-        "#,
-        message.chat_id
-    )
-    .fetch_all(&mut *tx)
-    .await
-    .with_context(|| "Failed to fetch chat messages")?;
+    let messages = repo::messages::list(&mut *tx, ListParams { chat_id }).await?;
 
     debug!("Messages so far: {:?}", messages);
 
     // Get current agent.
-    let agent = query_as!(
-        AgentRow,
-        r#"
-        SELECT agents.*
-        FROM agents
-        INNER JOIN agents_chats ON agents.id = agents_chats.agent_id
-        WHERE agents_chats.chat_id = $1
-        "#,
-        request.chat_id,
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .with_context(|| "Failed to fetch agent")?;
+    let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
 
-    // TODO: correctly handle errors here
     let req_messages = messages
         .into_iter()
         .map(|message| crate::clients::openai::Message::try_from(message).unwrap())
         .collect();
 
     // Insert dummy message to chat.
-    let message = query_as!(
-        Message,
-        r#"
-        INSERT INTO messages (
-            chat_id, agent_id, status, role, created_at
-        ) VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-        "#,
-        request.chat_id,
-        agent.id,
-        Status::Writing,
-        Role::Assistant,
-        now
+    let message = repo::messages::create(
+        &mut *tx,
+        CreateParams {
+            chat_id,
+            agent_id: Some(agent.id),
+            status: Status::Writing,
+            role: Role::Assistant,
+            ..Default::default()
+        },
     )
-    .fetch_one(&mut *tx)
     .await
     .with_context(|| "Failed to insert dummy assistant message")?;
 
@@ -248,7 +391,7 @@ pub async fn create_message(
         .emit_all("messages:created", &message)
         .with_context(|| "Failed to emit event")?;
 
-    // Send request to OpenAI.
+    // Send request to LLM
     let client = Client::new(
         settings_guard
             .openai_api_key
@@ -256,21 +399,7 @@ pub async fn create_message(
             .with_context(|| "Failed to get openai api key")?,
     );
 
-    let abilities: Vec<Ability> = query_as!(
-        Ability,
-        r#"
-        SELECT
-            abilities.id as "id!", abilities.name, abilities.description, abilities.code,
-            abilities.created_at, abilities.updated_at, abilities.parameters_json
-        FROM abilities
-        INNER JOIN agent_abilities ON abilities.id = agent_abilities.ability_id
-        WHERE agent_abilities.agent_id = $1
-        "#,
-        agent.id,
-    )
-    .fetch_all(&mut *tx)
-    .await
-    .with_context(|| "Failed to fetch agent abilities")?;
+    let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
     let tools: Vec<Tool> = abilities
         .into_iter()
@@ -318,65 +447,26 @@ pub async fn create_message(
                 None => None,
             };
 
-            query_as!(
-                Message,
-                r#"
-                UPDATE messages
-                SET
-                    status = $2,
-                    content = $3,
-                    prompt_tokens = $4,
-                    completion_tokens = $5,
-                    tool_calls = $6
-                WHERE id = $1
-                RETURNING
-                    id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-                    completion_tokens, tool_calls, tool_call_id, created_at
-                "#,
-                message.id,
-                status,
-                content,
-                completion.usage.prompt_tokens,
-                completion.usage.completion_tokens,
-                tool_calls,
+            repo::messages::update_with_completion_result(
+                &mut *tx,
+                UpdateWithCompletionResultParams {
+                    id: message.id,
+                    status,
+                    content: content.clone(),
+                    prompt_tokens: Some(i64::from(completion.usage.prompt_tokens)),
+                    completion_tokens: Some(i64::from(completion.usage.completion_tokens)),
+                    tool_calls,
+                },
             )
-            .fetch_one(&mut *tx)
             .await
-            .with_context(|| "Failed to update assistant message")?
+            .with_context(|| "Failed to update assistant message")
         }
         _ => return Err(anyhow::anyhow!("Unexpected message type").into()),
-    };
+    }?;
 
     window
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit event")?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(())
-}
-
-/// Delete message by id.
-///
-/// # Errors
-///
-/// Returns error if there was a problem while deleting message.
-#[tauri::command]
-pub async fn delete_message(request: DeleteMessage, pool_mutex: State<'_, DbMutex>) -> Result<()> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    query!("DELETE FROM messages WHERE id = $1", request.id)
-        .execute(&mut *tx)
-        .await
-        .with_context(|| "Failed to delete message")?;
 
     tx.commit()
         .await

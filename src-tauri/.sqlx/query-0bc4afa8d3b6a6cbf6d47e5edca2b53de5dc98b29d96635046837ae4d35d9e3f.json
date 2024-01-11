@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) FROM agent_abilities WHERE ability_id = $1",
+  "query": "SELECT COUNT(*) as count FROM agent_abilities WHERE ability_id = $1",
   "describe": {
     "columns": [
       {
-        "name": "COUNT(*)",
+        "name": "count",
         "ordinal": 0,
         "type_info": "Int"
       }
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "e964df0dd448ceed198a2a4f2f968500d076d5ae0a2614dd6b9f450659d89dc1"
+  "hash": "0bc4afa8d3b6a6cbf6d47e5edca2b53de5dc98b29d96635046837ae4d35d9e3f"
 }

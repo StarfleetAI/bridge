@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT id, name, description, code, parameters_json, created_at, updated_at\n        FROM abilities\n        WHERE id = $1\n        ",
+  "query": "\n        SELECT agents.*\n        FROM agents\n        INNER JOIN agents_chats ON agents.id = agents_chats.agent_id\n        WHERE agents_chats.chat_id = $1\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -19,23 +19,18 @@
         "type_info": "Text"
       },
       {
-        "name": "code",
+        "name": "system_message",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "parameters_json",
-        "ordinal": 4,
-        "type_info": "Text"
-      },
-      {
         "name": "created_at",
-        "ordinal": 5,
+        "ordinal": 4,
         "type_info": "Datetime"
       },
       {
         "name": "updated_at",
-        "ordinal": 6,
+        "ordinal": 5,
         "type_info": "Datetime"
       }
     ],
@@ -48,9 +43,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "78aacc57712594c8ebed478df2424dfd17ed21d6916d1f774fb12c565873aa9d"
+  "hash": "96e478cec9c43587eb8864d3ac47021ace309978f9088e74ab702a17ca787022"
 }

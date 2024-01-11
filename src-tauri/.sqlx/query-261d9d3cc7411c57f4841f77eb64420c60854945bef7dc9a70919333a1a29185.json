@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO agents (name, description, system_message, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $4)\n        RETURNING id, name, description, system_message, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO agents (name, description, system_message, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $4)\n        RETURNING *\n        ",
   "describe": {
     "columns": [
       {
@@ -46,5 +46,5 @@
       false
     ]
   },
-  "hash": "35bbb6838348958fbee5194d9fc748a0f86b75ba620459e891a500bf70ef1a79"
+  "hash": "261d9d3cc7411c57f4841f77eb64420c60854945bef7dc9a70919333a1a29185"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT id, name, description, system_message, created_at, updated_at\n        FROM agents\n        ORDER BY id DESC\n        ",
+  "query": "\n        SELECT *\n        FROM agents\n        ORDER BY agents.id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -46,5 +46,5 @@
       false
     ]
   },
-  "hash": "7d3e13690b90dd57530e144ae4de3526f9e3d824c733cd60f6563b9bdfd14d9f"
+  "hash": "502c6662e80b8dd95f046336381ab446f420dc413ee7a21125b66c48adfce8dd"
 }

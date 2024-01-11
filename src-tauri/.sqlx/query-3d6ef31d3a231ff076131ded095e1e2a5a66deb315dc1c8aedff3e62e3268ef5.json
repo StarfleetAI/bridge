@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT agent_id, ability_id FROM agent_abilities",
+  "query": "SELECT * FROM agent_abilities",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "ace8dab73854668ea4b565116f7549b75e760e980e25c727d9c8b8b8d04be5f8"
+  "hash": "3d6ef31d3a231ff076131ded095e1e2a5a66deb315dc1c8aedff3e62e3268ef5"
 }
