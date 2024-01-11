@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO abilities (name, description, code, parameters_json, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $4, $5)\n        RETURNING id, name, description, code, parameters_json, created_at, updated_at\n        ",
+  "query": "\n        UPDATE abilities\n        SET name = $2, description = $3, code = $4, parameters_json = $5, updated_at = $6\n        WHERE id = $1\n        RETURNING id as \"id!\", name, description, code, parameters_json, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Int64"
       },
@@ -40,10 +40,10 @@
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 6
     },
     "nullable": [
-      false,
+      true,
       false,
       false,
       false,
@@ -52,5 +52,5 @@
       false
     ]
   },
-  "hash": "04ac2de1931570f7fd645e6b2674ff0ee1ad903f663bd95da0308612dd80ce71"
+  "hash": "4b57ccb398339c664b74fb9b91976f21afb027e3ab725637441221b883aacf24"
 }

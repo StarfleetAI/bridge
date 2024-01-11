@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO chats (created_at, updated_at)\n        VALUES ($1, $1)\n        RETURNING id, title, created_at, updated_at\n        ",
+  "query": "INSERT INTO chats (created_at, updated_at) VALUES ($1, $1) RETURNING *",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "e7644d02df625fe6eef6a88f6846f79c57ffb7a2495e0a2dd664078a05276c60"
+  "hash": "002c6b7e2192981832f5bdc4b224e921cfe4d331c2832043562b642b6ae04137"
 }

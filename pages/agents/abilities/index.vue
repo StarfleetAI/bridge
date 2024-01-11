@@ -9,10 +9,10 @@
     <NuxtLink to="/agents" class="ml-3 inline-block bg-blue-500 hover:bg-blue-400 text-white py-2 px-4 rounded">
       to Agents &rarr;
     </NuxtLink>
-    <ul>
+    <ul class="mt-3">
       <li v-for="ability in abilitiesStore.abilities" :key="ability.id">
         <NuxtLink :to="`/agents/abilities/edit?id=${ability.id}`" class="block mb-2">
-          <strong>{{ ability.id }}. {{ ability.name }}</strong>
+          <strong>{{ ability.name }}</strong>
           <div class="text-grey-300">
             {{ ability.description }}
           </div>

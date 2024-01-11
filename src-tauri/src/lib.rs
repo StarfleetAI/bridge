@@ -4,5 +4,6 @@
 pub mod clients;
 pub mod commands;
 pub mod errors;
+pub mod repo;
 pub mod settings;
 pub mod types;

@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO messages (\n            chat_id, status, role, content, created_at\n        ) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+  "query": "\n        UPDATE messages\n        SET\n            status = $2,\n            content = $3,\n            prompt_tokens = $4,\n            completion_tokens = $5,\n            tool_calls = $6\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Int64"
       },
@@ -60,10 +60,10 @@
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 6
     },
     "nullable": [
-      false,
+      true,
       false,
       true,
       false,
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "e4380b99d2f2cc012f5594cbac9eaf7ed9dd78c133d7c575d9697b976d70d3d9"
+  "hash": "552cb8dc5ded4a2a9549301ae50ceed63a4897d65d037f8a14691c7fa861bc4b"
 }

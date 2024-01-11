@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        FROM messages\n        WHERE chat_id = $1\n        ORDER BY id ASC\n        ",
+  "query": "\n        SELECT\n            id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        FROM messages\n        WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -14,14 +14,14 @@
         "type_info": "Int64"
       },
       {
-        "name": "agent_id",
+        "name": "status",
         "ordinal": 2,
-        "type_info": "Int64"
+        "type_info": "Text"
       },
       {
-        "name": "status",
+        "name": "agent_id",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
         "name": "role",
@@ -63,10 +63,10 @@
       "Right": 1
     },
     "nullable": [
-      true,
+      false,
+      false,
       false,
       true,
-      false,
       false,
       true,
       true,
@@ -76,5 +76,5 @@
       false
     ]
   },
-  "hash": "a449b344ac96083b13a257d0117798d314e1e7be11cfefc8e433fee1e3c57123"
+  "hash": "3d2a49f9f4551c2f241dee41abd4e60b459f7a29d6057b0e73d723e40481bb92"
 }

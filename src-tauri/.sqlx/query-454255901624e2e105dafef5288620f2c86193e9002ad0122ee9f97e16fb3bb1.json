@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT CAST(MAX(id) AS INTEGER) FROM messages WHERE chat_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "CAST(MAX(id) AS INTEGER)",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "454255901624e2e105dafef5288620f2c86193e9002ad0122ee9f97e16fb3bb1"
+}
