@@ -10,12 +10,19 @@ export enum Status {
   COMPLETED = 'Completed'
 }
 
+export enum Role {
+  SYSTEM = 'System',
+  USER = 'User',
+  ASSISTANT = 'Assistant',
+  TOOL = 'Tool'
+}
+
 export interface Message {
   id: number;
   chat_id: number;
   agent_id: number | null;
   status: Status;
-  role: string;
+  role: Role;
   content: string;
   prompt_tokens: number | null;
   completion_tokens: number | null;
@@ -68,6 +75,10 @@ export const useMessagesStore = defineStore('messages', {
 
     createMessage(request: CreateMessage) {
       return invoke<Message>('create_message', { request })
+    },
+
+    approveToolCall(messageId: number) {
+      return invoke('approve_tool_call', { messageId })
     },
 
     async deleteMessage(request: DeleteMessage) {

@@ -44,6 +44,7 @@ fn main() -> Result<()> {
             commands::chats::delete_chat,
             commands::chats::get_chat,
             commands::chats::list_chats,
+            commands::messages::approve_tool_call,
             commands::messages::create_message,
             commands::messages::delete_message,
             commands::messages::list_messages,

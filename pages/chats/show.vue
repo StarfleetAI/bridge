@@ -18,7 +18,10 @@
           </div>
           <div v-else>
             <!-- eslint-disable-next-line vue/no-v-html -->
-            <div v-if="message.content?.length > 0" v-html="markdown(message.content)" />
+            <div v-if="message.content?.length > 0 && message.role != Role.TOOL" v-html="markdown(message.content)" />
+            <div v-if="message.content?.length > 0 && message.role === Role.TOOL">
+              <pre><code>{{ message.content }}</code></pre>
+            </div>
             <div v-if="message?.tool_calls">
               <p>
                 <strong>Tool Calls</strong>
@@ -26,6 +29,12 @@
               <ul>
                 <pre><code>{{ message.tool_calls }}</code></pre>
               </ul>
+              <a
+                v-if="message.status === Status.WAITING_FOR_TOOL_CALL"
+                class="text-blue-500 hover:text-blue-700"
+                @click="approveToolCall(message.id)"
+              >
+                Approve</a>
             </div>
           </div>
         </div>
@@ -51,7 +60,7 @@ import { marked } from 'marked'
 import type { CreateMessage, Message } from '@/store/messages'
 import { useAgentsStore } from '@/store/agents'
 import { useChatsStore } from '@/store/chats'
-import { Status, useMessagesStore } from '@/store/messages'
+import { Role, Status, useMessagesStore } from '@/store/messages'
 
 const agentsStore = useAgentsStore()
 const chatsStore = useChatsStore()
@@ -66,9 +75,14 @@ const chatMessages = computed(() => {
   return messagesStore.listByChatId(Number(useRoute().query.id))
 })
 
+const approveToolCall = async (messageId: number) => {
+  await messagesStore.approveToolCall(messageId)
+}
+
 const sendMessage = async () => {
   const msg = { ...newMessage.value }
   newMessage.value.text = ''
+
   await messagesStore.createMessage(msg)
 }
 
