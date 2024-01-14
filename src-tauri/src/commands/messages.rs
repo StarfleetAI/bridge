@@ -7,10 +7,11 @@
 use std::path::PathBuf;
 
 use anyhow::Context;
+use askama::Template;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{App, Manager, State, Window};
+use tauri::{AppHandle, Manager, State, Window};
 use tokio::{fs::create_dir_all, process::Command, sync::RwLock};
 
 use crate::{
@@ -47,6 +48,14 @@ pub struct CreateMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DeleteMessage {
     pub id: i64,
+}
+
+#[derive(Template)]
+#[template(path = "python/call_tools.py", escape = "none")]
+struct CallToolsTemplate<'a> {
+    code: &'a str,
+    python_path: &'a str,
+    tool_calls: &'a str,
 }
 
 /// List all messages.
@@ -148,7 +157,7 @@ pub async fn approve_tool_call(
     pool_mutex: State<'_, DbMutex>,
     settings: State<'_, RwLock<Settings>>,
     window: Window,
-    app: App,
+    app_handle: AppHandle,
 ) -> Result<()> {
     let pool_guard = pool_mutex.lock().await;
     let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
@@ -194,7 +203,6 @@ pub async fn approve_tool_call(
         .collect::<Vec<&str>>()
         .join("\n\n");
 
-    let app_handle = app.handle();
     let app_local_data_dir = app_handle
         .path_resolver()
         .app_local_data_dir()
@@ -214,32 +222,24 @@ pub async fn approve_tool_call(
             .with_context(|| "Failed to create workdir")?;
     }
 
+    let settings_guard = settings.read().await;
+
     let Some(tool_calls) = &message.tool_calls else {
         return Err(anyhow::anyhow!("Tool calls are not set for the message").into());
     };
 
     let script_name = format!("script-{}.py", message.id);
-    let content = format!(
-        r#"
-import json
-
-{code}
-
-tool_calls = {tool_calls}
-results = {{}}
-for tool_call in tool_calls:
-    name = tool_call['function']['name']
-    arguments = json.loads(tool_call['function']['arguments'])
-
-    try:
-        results[tool_call.id] = globals()[name](**arguments)
-    except Exception as e:
-        results[tool_call.id] = str(e)
-        break
-
-print(json.dumps(results))
-"#
-    );
+    let call_tools_template = CallToolsTemplate {
+        code: &code,
+        tool_calls,
+        python_path: settings_guard
+            .python_path
+            .as_ref()
+            .with_context(|| "Failed to get python path")?,
+    };
+    let content = call_tools_template
+        .render()
+        .with_context(|| "Failed to render `call_tools` script")?;
 
     debug!("Script name: {}", script_name);
     debug!("Script content: {}", content);
@@ -254,11 +254,10 @@ print(json.dumps(results))
         .with_context(|| "Failed to write script to workdir")?;
 
     // Run script
-    let settings_guard = settings.read().await;
     let output = match &settings_guard.python_path {
         Some(path) => Command::new(path)
             .current_dir(&workdir)
-            .arg(script_path)
+            .arg(&script_path)
             .output()
             .await
             .with_context(|| "Failed to execute tool_calls script")?,
@@ -272,6 +271,11 @@ print(json.dumps(results))
         .with_context(|| "Failed to parse tool_calls script output")?;
     debug!("Parsed results: {:?}", results);
 
+    // Delete script
+    tokio::fs::remove_file(&script_path)
+        .await
+        .with_context(|| "Failed to remove script from workdir")?;
+
     // Mark message as completed
     repo::messages::update_status(&mut *tx, message.id, Status::Completed).await?;
 
@@ -281,16 +285,37 @@ print(json.dumps(results))
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit event")?;
 
+    let tool_call_id = results
+        .as_object()
+        .with_context(|| "Failed to get results object")?
+        .keys()
+        .next()
+        .with_context(|| "Failed to get first key from results object")?
+        .to_string();
+
+    let content = results
+        .get(&tool_call_id)
+        .with_context(|| {
+            format!(
+                "Failed to get value for key {tool_call_id} from results object"
+            )
+        })?
+        .as_str()
+        .with_context(|| {
+            format!(
+                "Failed to get string value for key {tool_call_id} from results object"
+            )
+        })?;
+
     // Save script output to a new message
-    let content = serde_json::to_string(&results)
-        .with_context(|| "Failed to serialize tool_calls script results")?;
     let results_message = repo::messages::create(
         &mut *tx,
         CreateParams {
             chat_id: message.chat_id,
             status: Status::Completed,
             role: Role::Tool,
-            content: Some(content),
+            content: Some(content.to_string()),
+            tool_call_id: Some(tool_call_id),
 
             ..Default::default()
         },

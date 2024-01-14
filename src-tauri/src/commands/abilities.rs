@@ -5,6 +5,7 @@
 #![allow(clippy::used_underscore_binding)]
 
 use anyhow::Context;
+use askama::Template;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -49,37 +50,35 @@ pub struct GetFunctionParameters {
     pub code: String,
 }
 
-/// Get function parameters by code.
+#[derive(Template)]
+#[template(path = "python/get_function_definition.py", escape = "none")]
+struct GetFunctionDefinitionTemplate<'a> {
+    code: &'a str,
+}
+
+/// Get function definition by it's code.
 ///
 /// # Errors
 ///
 /// Returns error if there was a problem when determining function parameters.
 // TODO: work correctly if there are imports in the code
-pub async fn get_function_parameters(code: &str, python_path: &str) -> Result<Function> {
+pub async fn get_function_definition(code: &str, python_path: &str) -> Result<Function> {
+    let template = GetFunctionDefinitionTemplate { code };
     let output = Command::new(python_path)
         .arg("-c")
-        .arg(format!(
-            r#"
-import json
-from typing import Annotated
-from bridge import Agent
-
-agent = Agent(name='')
-
-@agent.register(description='')
-{code}
-
-print(json.dumps(agent.functions_definitions()[0]))
-"#
-        ))
+        .arg(
+            template
+                .render()
+                .context("Failed to render `get_function_definition` script")?,
+        )
         .output()
         .await
         .with_context(|| "Failed to execute python script")?;
 
-    debug!("Function definitions script output: {:?}", output);
+    debug!("Function definition script output: {:?}", output);
 
     let tool: Tool = serde_json::from_slice(&output.stdout)
-        .with_context(|| "Failed to parse python script output")?;
+        .with_context(|| "Failed to parse function definition script output")?;
 
     Ok(tool.function)
 }
@@ -129,7 +128,7 @@ pub async fn create_ability(
 
     let settings_guard = settings.read().await;
     let params = match &settings_guard.python_path {
-        Some(path) => get_function_parameters(&code, path)
+        Some(path) => get_function_definition(&code, path)
             .await
             .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
         None => return Err(anyhow::anyhow!("Python path is not set").into()),
@@ -171,7 +170,7 @@ pub async fn update_ability(
 
     let settings_guard = settings.read().await;
     let params = match &settings_guard.python_path {
-        Some(path) => get_function_parameters(&code, path)
+        Some(path) => get_function_definition(&code, path)
             .await
             .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
         None => return Err(anyhow::anyhow!("Python path is not set").into()),

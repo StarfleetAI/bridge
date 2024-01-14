@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <template>
-  <div class="max-w-2xl mx-auto py-10">
+  <div class="max-w-6xl mx-auto py-10">
     <NuxtLink to="/agents/abilities" class="text-blue-400 hover:text-blue-300">
       ← Back to Abilities
     </NuxtLink>

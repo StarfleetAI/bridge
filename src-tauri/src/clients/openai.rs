@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::types::Result;
@@ -65,7 +66,13 @@ impl TryFrom<crate::repo::messages::Message> for Message {
             crate::repo::messages::Role::Assistant => Message::Assistant {
                 content: message.content,
                 name: None,
-                tool_calls: None,
+                tool_calls: match message.tool_calls {
+                    Some(tool_calls) => Some(
+                        serde_json::from_str(&tool_calls)
+                            .with_context(|| "Failed to parse tool calls")?,
+                    ),
+                    None => None,
+                },
             },
             crate::repo::messages::Role::Tool => Message::Tool {
                 content: message
@@ -193,7 +200,11 @@ impl<'a> Client<'a> {
         let url = format!("{API_URL}{endpoint}");
         let client = reqwest::Client::new();
 
-        Ok(client
+        let body =
+            serde_json::to_value(body).with_context(|| "Failed to serialize request body")?;
+        debug!("OpenAI API request: {:?}", body.to_string());
+
+        let response = client
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
@@ -201,8 +212,12 @@ impl<'a> Client<'a> {
             .send()
             .await
             .with_context(|| "Failed to send request")?
-            .json::<T>()
+            .text()
             .await
-            .with_context(|| "Failed to deserialize response")?)
+            .with_context(|| "Failed to get response text")?;
+
+        debug!("OpenAI API response: {:?}", response);
+
+        Ok(serde_json::from_str(&response).with_context(|| "Failed to deserialize response")?)
     }
 }
