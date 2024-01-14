@@ -9,28 +9,22 @@ use std::path::PathBuf;
 use anyhow::Context;
 use dotenvy::dotenv;
 use env_logger::{Builder, Env};
-use log::info;
-use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
-use tauri::{generate_handler, Manager, State};
+use log::{debug, info};
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite};
+use tauri::{generate_handler, Manager};
 
-use bridge::{
-    commands,
-    settings::Settings,
-    types::{DbMutex, Result},
-};
-use tokio::sync::{Mutex, RwLock};
+use bridge::{commands, settings::Settings, types::Result};
+use tokio::sync::RwLock;
 
 fn main() -> Result<()> {
     dotenv().ok();
     Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let db_state: DbMutex = Mutex::new(None);
-    let settings_state: RwLock<Settings> = RwLock::new(Settings::new());
+    tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
 
     info!("Starting Bridge...");
     tauri::Builder::default()
-        .manage(db_state)
-        .manage(settings_state)
+        .manage(RwLock::new(Settings::new()))
         .invoke_handler(generate_handler![
             commands::abilities::create_ability,
             commands::abilities::delete_ability,
@@ -60,6 +54,21 @@ fn main() -> Result<()> {
 // using the setup_handler, but it can't be async, so we need to spawn a task to do the actual
 // work.
 fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let app_handle = app.handle();
+
+    tauri_plugin_deep_link::register("starfleetai-bridge", move |request| {
+        debug!("Received deep link: {}", request);
+        app_handle
+            .emit_all("scheme-request-received", request)
+            .unwrap();
+    })
+    .with_context(|| "Failed to register deep link handler")?;
+
+    #[cfg(not(target_os = "macos"))]
+    if let Some(url) = std::env::args().nth(1) {
+        app.emit_all("scheme-request-received", url).unwrap();
+    }
+
     let app_handle = app.handle();
 
     // TODO: read `database_url` from `Settings` instead of env
@@ -115,9 +124,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
             .with_context(|| "Failed to run migrations")
     })?;
 
-    let db_state: State<Mutex<Option<Pool<Sqlite>>>> = app_handle.state();
-    let mut dbs = db_state.blocking_lock();
-    *dbs = Some(pool);
+    app_handle.manage(pool);
 
     info!("Startup sequence completed!");
     info!("Launching! 🚀");

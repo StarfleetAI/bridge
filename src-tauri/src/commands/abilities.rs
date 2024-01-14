@@ -16,7 +16,7 @@ use crate::{
     errors::Error,
     repo::{self, abilities::Ability},
     settings::Settings,
-    types::{DbMutex, Result},
+    types::{DbPool, Result},
 };
 
 #[allow(clippy::module_name_repetitions)]
@@ -101,11 +101,8 @@ fn preprocess_code(code: &str) -> String {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesList> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
-    let abilities = repo::abilities::list(pool).await?;
+pub async fn list_abilities(pool: State<'_, DbPool>) -> Result<AbilitiesList> {
+    let abilities = repo::abilities::list(&*pool).await?;
 
     Ok(AbilitiesList { abilities })
 }
@@ -118,12 +115,9 @@ pub async fn list_abilities(pool_mutex: State<'_, DbMutex>) -> Result<AbilitiesL
 #[tauri::command]
 pub async fn create_ability(
     request: CreateAbility,
-    pool_mutex: State<'_, DbMutex>,
+    pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<Ability> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
     let code = preprocess_code(&request.code);
 
     let settings_guard = settings.read().await;
@@ -138,7 +132,7 @@ pub async fn create_ability(
         .with_context(|| "Failed to serialize function parameters to json")?;
 
     let ability = repo::abilities::create(
-        pool,
+        &*pool,
         repo::abilities::CreateParams {
             name: request.name,
             description: request.description,
@@ -160,12 +154,9 @@ pub async fn create_ability(
 #[tauri::command]
 pub async fn update_ability(
     request: UpdateAbility,
-    pool_mutex: State<'_, DbMutex>,
+    pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<Ability> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
     let code = preprocess_code(&request.code);
 
     let settings_guard = settings.read().await;
@@ -180,7 +171,7 @@ pub async fn update_ability(
         .with_context(|| "Failed to serialize function parameters to json")?;
 
     let ability = repo::abilities::update(
-        pool,
+        &*pool,
         repo::abilities::UpdateParams {
             id: request.id,
             name: request.name,
@@ -200,10 +191,7 @@ pub async fn update_ability(
 ///
 /// Returns error if ability with given id does not exist.
 #[tauri::command]
-pub async fn delete_ability(request: DeleteAbility, pool_mutex: State<'_, DbMutex>) -> Result<()> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn delete_ability(request: DeleteAbility, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await

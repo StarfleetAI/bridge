@@ -16,7 +16,7 @@ use crate::{
         self,
         agents::{CreateParams, UpdateParams},
     },
-    types::{DbMutex, Result},
+    types::{DbPool, Result},
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -65,13 +65,10 @@ pub struct DeleteAgent {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_agents(pool_mutex: State<'_, DbMutex>) -> Result<AgentsList> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
+pub async fn list_agents(pool: State<'_, DbPool>) -> Result<AgentsList> {
+    let rows = repo::agents::list(&*pool).await?;
 
-    let rows = repo::agents::list(pool).await?;
-
-    let ability_rows = repo::agent_abilities::list(pool).await?;
+    let ability_rows = repo::agent_abilities::list(&*pool).await?;
 
     let mut abilities: BTreeMap<i64, Vec<i64>> = BTreeMap::new();
     for row in ability_rows {
@@ -103,10 +100,7 @@ pub async fn list_agents(pool_mutex: State<'_, DbMutex>) -> Result<AgentsList> {
 ///
 /// Returns error if there was a problem while accessing database.
 #[tauri::command]
-pub async fn create_agent(request: CreateAgent, pool_mutex: State<'_, DbMutex>) -> Result<Agent> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Result<Agent> {
     let mut tx = pool
         .begin()
         .await
@@ -148,10 +142,7 @@ pub async fn create_agent(request: CreateAgent, pool_mutex: State<'_, DbMutex>) 
 /// Returns error if agent with given id does not exist or there was an error
 /// while accessing database.
 #[tauri::command]
-pub async fn update_agent(request: UpdateAgent, pool_mutex: State<'_, DbMutex>) -> Result<Agent> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Result<Agent> {
     let mut tx = pool
         .begin()
         .await
@@ -196,10 +187,7 @@ pub async fn update_agent(request: UpdateAgent, pool_mutex: State<'_, DbMutex>) 
 /// Returns error if agent with given id does not exist.
 /// Returns error if any error occurs during transaction.
 #[tauri::command]
-pub async fn delete_agent(request: DeleteAgent, pool_mutex: State<'_, DbMutex>) -> Result<()> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn delete_agent(request: DeleteAgent, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await

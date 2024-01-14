@@ -14,7 +14,7 @@ use crate::{
         chats::Chat,
         messages::{Role, Status},
     },
-    types::{DbMutex, Result},
+    types::{DbPool, Result},
 };
 
 #[allow(clippy::module_name_repetitions)]
@@ -45,11 +45,8 @@ pub struct GetChat {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_chats(pool_mutex: State<'_, DbMutex>) -> Result<ChatsList> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
-    let chats = repo::chats::list(pool).await?;
+pub async fn list_chats(pool: State<'_, DbPool>) -> Result<ChatsList> {
+    let chats = repo::chats::list(&*pool).await?;
 
     Ok(ChatsList { chats })
 }
@@ -60,11 +57,8 @@ pub async fn list_chats(pool_mutex: State<'_, DbMutex>) -> Result<ChatsList> {
 ///
 /// Returns error if chat with given id does not exist.
 #[tauri::command]
-pub async fn get_chat(request: GetChat, pool_mutex: State<'_, DbMutex>) -> Result<Chat> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
-    repo::chats::get(pool, request.id).await
+pub async fn get_chat(request: GetChat, pool: State<'_, DbPool>) -> Result<Chat> {
+    repo::chats::get(&*pool, request.id).await
 }
 
 /// Create new chat with agent.
@@ -73,10 +67,7 @@ pub async fn get_chat(request: GetChat, pool_mutex: State<'_, DbMutex>) -> Resul
 ///
 /// Returns error if there was a problem while inserting new chat.
 #[tauri::command]
-pub async fn create_chat(request: CreateChat, pool_mutex: State<'_, DbMutex>) -> Result<Chat> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn create_chat(request: CreateChat, pool: State<'_, DbPool>) -> Result<Chat> {
     let mut tx = pool
         .begin()
         .await
@@ -114,10 +105,7 @@ pub async fn create_chat(request: CreateChat, pool_mutex: State<'_, DbMutex>) ->
 ///
 /// Returns error if chat with given id does not exist.
 #[tauri::command]
-pub async fn delete_chat(request: DeleteChat, pool_mutex: State<'_, DbMutex>) -> Result<()> {
-    let pool_guard = pool_mutex.lock().await;
-    let pool = pool_guard.as_ref().with_context(|| "Failed to get pool")?;
-
+pub async fn delete_chat(request: DeleteChat, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
