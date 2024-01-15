@@ -57,7 +57,7 @@ onMounted(async () => {
     messagesStore.messages.push(event.payload as Message)
   })
 
-  msgCreatedUnlisten = listen('messages:updated', (event) => {
+  msgUpdatedUnlisten = listen('messages:updated', (event) => {
     const msg = event.payload as Message
     const idx = messagesStore.messages.findIndex(m => m.id === msg.id)
 

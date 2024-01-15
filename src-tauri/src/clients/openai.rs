@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use log::debug;
+use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
 use crate::types::Result;
@@ -138,6 +139,25 @@ pub struct CreateChatCompletionRequest {
     pub model: String,
     pub messages: Vec<Message>,
     pub tools: Vec<Tool>,
+    pub stream: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChatCompletionChunk {
+    pub id: String,
+    pub object: String,
+    pub created: u32,
+    pub model: String,
+    pub system_fingerprint: Option<String>,
+    pub choices: Vec<ChunkChoice>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChunkChoice {
+    pub index: u32,
+    pub delta: Message,
+    pub finish_reason: Option<String>,
+    pub logprobs: Option<f32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -171,6 +191,23 @@ impl<'a> Client<'a> {
         Self { api_key }
     }
 
+    /// Creates a streaming chat completion.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if there was a problem while making the API call.
+    pub async fn create_chat_completion_stream(
+        &self,
+        mut request: CreateChatCompletionRequest,
+    ) -> Result<Response> {
+        request.stream = true;
+
+        Ok(self
+            .post_stream("chat/completions", &request)
+            .await
+            .with_context(|| "Failed to make OpenAI API call")?)
+    }
+
     /// Creates a chat completion.
     ///
     /// # Errors
@@ -184,6 +221,34 @@ impl<'a> Client<'a> {
             .post("chat/completions", &request)
             .await
             .with_context(|| "Failed to make OpenAI API call")?)
+    }
+
+    /// Sends a stream POST request, returns the response for further processing.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if there was a problem while sending the request or
+    /// deserializing the response.
+    pub async fn post_stream<B>(&self, endpoint: &str, body: B) -> Result<Response>
+    where
+        B: serde::Serialize,
+    {
+        let url = format!("{API_URL}{endpoint}");
+        let client = reqwest::Client::new();
+
+        let body =
+            serde_json::to_value(body).with_context(|| "Failed to serialize request body")?;
+
+        debug!("OpenAI API request: {:?}", body.to_string());
+
+        Ok(client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Content-Type", "application/json")
+            .json(&body)
+            .send()
+            .await
+            .with_context(|| "Failed to send request")?)
     }
 
     /// Sends a POST request, deserializes the response to the given type.

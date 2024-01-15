@@ -11,12 +11,7 @@
             <strong>{{ authorName(message) }}</strong>
           </p>
 
-          <div v-if="message.status === Status.WRITING">
-            <p>
-              <em>is writing...</em>
-            </p>
-          </div>
-          <div v-else>
+          <div>
             <!-- eslint-disable-next-line vue/no-v-html -->
             <div v-if="message.content?.length > 0 && message.role != Role.TOOL" v-html="markdown(message.content)" />
             <div v-if="message.content?.length > 0 && message.role === Role.TOOL">

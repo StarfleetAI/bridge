@@ -28,7 +28,7 @@ impl From<String> for Role {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, sqlx::Type, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, sqlx::Type, PartialEq, Default, Clone, Copy)]
 pub enum Status {
     #[default]
     Writing,
