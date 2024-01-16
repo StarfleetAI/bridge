@@ -41,11 +41,6 @@ pub struct UpdateAbility {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct DeleteAbility {
-    pub id: i64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct GetFunctionParameters {
     pub code: String,
 }
@@ -191,19 +186,19 @@ pub async fn update_ability(
 ///
 /// Returns error if ability with given id does not exist.
 #[tauri::command]
-pub async fn delete_ability(request: DeleteAbility, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_ability(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let agents_count = repo::agent_abilities::get_agents_count(&mut *tx, request.id).await?;
+    let agents_count = repo::agent_abilities::get_agents_count(&mut *tx, id).await?;
 
     if agents_count > 0 {
         return Err(Error::AbilityIsUsedByAgents);
     }
 
-    repo::abilities::delete(&mut *tx, request.id).await?;
+    repo::abilities::delete(&mut *tx, id).await?;
 
     tx.commit()
         .await

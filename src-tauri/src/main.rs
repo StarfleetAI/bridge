@@ -42,6 +42,10 @@ fn main() -> Result<()> {
             commands::messages::create_message,
             commands::messages::delete_message,
             commands::messages::list_messages,
+            commands::tasks::list_root_tasks,
+            commands::tasks::list_child_tasks,
+            commands::tasks::get_task,
+            commands::tasks::delete_task,
         ])
         .setup(setup_handler)
         .run(tauri::generate_context!())

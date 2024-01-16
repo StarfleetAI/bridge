@@ -108,7 +108,7 @@ onMounted(async () => {
   messagesStore.$reset()
 
   await Promise.all([
-    chatsStore.getChat({ id: Number(useRoute().query.id) }),
+    chatsStore.getChat(Number(useRoute().query.id)),
     messagesStore.listMessages({ chat_id: Number(useRoute().query.id) })
   ])
 })

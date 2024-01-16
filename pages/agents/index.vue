@@ -52,12 +52,12 @@ const abilitiesStore = useAbilitiesStore()
 const agentsStore = useAgentsStore()
 const chatsStore = useChatsStore()
 
-const createChat = (agentId: number) => {
-  chatsStore.createChat({
+const createChat = async (agentId: number) => {
+  const chat = await chatsStore.createChat({
     agent_id: agentId
-  }).then((chat) => {
-    useRouter().push(`/chats/show?id=${chat.id}`)
   })
+
+  useRouter().push(`/chats/show?id=${chat.id}`)
 }
 
 definePageMeta({

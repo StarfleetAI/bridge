@@ -28,16 +28,6 @@ pub struct CreateChat {
     pub agent_id: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DeleteChat {
-    pub id: i64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GetChat {
-    pub id: i64,
-}
-
 /// List all chats.
 ///
 /// # Errors
@@ -57,8 +47,8 @@ pub async fn list_chats(pool: State<'_, DbPool>) -> Result<ChatsList> {
 ///
 /// Returns error if chat with given id does not exist.
 #[tauri::command]
-pub async fn get_chat(request: GetChat, pool: State<'_, DbPool>) -> Result<Chat> {
-    repo::chats::get(&*pool, request.id).await
+pub async fn get_chat(id: i64, pool: State<'_, DbPool>) -> Result<Chat> {
+    repo::chats::get(&*pool, id).await
 }
 
 /// Create new chat with agent.
@@ -105,14 +95,14 @@ pub async fn create_chat(request: CreateChat, pool: State<'_, DbPool>) -> Result
 ///
 /// Returns error if chat with given id does not exist.
 #[tauri::command]
-pub async fn delete_chat(request: DeleteChat, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_chat(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    repo::agents_chats::delete_for_chat(&mut *tx, request.id).await?;
-    repo::chats::delete(&mut *tx, request.id).await?;
+    repo::agents_chats::delete_for_chat(&mut *tx, id).await?;
+    repo::chats::delete(&mut *tx, id).await?;
 
     tx.commit()
         .await

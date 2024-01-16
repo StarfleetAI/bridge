@@ -19,14 +19,6 @@ export interface CreateChat {
   agent_id: number;
 }
 
-export interface DeleteChat {
-  id: number;
-}
-
-export interface GetChat {
-  id: number;
-}
-
 export const useChatsStore = defineStore('chats', {
   state: () => ({
     chats: [] as Chat[]
@@ -52,35 +44,21 @@ export const useChatsStore = defineStore('chats', {
       this.chats = chats.chats
     },
 
-    getChat(request: GetChat) {
-      return new Promise((resolve, reject) => {
-        try {
-          invoke<Chat>('get_chat', { request }).then((chat) => {
-            this.chats.push(chat)
-            resolve(chat)
-          })
-        } catch (e) {
-          reject(e)
-        }
-      })
+    async getChat(id: number) {
+      const chat = await invoke<Chat>('get_chat', { id })
+      this.chats.push(chat)
     },
 
-    createChat(request: CreateChat): Promise<Chat> {
-      return new Promise((resolve, reject) => {
-        try {
-          invoke<Chat>('create_chat', { request }).then((chat) => {
-            this.chats.push(chat)
-            resolve(chat)
-          })
-        } catch (e) {
-          reject(e)
-        }
-      })
+    async createChat(request: CreateChat): Promise<Chat> {
+      const chat = await invoke<Chat>('create_chat', { request })
+      this.chats.push(chat)
+
+      return chat
     },
 
-    async deleteChat(request: DeleteChat) {
-      await invoke('delete_chat', { request })
-      const index = this.chats.findIndex(a => a.id === request.id)
+    async deleteChat(id: number) {
+      await invoke('delete_chat', { id })
+      const index = this.chats.findIndex(a => a.id === id)
       if (index !== undefined && index !== -1) {
         this.chats.splice(index, 1)
       }
