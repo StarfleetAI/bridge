@@ -33,10 +33,6 @@ export interface UpdateAgent {
   ability_ids: number[];
 }
 
-export interface DeleteAgent {
-  id: number;
-}
-
 export const useAgentsStore = defineStore('agents', {
   state: () => ({
     agents: [] as Agent[]
@@ -75,9 +71,9 @@ export const useAgentsStore = defineStore('agents', {
       }
     },
 
-    async deleteAgent(request: DeleteAgent) {
-      await invoke('delete_agent', { request })
-      const index = this.agents.findIndex(a => a.id === request.id)
+    async deleteAgent(id: number) {
+      await invoke('delete_agent', { id })
+      const index = this.agents.findIndex(a => a.id === id)
       if (index !== undefined && index !== -1) {
         this.agents.splice(index, 1)
       }

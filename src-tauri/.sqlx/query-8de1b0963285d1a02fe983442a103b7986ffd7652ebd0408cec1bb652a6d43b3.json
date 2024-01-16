@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM tasks WHERE ancestry LIKE $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8de1b0963285d1a02fe983442a103b7986ffd7652ebd0408cec1bb652a6d43b3"
+}

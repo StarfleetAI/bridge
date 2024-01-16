@@ -30,10 +30,6 @@ export interface UpdateAbility {
   code: string;
 }
 
-export interface DeleteAbility {
-  id: number;
-}
-
 export const useAbilitiesStore = defineStore('abilities', {
   state: () => ({
     abilities: [] as Ability[]
@@ -72,9 +68,9 @@ export const useAbilitiesStore = defineStore('abilities', {
       }
     },
 
-    async deleteAbility(request: DeleteAbility) {
-      await invoke('delete_ability', { request })
-      const index = this.abilities.findIndex(a => a.id === request.id)
+    async deleteAbility(id: number) {
+      await invoke('delete_ability', { id })
+      const index = this.abilities.findIndex(a => a.id === id)
       if (index !== undefined && index !== -1) {
         this.abilities.splice(index, 1)
       }

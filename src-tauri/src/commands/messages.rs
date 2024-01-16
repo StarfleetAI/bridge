@@ -50,11 +50,6 @@ pub struct CreateMessage {
     pub text: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DeleteMessage {
-    pub id: i64,
-}
-
 #[derive(Template)]
 #[template(path = "python/call_tools.py", escape = "none")]
 struct CallToolsTemplate<'a> {
@@ -336,13 +331,13 @@ pub async fn approve_tool_call(
 ///
 /// Returns error if there was a problem while deleting message.
 #[tauri::command]
-pub async fn delete_message(request: DeleteMessage, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    repo::messages::delete(&mut *tx, request.id).await?;
+    repo::messages::delete(&mut *tx, id).await?;
 
     tx.commit()
         .await

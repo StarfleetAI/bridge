@@ -53,11 +53,6 @@ pub struct UpdateAgent {
     pub ability_ids: Vec<i64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DeleteAgent {
-    pub id: i64,
-}
-
 /// List all agents.
 ///
 /// # Errors
@@ -187,14 +182,14 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
 /// Returns error if agent with given id does not exist.
 /// Returns error if any error occurs during transaction.
 #[tauri::command]
-pub async fn delete_agent(request: DeleteAgent, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_agent(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    repo::agent_abilities::delete_for_agent(&mut *tx, request.id).await?;
-    repo::agents::delete(&mut *tx, request.id).await?;
+    repo::agent_abilities::delete_for_agent(&mut *tx, id).await?;
+    repo::agents::delete(&mut *tx, id).await?;
 
     tx.commit()
         .await

@@ -40,10 +40,6 @@ export interface CreateMessage {
   text: string;
 }
 
-export interface DeleteMessage {
-  id: number;
-}
-
 export interface ListMessages {
   chat_id: number;
 }
@@ -81,9 +77,9 @@ export const useMessagesStore = defineStore('messages', {
       return invoke('approve_tool_call', { messageId })
     },
 
-    async deleteMessage(request: DeleteMessage) {
-      await invoke('delete_message', { request })
-      const index = this.messages.findIndex(a => a.id === request.id)
+    async deleteMessage(id: number) {
+      await invoke('delete_message', { id })
+      const index = this.messages.findIndex(a => a.id === id)
       if (index !== undefined && index !== -1) {
         this.messages.splice(index, 1)
       }
