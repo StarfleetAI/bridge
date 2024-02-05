@@ -399,20 +399,25 @@ async fn get_chat_completion(
 
     let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
-    let tools: Vec<Tool> = abilities
-        .into_iter()
-        .map(
-            |ability| match serde_json::from_str(&ability.parameters_json) {
-                Ok(function) => Ok(Tool {
-                    type_: "function".to_string(),
-                    function,
-                }),
-                Err(err) => Err(errors::Error::Internal(err.into())),
-            },
-        )
-        .collect::<Result<Vec<Tool>>>()?;
+    let mut tools = None;
+    if !abilities.is_empty() {
+        tools = Some(
+            abilities
+                .into_iter()
+                .map(
+                    |ability| match serde_json::from_str(&ability.parameters_json) {
+                        Ok(function) => Ok(Tool {
+                            type_: "function".to_string(),
+                            function,
+                        }),
+                        Err(err) => Err(errors::Error::Internal(err.into())),
+                    },
+                )
+                .collect::<Result<Vec<Tool>>>()?,
+        );
 
-    debug!("Tools: {:?}", tools);
+        debug!("Tools: {:?}", tools);
+    }
 
     let mut response = client
         .create_chat_completion_stream(CreateChatCompletionRequest {
@@ -433,6 +438,7 @@ async fn get_chat_completion(
         let chunk_str = String::from_utf8_lossy(&chunk);
         let chunks = chunk_str
             .split(CHUNK_SEPARATOR)
+            .map(|chunk| chunk.trim())
             .filter(|chunk| !chunk.is_empty())
             .collect::<Vec<&str>>();
 
@@ -486,10 +492,11 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
 
     let completion: Value = serde_json::from_str(
         chunk
+            .trim()
             .strip_prefix("data: ")
-            .with_context(|| "Failed to strip prefix")?,
+            .with_context(|| format!("Failed to strip prefix for chunk: {}", chunk))?,
     )
-    .with_context(|| "Failed to parse OpenAI API response chunk")?;
+    .with_context(|| format!("Failed to parse OpenAI API response chunk: {}", chunk))?;
 
     if let Some(choices) = completion.get("choices") {
         debug!("Choices: {:?}", choices);
