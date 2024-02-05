@@ -34,7 +34,7 @@
         />
       </div>
       <div class="mb-6">
-        <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Agents</label>
+        <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Abilities</label>
         <select
           v-model="req.ability_ids"
           multiple

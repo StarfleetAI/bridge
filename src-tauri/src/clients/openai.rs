@@ -138,7 +138,7 @@ pub struct FunctionPropetryValue {
 pub struct CreateChatCompletionRequest {
     pub model: String,
     pub messages: Vec<Message>,
-    pub tools: Vec<Tool>,
+    pub tools: Option<Vec<Tool>>,
     pub stream: bool,
 }
 
