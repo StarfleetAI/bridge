@@ -9,31 +9,46 @@
     <form class="mt-8" @submit.prevent="updateAgent">
       <div class="mb-6">
         <label for="name" class="block text-sm font-medium text-gray-200 mb-2">Name</label>
-        <input id="name" v-model="req.name" required="true"
-          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700">
+        <input
+          id="name"
+          v-model="req.name"
+          required="true"
+          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
+        >
       </div>
       <div class="mb-6">
         <label for="description" class="block text-sm font-medium text-gray-200 mb-2">Description</label>
-        <input id="description" v-model="req.description"
-          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700">
+        <input
+          id="description"
+          v-model="req.description"
+          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
+        >
       </div>
       <div class="mb-6">
         <label for="code" class="block text-sm font-medium text-gray-200 mb-2">System Message</label>
-        <textarea id="code" v-model="req.system_message"
+        <textarea
+          id="code"
+          v-model="req.system_message"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700"
-          required="true" />
+          required="true"
+        />
       </div>
       <div class="mb-6">
         <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Abilities</label>
-        <select v-model="req.ability_ids" multiple
-          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700">
+        <select
+          v-model="req.ability_ids"
+          multiple
+          class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700"
+        >
           <option v-for="ability in abilitiesStore.abilities" :key="ability.id" :value="ability.id">
             {{ ability.name }}
           </option>
         </select>
       </div>
-      <button type="submit"
-        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <button
+        type="submit"
+        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
         Save
       </button>
     </form>

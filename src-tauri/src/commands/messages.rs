@@ -347,6 +347,8 @@ pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 }
 
 /// Does the whole chat completion routine.
+// TODO: refactor this function.
+#[allow(clippy::too_many_lines)]
 async fn get_chat_completion(
     chat_id: i64,
     window: Window,
@@ -438,7 +440,7 @@ async fn get_chat_completion(
         let chunk_str = String::from_utf8_lossy(&chunk);
         let chunks = chunk_str
             .split(CHUNK_SEPARATOR)
-            .map(|chunk| chunk.trim())
+            .map(str::trim)
             .filter(|chunk| !chunk.is_empty())
             .collect::<Vec<&str>>();
 
@@ -494,9 +496,9 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
         chunk
             .trim()
             .strip_prefix("data: ")
-            .with_context(|| format!("Failed to strip prefix for chunk: {}", chunk))?,
+            .with_context(|| format!("Failed to strip prefix for chunk: {chunk}"))?,
     )
-    .with_context(|| format!("Failed to parse OpenAI API response chunk: {}", chunk))?;
+    .with_context(|| format!("Failed to parse OpenAI API response chunk: {chunk}"))?;
 
     if let Some(choices) = completion.get("choices") {
         debug!("Choices: {:?}", choices);
