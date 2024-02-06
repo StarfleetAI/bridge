@@ -1,0 +1,10 @@
+.eslintrc.js
+Dockerfile
+entrypoint.sh
+nuxt.config.ts
+package.json
+tsconfig.json
+yarn.lock
+*.mjs
+protos
+shared/api-helpers

@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+yarn-lock.json
+package-lock.json
+node_modules
+src-tauri
+.github

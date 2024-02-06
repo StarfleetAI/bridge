@@ -1,8 +1,8 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { defineStore } from 'pinia'
 import { invoke } from '@tauri-apps/api/tauri'
+import { defineStore } from 'pinia'
 
 export enum Status {
   WRITING = 'Writing',
@@ -18,30 +18,30 @@ export enum Role {
 }
 
 export interface Message {
-  id: number;
-  chat_id: number;
-  agent_id: number | null;
-  status: Status;
-  role: Role;
-  content: string;
-  prompt_tokens: number | null;
-  completion_tokens: number | null;
-  tool_calls: string | null;
-  tool_call_id: string | null;
-  created_at: Date;
+  id: number
+  chat_id: number
+  agent_id: number | null
+  status: Status
+  role: Role
+  content: string
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  tool_calls: string | null
+  tool_call_id: string | null
+  created_at: Date
 }
 
 export interface MessagesList {
-  messages: Message[];
+  messages: Message[]
 }
 
 export interface CreateMessage {
-  chat_id: number;
-  text: string;
+  chat_id: number
+  text: string
 }
 
 export interface ListMessages {
-  chat_id: number;
+  chat_id: number
 }
 
 export const useMessagesStore = defineStore('messages', {
@@ -50,17 +50,19 @@ export const useMessagesStore = defineStore('messages', {
   }),
 
   getters: {
-    listByChatId: state => (id: number | string | undefined): Message[] => {
-      if (id === undefined) {
-        return []
-      }
+    listByChatId:
+      (state) =>
+      (id: number | string | undefined): Message[] => {
+        if (id === undefined) {
+          return []
+        }
 
-      if (typeof id === 'string') {
-        id = parseInt(id, 10)
-      }
+        if (typeof id === 'string') {
+          id = parseInt(id, 10)
+        }
 
-      return state.messages.filter(a => a.chat_id === id)
-    }
+        return state.messages.filter((a) => a.chat_id === id)
+      }
   },
 
   actions: {
@@ -79,7 +81,7 @@ export const useMessagesStore = defineStore('messages', {
 
     async deleteMessage(id: number) {
       await invoke('delete_message', { id })
-      const index = this.messages.findIndex(a => a.id === id)
+      const index = this.messages.findIndex((a) => a.id === id)
       if (index !== undefined && index !== -1) {
         this.messages.splice(index, 1)
       }

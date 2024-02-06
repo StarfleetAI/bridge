@@ -1,4 +1,33 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
-  "extends": "./.nuxt/tsconfig.json"
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    // enable latest features
+    "lib": ["ESNext", "dom"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "allowJs": true, // allow importing `.js` from `.ts`
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    // Bundler mode
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Some stricter flags
+    "useUnknownInCatchVariables": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "strictPropertyInitialization": false
+  },
+  "include": [".nuxt/./typed-router/typed-router.d.ts", ".nuxt/./nuxt.d.ts", "./**/*"],
+  "exclude": ["shared/api-helpers/**", "dist", ".output", "protos", "nuxt.config.ts"]
 }

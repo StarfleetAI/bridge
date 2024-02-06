@@ -1,0 +1,120 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
+@font-face {
+  font-weight: 900;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Black.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 800;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-ExtraBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 700;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 600;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 500;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 400;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 300;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Light.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 200;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-ExtraLight.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 100;
+  font-style: normal;
+  font-family: Inter;
+  src: url('~/assets/fonts/Inter-Thin.ttf') format('truetype');
+}
+
+@font-face {
+  font-weight: 500;
+  font-style: normal;
+  font-family: 'DM Sans';
+  src: url('~/assets/fonts/DMSans-Medium.ttf') format('truetype');
+}
+
+@mixin font-inter-400($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 400;
+  font-size: $size;
+  line-height: $line-height;
+}
+
+@mixin font-inter-500($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 500;
+  font-size: $size;
+  line-height: $line-height;
+}
+
+@mixin font-inter-600($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 600;
+  font-size: $size;
+  line-height: $line-height;
+}
+
+@mixin font-inter-700($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 700;
+  font-size: $size;
+  line-height: $line-height;
+}
+
+@mixin font-inter-800($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 800;
+  font-size: $size;
+  line-height: $line-height;
+}
+
+@mixin font-dmsans-500($size, $line-height, $color: var(--text-primary)) {
+  color: $color;
+  font-weight: 500;
+  font-size: $size;
+  font-family: 'DM Sans', sans-serif;
+  line-height: $line-height;
+}
+
+@mixin no-text-selection() {
+  user-select: none; /* Safari */
+  -webkit-touch-callout: none; /* iOS Safari */
+}

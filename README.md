@@ -7,7 +7,7 @@ Bridge is a self-contained fully-featured IDE for building and running autonomou
 0. Ensure you have Rust, `tauri-cli` and Bun installed locally
 1. Clone the repository
 2. Prepare config file
-   
+
    ```shell
    cp src-tauri/.env{.example,}
    ```

@@ -1,0 +1,10 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
+@mixin flex($flex-direction: null, $justify-content: null, $align-items: null, $gap: null) {
+  display: flex;
+  flex-direction: $flex-direction;
+  gap: $gap;
+  justify-content: $justify-content;
+  align-items: $align-items;
+}
