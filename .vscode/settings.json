@@ -6,5 +6,7 @@
   },
   "stylelint.snippet": ["css", "scss", "vue"],
   "stylelint.validate": ["css", "scss", "vue"],
-  "cssVariables.lookupFiles": ["**/*.css", "**/*.scss"]
+  "cssVariables.lookupFiles": ["**/*.css", "**/*.scss"],
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true
 }
