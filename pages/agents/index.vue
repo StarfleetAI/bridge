@@ -1,6 +1,28 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { useAbilitiesStore } from '@/store/abilities'
+  import { useAgentsStore } from '@/store/agents'
+  import { useChatsStore } from '@/store/chats'
+
+  definePageMeta({
+    title: 'Agents'
+  })
+
+  const abilitiesStore = useAbilitiesStore()
+  const agentsStore = useAgentsStore()
+  const chatsStore = useChatsStore()
+
+  const createChat = async (agentId: number) => {
+    const chat = await chatsStore.createChat({
+      agent_id: agentId
+    })
+
+    useRouter().push(`/chats/show?id=${chat.id}`)
+  }
+</script>
+
 <template>
   <div>
     <NuxtLink
@@ -52,25 +74,3 @@
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-  import { useAgentsStore } from '@/store/agents'
-  import { useChatsStore } from '@/store/chats'
-
-  const abilitiesStore = useAbilitiesStore()
-  const agentsStore = useAgentsStore()
-  const chatsStore = useChatsStore()
-
-  const createChat = async (agentId: number) => {
-    const chat = await chatsStore.createChat({
-      agent_id: agentId
-    })
-
-    useRouter().push(`/chats/show?id=${chat.id}`)
-  }
-
-  definePageMeta({
-    title: 'Agents'
-  })
-</script>

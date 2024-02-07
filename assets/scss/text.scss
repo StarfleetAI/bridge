@@ -5,21 +5,24 @@
   font-weight: 700;
   font-style: normal;
   font-family: Inter;
-  src: url('~/assets/fonts/Inter-Bold.ttf') format('truetype');
+  src: url('/fonts/Inter-Bold.ttf') format('truetype');
+  font-display: swap;
 }
 
 @font-face {
   font-weight: 500;
   font-style: normal;
   font-family: Inter;
-  src: url('~/assets/fonts/Inter-Medium.ttf') format('truetype');
+  src: url('/fonts/Inter-Medium.ttf') format('truetype');
+  font-display: swap;
 }
 
 @font-face {
   font-weight: 400;
   font-style: normal;
   font-family: Inter;
-  src: url('~/assets/fonts/Inter-Regular.ttf') format('truetype');
+  src: url('/fonts/Inter-Regular.ttf') format('truetype');
+  font-display: swap;
 }
 
 @mixin font-inter-400($size, $line-height, $color: var(--text-primary)) {

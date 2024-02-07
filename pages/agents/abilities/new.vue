@@ -1,6 +1,45 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { highlight, languages } from 'prismjs'
+  import 'prismjs/components/prism-python'
+  import 'prismjs/themes/prism-tomorrow.css'
+  import { PrismEditor } from 'vue-prism-editor'
+
+  import 'vue-prism-editor/dist/prismeditor.min.css'
+
+  import type { CreateAbility } from '@/store/abilities'
+  import { useAbilitiesStore } from '@/store/abilities'
+
+  definePageMeta({
+    title: 'Abilities &raquo; New'
+  })
+
+  const abilitiesStore = useAbilitiesStore()
+
+  const highlighter = (code: string) => {
+    return highlight(code, languages.python, 'python')
+  }
+
+  const req = ref<CreateAbility>({
+    name: '',
+    description: '',
+    code: `def do_something(
+    arg1: Annotated[str, "String argument"],
+    arg2: Annotated[int, "Integer argument"]
+) -> str:
+    # Do the actual job here
+    return "Something was successful!"`
+  })
+  const router = useRouter()
+
+  const createAbility = async () => {
+    await abilitiesStore.createAbility(req.value)
+    router.push('/agents/abilities')
+  }
+</script>
+
 <template>
   <div class="max-w-2xl mx-auto py-10">
     <NuxtLink
@@ -62,42 +101,3 @@
     </form>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { highlight, languages } from 'prismjs'
-  import 'prismjs/components/prism-python'
-  import 'prismjs/themes/prism-tomorrow.css'
-  import { PrismEditor } from 'vue-prism-editor'
-
-  import 'vue-prism-editor/dist/prismeditor.min.css'
-
-  import type { CreateAbility } from '@/store/abilities'
-  import { useAbilitiesStore } from '@/store/abilities'
-
-  const abilitiesStore = useAbilitiesStore()
-
-  const highlighter = (code: string) => {
-    return highlight(code, languages.python, 'python')
-  }
-
-  const req = ref<CreateAbility>({
-    name: '',
-    description: '',
-    code: `def do_something(
-    arg1: Annotated[str, "String argument"],
-    arg2: Annotated[int, "Integer argument"]
-) -> str:
-    # Do the actual job here
-    return "Something was successful!"`
-  })
-  const router = useRouter()
-
-  const createAbility = async () => {
-    await abilitiesStore.createAbility(req.value)
-    router.push('/agents/abilities')
-  }
-
-  definePageMeta({
-    title: 'Abilities &raquo; New'
-  })
-</script>

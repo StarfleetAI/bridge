@@ -25,40 +25,34 @@
 <template>
   <div
     :to="to"
-    :class="['sidebar-item__container', { active: isActiveItem }]"
+    :class="['header-item py-3 px-4', { active: isActiveItem }]"
     @click="handleClick()"
   >
-    <div class="sidebar-item__icon"><slot name="icon" /></div>
-    <div class="sidebar-item__name"><slot name="name" /></div>
+    <slot name="icon" />
+    <div class="header-item__name"><slot name="name" /></div>
   </div>
 </template>
 
 <style scoped lang="scss">
-  .sidebar-item {
-    &__container {
-      padding: 8px;
-      border-radius: 8px;
-      color: black;
-      cursor: pointer;
+  .header-item {
+    color: var(--text-tertiary);
+    cursor: pointer;
 
-      &.active {
-        background: var(--surface-2);
-        color: black;
-        cursor: auto;
-      }
-
-      @include flex(row, flex-start, center);
+    &.active {
+      background: var(--surface-1);
+      cursor: auto;
     }
 
-    &__name {
-      @include font-inter-700(14px, 17px);
-    }
+    @include flex($align-items: center, $gap: 8px);
+  }
 
-    &__icon {
-      margin-top: 2px;
-      margin-right: 10px;
-      color: black;
-      transition: all 0.2s ease;
-    }
+  .header-item__name {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .header-item.active .header-item__name {
+    color: var(--text-primary);
   }
 </style>

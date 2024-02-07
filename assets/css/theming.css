@@ -1,0 +1,12 @@
+/* stylelint-disable comment-empty-line-before */
+
+/* Copyright 2024 StarfleetAI */
+/* SPDX-License-Identifier: Apache-2.0  */
+
+:root {
+  --text-primary: #eaecf0;
+  --text-tertiary: #677383;
+  --surface-0: #0c0e12;
+  --surface-1: #1a1d26;
+  --status-progress: #62ac55;
+}

@@ -1,6 +1,46 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { highlight, languages } from 'prismjs'
+  import 'prismjs/components/prism-python'
+  import 'prismjs/themes/prism-tomorrow.css'
+  import { PrismEditor } from 'vue-prism-editor'
+  import 'vue-prism-editor/dist/prismeditor.min.css'
+
+  import type { UpdateAbility } from '@/store/abilities'
+  import { useAbilitiesStore } from '@/store/abilities'
+
+  definePageMeta({
+    title: 'Abilities &raquo; Edit'
+  })
+
+  const abilitiesStore = useAbilitiesStore()
+
+  const highlighter = (code: string) => {
+    return highlight(code, languages.python, 'python')
+  }
+
+  const route = useRoute()
+  const router = useRouter()
+
+  const ability = computed(() => {
+    return abilitiesStore.getById(Number(route.query.id))
+  })
+
+  const req = ref<UpdateAbility>({
+    id: ability.value?.id || 0,
+    name: ability.value?.name || '',
+    description: ability.value?.description || '',
+    code: ability.value?.code || ''
+  })
+
+  const updateAbility = async () => {
+    await abilitiesStore.updateAbility(req.value)
+    router.push('/agents/abilities')
+  }
+</script>
+
 <template>
   <div class="max-w-6xl mx-auto py-10">
     <NuxtLink
@@ -62,43 +102,3 @@
     </form>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { highlight, languages } from 'prismjs'
-  import 'prismjs/components/prism-python'
-  import 'prismjs/themes/prism-tomorrow.css'
-  import { PrismEditor } from 'vue-prism-editor'
-  import 'vue-prism-editor/dist/prismeditor.min.css'
-
-  import type { UpdateAbility } from '@/store/abilities'
-  import { useAbilitiesStore } from '@/store/abilities'
-
-  const abilitiesStore = useAbilitiesStore()
-
-  const highlighter = (code: string) => {
-    return highlight(code, languages.python, 'python')
-  }
-
-  const route = useRoute()
-  const router = useRouter()
-
-  const ability = computed(() => {
-    return abilitiesStore.getById(Number(route.query.id))
-  })
-
-  const req = ref<UpdateAbility>({
-    id: ability.value?.id || 0,
-    name: ability.value?.name || '',
-    description: ability.value?.description || '',
-    code: ability.value?.code || ''
-  })
-
-  const updateAbility = async () => {
-    await abilitiesStore.updateAbility(req.value)
-    router.push('/agents/abilities')
-  }
-
-  definePageMeta({
-    title: 'Abilities &raquo; Edit'
-  })
-</script>

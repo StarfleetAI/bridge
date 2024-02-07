@@ -8,5 +8,5 @@ export default {
     extend: {}
   },
   plugins: [],
-  safelist: ['bg-gray-900', 'cursor-default', 'text-slate-50', 'select-none']
+  safelist: ['cursor-default', 'select-none']
 }

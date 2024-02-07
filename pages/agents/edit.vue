@@ -1,6 +1,40 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { useAbilitiesStore } from '@/store/abilities'
+  import type { UpdateAgent } from '@/store/agents'
+
+  import { useAgentsStore } from '@/store/agents'
+
+  definePageMeta({
+    title: 'Agents &raquo; Edit'
+  })
+
+  const abilitiesStore = useAbilitiesStore()
+  const agentsStore = useAgentsStore()
+
+  const route = useRoute()
+  const router = useRouter()
+
+  const agent = computed(() => {
+    return agentsStore.getById(Number(route.query.id))
+  })
+
+  const req = ref<UpdateAgent>({
+    id: agent.value?.id || 0,
+    name: agent.value?.name || '',
+    description: agent.value?.description || '',
+    system_message: agent.value?.system_message || '',
+    ability_ids: agent.value?.ability_ids || []
+  })
+
+  const updateAgent = async () => {
+    await agentsStore.updateAgent(req.value)
+    router.push('/agents')
+  }
+</script>
+
 <template>
   <div class="max-w-2xl mx-auto py-10">
     <NuxtLink
@@ -80,37 +114,3 @@
     </form>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-  import type { UpdateAgent } from '@/store/agents'
-
-  import { useAgentsStore } from '@/store/agents'
-
-  const abilitiesStore = useAbilitiesStore()
-  const agentsStore = useAgentsStore()
-
-  const route = useRoute()
-  const router = useRouter()
-
-  const agent = computed(() => {
-    return agentsStore.getById(Number(route.query.id))
-  })
-
-  const req = ref<UpdateAgent>({
-    id: agent.value?.id || 0,
-    name: agent.value?.name || '',
-    description: agent.value?.description || '',
-    system_message: agent.value?.system_message || '',
-    ability_ids: agent.value?.ability_ids || []
-  })
-
-  const updateAgent = async () => {
-    await agentsStore.updateAgent(req.value)
-    router.push('/agents')
-  }
-
-  definePageMeta({
-    title: 'Agents &raquo; Edit'
-  })
-</script>

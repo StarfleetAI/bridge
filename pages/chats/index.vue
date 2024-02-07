@@ -3,10 +3,12 @@
 
 <script lang="ts" setup>
   definePageMeta({
-    title: 'Settings'
+    title: 'Chats'
   })
 </script>
 
 <template>
-  <div>Settings</div>
+  <div>Chats</div>
 </template>
+
+<style lang="scss" scoped></style>

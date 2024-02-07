@@ -1,6 +1,16 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { useAbilitiesStore } from '@/store/abilities'
+
+  const abilitiesStore = useAbilitiesStore()
+
+  definePageMeta({
+    title: 'Abilities'
+  })
+</script>
+
 <template>
   <div>
     <NuxtLink
@@ -33,13 +43,3 @@
     </ul>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-
-  const abilitiesStore = useAbilitiesStore()
-
-  definePageMeta({
-    title: 'Abilities'
-  })
-</script>
