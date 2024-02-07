@@ -1,6 +1,73 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { marked } from 'marked'
+  import { useAgentsStore } from '@/store/agents'
+  import { useChatsStore } from '@/store/chats'
+  import type { CreateMessage, Message } from '@/store/messages'
+  import { Role, Status, useMessagesStore } from '@/store/messages'
+
+  definePageMeta({
+    title: 'Chat'
+  })
+
+  const agentsStore = useAgentsStore()
+  const chatsStore = useChatsStore()
+  const messagesStore = useMessagesStore()
+
+  const newMessage = ref<CreateMessage>({
+    chat_id: Number(useRoute().query.id),
+    text: ''
+  })
+
+  const chatMessages = computed(() => {
+    return messagesStore.listByChatId(Number(useRoute().query.id))
+  })
+
+  const approveToolCall = async (messageId: number) => {
+    await messagesStore.approveToolCall(messageId)
+  }
+
+  const sendMessage = async () => {
+    const msg = { ...newMessage.value }
+    newMessage.value.text = ''
+
+    await messagesStore.createMessage(msg)
+  }
+
+  const markdown = (text: string) => {
+    return marked.parse(text)
+  }
+
+  const authorName = (message: Message) => {
+    switch (message.role) {
+      case 'System':
+        return 'System'
+      case 'User':
+        return 'You'
+      case 'Assistant':
+        if (message.agent_id === null) {
+          return 'Unknown Agent'
+        }
+
+        return agentsStore.getById(message.agent_id)?.name || 'Unknown Agent'
+      case 'Tool':
+        return 'Tool'
+      default:
+        return 'Unknown'
+    }
+  }
+
+  onMounted(async () => {
+    messagesStore.$reset()
+
+    await Promise.all([
+      chatsStore.getChat(Number(useRoute().query.id)),
+      messagesStore.listMessages({ chat_id: Number(useRoute().query.id) })
+    ])
+  })
+</script>
 <template>
   <div class="flex flex-col h-5/6">
     <!-- Chat Messages Window -->
@@ -61,82 +128,14 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-  import { marked } from 'marked'
-  import { useAgentsStore } from '@/store/agents'
-  import { useChatsStore } from '@/store/chats'
-  import type { CreateMessage, Message } from '@/store/messages'
-  import { Role, Status, useMessagesStore } from '@/store/messages'
-
-  const agentsStore = useAgentsStore()
-  const chatsStore = useChatsStore()
-  const messagesStore = useMessagesStore()
-
-  const newMessage = ref<CreateMessage>({
-    chat_id: Number(useRoute().query.id),
-    text: ''
-  })
-
-  const chatMessages = computed(() => {
-    return messagesStore.listByChatId(Number(useRoute().query.id))
-  })
-
-  const approveToolCall = async (messageId: number) => {
-    await messagesStore.approveToolCall(messageId)
-  }
-
-  const sendMessage = async () => {
-    const msg = { ...newMessage.value }
-    newMessage.value.text = ''
-
-    await messagesStore.createMessage(msg)
-  }
-
-  const markdown = (text: string) => {
-    return marked.parse(text)
-  }
-
-  const authorName = (message: Message) => {
-    switch (message.role) {
-      case 'System':
-        return 'System'
-      case 'User':
-        return 'You'
-      case 'Assistant':
-        if (message.agent_id === null) {
-          return 'Unknown Agent'
-        }
-
-        return agentsStore.getById(message.agent_id)?.name || 'Unknown Agent'
-      case 'Tool':
-        return 'Tool'
-      default:
-        return 'Unknown'
-    }
-  }
-
-  onMounted(async () => {
-    messagesStore.$reset()
-
-    await Promise.all([
-      chatsStore.getChat(Number(useRoute().query.id)),
-      messagesStore.listMessages({ chat_id: Number(useRoute().query.id) })
-    ])
-  })
-
-  definePageMeta({
-    title: 'Chat'
-  })
-</script>
-
 <style>
   pre > code {
+    display: block;
     margin-top: 1rem;
     margin-bottom: 1rem;
-    display: block;
-    background-color: #1a202c;
-    color: #f7fafc;
     padding: 1rem;
     border-radius: 0.25rem;
+    background-color: #1a202c;
+    color: #f7fafc;
   }
 </style>

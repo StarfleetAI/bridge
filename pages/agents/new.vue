@@ -1,6 +1,31 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<script lang="ts" setup>
+  import { useAbilitiesStore } from '@/store/abilities'
+  import type { CreateAgent } from '@/store/agents'
+  import { useAgentsStore } from '@/store/agents'
+
+  definePageMeta({
+    title: 'Agents &raquo; New'
+  })
+
+  const abilitiesStore = useAbilitiesStore()
+  const agentsStore = useAgentsStore()
+
+  const req = ref<CreateAgent>({
+    name: '',
+    description: '',
+    system_message: '',
+    ability_ids: []
+  })
+  const router = useRouter()
+
+  const createAgent = async () => {
+    await agentsStore.createAgent(req.value)
+    router.push('/agents')
+  }
+</script>
 <template>
   <div class="max-w-2xl mx-auto py-10">
     <NuxtLink
@@ -80,29 +105,3 @@
     </form>
   </div>
 </template>
-
-<script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-  import type { CreateAgent } from '@/store/agents'
-  import { useAgentsStore } from '@/store/agents'
-
-  const abilitiesStore = useAbilitiesStore()
-  const agentsStore = useAgentsStore()
-
-  const req = ref<CreateAgent>({
-    name: '',
-    description: '',
-    system_message: '',
-    ability_ids: []
-  })
-  const router = useRouter()
-
-  const createAgent = async () => {
-    await agentsStore.createAgent(req.value)
-    router.push('/agents')
-  }
-
-  definePageMeta({
-    title: 'Agents &raquo; New'
-  })
-</script>

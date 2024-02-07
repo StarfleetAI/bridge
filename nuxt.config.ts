@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       bodyAttrs: {
-        class: ['bg-gray-900', 'text-slate-50', 'select-none', 'cursor-default']
+        class: ['select-none', 'cursor-default']
       }
     }
   },
@@ -24,13 +24,14 @@ export default defineNuxtConfig({
     strict: true
   },
 
+  css: ['~/assets/css/theming.css'],
+
   vite: {
     css: {
       preprocessorOptions: {
         scss: {
           additionalData: `
             @import "@/assets/scss/default.scss";
-            @import "@/assets/scss/theming.scss";
           `
         }
       }
