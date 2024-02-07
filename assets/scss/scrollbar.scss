@@ -1,0 +1,12 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
+@mixin hide-scrollbar() {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

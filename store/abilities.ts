@@ -1,33 +1,33 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { defineStore } from 'pinia'
 import { invoke } from '@tauri-apps/api/tauri'
+import { defineStore } from 'pinia'
 
 export interface Ability {
-  id: number;
-  name: string;
-  description: string;
-  code: string;
-  created_at: Date;
-  updated_at: Date;
+  id: number
+  name: string
+  description: string
+  code: string
+  created_at: Date
+  updated_at: Date
 }
 
 export interface AbilitiesList {
-  abilities: Ability[];
+  abilities: Ability[]
 }
 
 export interface CreateAbility {
-  name: string;
-  description: string;
-  code: string;
+  name: string
+  description: string
+  code: string
 }
 
 export interface UpdateAbility {
-  id: number;
-  name: string;
-  description: string;
-  code: string;
+  id: number
+  name: string
+  description: string
+  code: string
 }
 
 export const useAbilitiesStore = defineStore('abilities', {
@@ -36,17 +36,19 @@ export const useAbilitiesStore = defineStore('abilities', {
   }),
 
   getters: {
-    getById: state => (id: number | string | undefined): Ability | undefined => {
-      if (id === undefined) {
-        return undefined
-      }
+    getById:
+      (state) =>
+      (id: number | string | undefined): Ability | undefined => {
+        if (id === undefined) {
+          return undefined
+        }
 
-      if (typeof id === 'string') {
-        id = parseInt(id, 10)
-      }
+        if (typeof id === 'string') {
+          id = parseInt(id, 10)
+        }
 
-      return state.abilities.find(a => a.id === id)
-    }
+        return state.abilities.find((a) => a.id === id)
+      }
   },
 
   actions: {
@@ -62,7 +64,7 @@ export const useAbilitiesStore = defineStore('abilities', {
 
     async updateAbility(request: UpdateAbility) {
       const updated = await invoke<Ability>('update_ability', { request })
-      const index = this.abilities.findIndex(a => a.id === updated.id)
+      const index = this.abilities.findIndex((a) => a.id === updated.id)
       if (index !== undefined && index !== -1) {
         this.abilities.splice(index, 1, updated)
       }
@@ -70,7 +72,7 @@ export const useAbilitiesStore = defineStore('abilities', {
 
     async deleteAbility(id: number) {
       await invoke('delete_ability', { id })
-      const index = this.abilities.findIndex(a => a.id === id)
+      const index = this.abilities.findIndex((a) => a.id === id)
       if (index !== undefined && index !== -1) {
         this.abilities.splice(index, 1)
       }

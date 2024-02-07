@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts" setup>
-definePageMeta({
-  title: 'Documents'
-})
+  definePageMeta({
+    title: 'Documents'
+  })
 </script>

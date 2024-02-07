@@ -10,10 +10,7 @@ export default defineNuxtConfig({
     }
   },
 
-  modules: [
-    '@nuxtjs/tailwindcss',
-    '@pinia/nuxt'
-  ],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', 'nuxt-typed-router', '@vueuse/nuxt', 'dayjs-nuxt'],
 
   routeRules: {
     '/': { redirect: '/agents' }
@@ -21,5 +18,22 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  devtools: { enabled: false }
+  devtools: { enabled: false },
+
+  typescript: {
+    strict: true
+  },
+
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: `
+            @import "@/assets/scss/default.scss";
+            @import "@/assets/scss/theming.scss";
+          `
+        }
+      }
+    }
+  }
 })

@@ -3,30 +3,48 @@
 
 <template>
   <div class="max-w-2xl mx-auto py-10">
-    <NuxtLink to="/agents/abilities" class="text-blue-400 hover:text-blue-300">
+    <NuxtLink
+      to="/agents/abilities"
+      class="text-blue-400 hover:text-blue-300"
+    >
       ← Back to Abilities
     </NuxtLink>
-    <form class="mt-8" @submit.prevent="createAbility">
+    <form
+      class="mt-8"
+      @submit.prevent="createAbility"
+    >
       <div class="mb-6">
-        <label for="name" class="block text-sm font-medium text-gray-200 mb-2">Name</label>
+        <label
+          for="name"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Name</label
+        >
         <input
           id="name"
           v-model="req.name"
           required="true"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
-        >
+        />
       </div>
       <div class="mb-6">
-        <label for="description" class="block text-sm font-medium text-gray-200 mb-2">Description</label>
+        <label
+          for="description"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Description</label
+        >
         <input
           id="description"
           v-model="req.description"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
           required="true"
-        >
+        />
       </div>
       <div class="mb-6">
-        <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Code</label>
+        <label
+          for="code"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Code</label
+        >
         <prism-editor
           v-model="req.code"
           :highlight="highlighter"
@@ -46,40 +64,40 @@
 </template>
 
 <script lang="ts" setup>
-import { PrismEditor } from 'vue-prism-editor'
+  import { highlight, languages } from 'prismjs'
+  import 'prismjs/components/prism-python'
+  import 'prismjs/themes/prism-tomorrow.css'
+  import { PrismEditor } from 'vue-prism-editor'
 
-import 'vue-prism-editor/dist/prismeditor.min.css'
+  import 'vue-prism-editor/dist/prismeditor.min.css'
 
-import { highlight, languages } from 'prismjs'
-import 'prismjs/components/prism-python'
-import 'prismjs/themes/prism-tomorrow.css'
+  import type { CreateAbility } from '@/store/abilities'
+  import { useAbilitiesStore } from '@/store/abilities'
 
-import type { CreateAbility } from '@/store/abilities'
-import { useAbilitiesStore } from '@/store/abilities'
-const abilitiesStore = useAbilitiesStore()
+  const abilitiesStore = useAbilitiesStore()
 
-const highlighter = (code: string) => {
-  return highlight(code, languages.python, 'python')
-}
+  const highlighter = (code: string) => {
+    return highlight(code, languages.python, 'python')
+  }
 
-const req = ref<CreateAbility>({
-  name: '',
-  description: '',
-  code: `def do_something(
+  const req = ref<CreateAbility>({
+    name: '',
+    description: '',
+    code: `def do_something(
     arg1: Annotated[str, "String argument"],
     arg2: Annotated[int, "Integer argument"]
 ) -> str:
     # Do the actual job here
     return "Something was successful!"`
-})
-const router = useRouter()
+  })
+  const router = useRouter()
 
-const createAbility = async () => {
-  await abilitiesStore.createAbility(req.value)
-  router.push('/agents/abilities')
-}
+  const createAbility = async () => {
+    await abilitiesStore.createAbility(req.value)
+    router.push('/agents/abilities')
+  }
 
-definePageMeta({
-  title: 'Abilities &raquo; New'
-})
+  definePageMeta({
+    title: 'Abilities &raquo; New'
+  })
 </script>

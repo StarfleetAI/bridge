@@ -3,29 +3,47 @@
 
 <template>
   <div class="max-w-2xl mx-auto py-10">
-    <NuxtLink to="/agents" class="text-blue-400 hover:text-blue-300">
+    <NuxtLink
+      to="/agents"
+      class="text-blue-400 hover:text-blue-300"
+    >
       ← Back to Agents
     </NuxtLink>
-    <form class="mt-8" @submit.prevent="updateAgent">
+    <form
+      class="mt-8"
+      @submit.prevent="updateAgent"
+    >
       <div class="mb-6">
-        <label for="name" class="block text-sm font-medium text-gray-200 mb-2">Name</label>
+        <label
+          for="name"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Name</label
+        >
         <input
           id="name"
           v-model="req.name"
           required="true"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
-        >
+        />
       </div>
       <div class="mb-6">
-        <label for="description" class="block text-sm font-medium text-gray-200 mb-2">Description</label>
+        <label
+          for="description"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Description</label
+        >
         <input
           id="description"
           v-model="req.description"
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 text-gray-700"
-        >
+        />
       </div>
       <div class="mb-6">
-        <label for="code" class="block text-sm font-medium text-gray-200 mb-2">System Message</label>
+        <label
+          for="code"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >System Message</label
+        >
         <textarea
           id="code"
           v-model="req.system_message"
@@ -34,13 +52,21 @@
         />
       </div>
       <div class="mb-6">
-        <label for="code" class="block text-sm font-medium text-gray-200 mb-2">Agents</label>
+        <label
+          for="code"
+          class="block text-sm font-medium text-gray-200 mb-2"
+          >Abilities</label
+        >
         <select
           v-model="req.ability_ids"
           multiple
           class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3 h-96 font-mono text-gray-700"
         >
-          <option v-for="ability in abilitiesStore.abilities" :key="ability.id" :value="ability.id">
+          <option
+            v-for="ability in abilitiesStore.abilities"
+            :key="ability.id"
+            :value="ability.id"
+          >
             {{ ability.name }}
           </option>
         </select>
@@ -56,35 +82,35 @@
 </template>
 
 <script lang="ts" setup>
-import type { UpdateAgent } from '@/store/agents'
+  import { useAbilitiesStore } from '@/store/abilities'
+  import type { UpdateAgent } from '@/store/agents'
 
-import { useAbilitiesStore } from '@/store/abilities'
-import { useAgentsStore } from '@/store/agents'
+  import { useAgentsStore } from '@/store/agents'
 
-const abilitiesStore = useAbilitiesStore()
-const agentsStore = useAgentsStore()
+  const abilitiesStore = useAbilitiesStore()
+  const agentsStore = useAgentsStore()
 
-const route = useRoute()
-const router = useRouter()
+  const route = useRoute()
+  const router = useRouter()
 
-const agent = computed(() => {
-  return agentsStore.getById(Number(route.query.id))
-})
+  const agent = computed(() => {
+    return agentsStore.getById(Number(route.query.id))
+  })
 
-const req = ref<UpdateAgent>({
-  id: agent.value?.id || 0,
-  name: agent.value?.name || '',
-  description: agent.value?.description || '',
-  system_message: agent.value?.system_message || '',
-  ability_ids: agent.value?.ability_ids || []
-})
+  const req = ref<UpdateAgent>({
+    id: agent.value?.id || 0,
+    name: agent.value?.name || '',
+    description: agent.value?.description || '',
+    system_message: agent.value?.system_message || '',
+    ability_ids: agent.value?.ability_ids || []
+  })
 
-const updateAgent = async () => {
-  await agentsStore.updateAgent(req.value)
-  router.push('/agents')
-}
+  const updateAgent = async () => {
+    await agentsStore.updateAgent(req.value)
+    router.push('/agents')
+  }
 
-definePageMeta({
-  title: 'Agents &raquo; Edit'
-})
+  definePageMeta({
+    title: 'Agents &raquo; Edit'
+  })
 </script>

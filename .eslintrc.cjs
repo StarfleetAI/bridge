@@ -2,18 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module.exports = {
-  extends: [
-    '@nuxtjs/eslint-config-typescript'
-  ],
-  ignorePatterns: [
-    'src-tauri/**/*'
-  ],
-  overrides: [
-    {
-      files: ['*.js', '*.ts', '*.vue'],
-      rules: {
-        'space-before-function-paren': 0
-      }
-    }
-  ]
+  extends: ['aurora-vue/vue-3-fsd'],
+  rules: {
+    'vue/require-v-for-key': 'off',
+    'vue/valid-v-for': 'off',
+    'vue/multi-word-component-names': 'off',
+    'import/no-internal-modules': 'off',
+    'perfectionist/sort-objects': 'off',
+    'vue/object-curly-newline': 'off'
+  }
 }
