@@ -1,8 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { sentryVitePlugin } from '@sentry/vite-plugin'
-
 export default defineNuxtConfig({
   app: {
     head: {
@@ -36,20 +34,6 @@ export default defineNuxtConfig({
           `
         }
       }
-    },
-    plugins: [
-      // Put the Sentry vite plugin after all other plugins
-      sentryVitePlugin({
-        authToken: process.env.SENTRY_AUTH_TOKEN,
-        org: process.env.SENTRY_ORG_NAME,
-        project: process.env.SENTRY_PROJECT_NAME,
-        url: process.env.SENTRY_URL,
-        sourcemaps: {
-          assets: ['.nuxt/dist/**/*'],
-          ignore: ['node_modules']
-        },
-        telemetry: false
-      })
-    ]
+    }
   }
 })
