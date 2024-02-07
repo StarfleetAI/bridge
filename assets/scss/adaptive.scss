@@ -1,0 +1,88 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
+// breakpoints
+$mobile-sm: 420px;
+$mobile-medium: 600px;
+$mobile: 767px;
+$tablet-medium: 968px;
+$tablet: 1023px;
+$desktop-small: 1024px;
+$desktop-medium: 1279px;
+$desktop-large: 1366px;
+$desktop-xl: 1920px;
+
+// mobile
+@mixin mobile-sm {
+  @media (max-width: $mobile-sm) {
+    @content;
+  }
+}
+
+@mixin mobile-medium {
+  @media (max-width: $mobile-medium) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media (max-width: $mobile) {
+    @content;
+  }
+}
+
+// tablet
+@mixin tablet {
+  @media (max-width: $tablet) {
+    @content;
+  }
+}
+
+@mixin tablet-medium {
+  @media (max-width: $tablet-medium) {
+    @content;
+  }
+}
+
+@mixin tablet-only {
+  @media (min-width: ($mobile + 1)) and (max-width: $tablet) {
+    @content;
+  }
+}
+
+@mixin from-tablet {
+  @media (min-width: ($mobile + 1)) {
+    @content;
+  }
+}
+
+@mixin desktop-small {
+  @media (max-width: $desktop-small) {
+    @content;
+  }
+}
+
+@mixin desktop-small-only {
+  @media (min-width: $desktop-small) and (max-width: ($desktop-medium - 1)) {
+    @content;
+  }
+}
+
+@mixin desktop-medium {
+  @media (max-width: $desktop-medium) {
+    @content;
+  }
+}
+
+// min since initial design is smaller
+@mixin desktop-large {
+  @media (min-width: $desktop-large) {
+    @content;
+  }
+}
+
+@mixin desktop-xl {
+  @media (min-width: $desktop-xl) {
+    @content;
+  }
+}

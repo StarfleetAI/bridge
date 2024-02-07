@@ -1,0 +1,11 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
+@mixin line-clamp($linesCount: 1) {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  visibility: visible !important;
+  -webkit-line-clamp: $linesCount;
+  -webkit-box-orient: vertical;
+}
