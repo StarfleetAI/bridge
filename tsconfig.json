@@ -29,5 +29,5 @@
     "strictPropertyInitialization": false
   },
   "include": [".nuxt/./typed-router/typed-router.d.ts", ".nuxt/./nuxt.d.ts", "./**/*"],
-  "exclude": ["shared/api-helpers/**", "dist", ".output", "protos", "nuxt.config.ts"]
+  "exclude": ["shared/api-helpers/**", "dist", ".output", "protos", "nuxt.config.ts", "src-tauri/**/*"]
 }

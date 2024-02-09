@@ -82,12 +82,6 @@ pub async fn list_messages(request: ListMessages, pool: State<'_, DbPool>) -> Re
 /// # Errors
 ///
 /// Returns error if there was a problem while inserting new message.
-///
-/// # Panics
-///
-/// Panics if there is an error when converting message from a database row to a API-compatible
-/// message. Should never happen.
-// TODO: refactor this function.
 #[tauri::command]
 pub async fn create_message(
     window: Window,

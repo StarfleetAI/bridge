@@ -2,3 +2,5 @@
 
 # Mark the SQLx files as having been generated.
 src-tauri/.sqlx/*.json linguist-generated
+
+bun.lockb linguist-generated

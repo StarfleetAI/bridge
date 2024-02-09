@@ -42,6 +42,7 @@ fn main() -> Result<()> {
             commands::messages::create_message,
             commands::messages::delete_message,
             commands::messages::list_messages,
+            commands::tasks::create_task,
             commands::tasks::list_root_tasks,
             commands::tasks::list_child_tasks,
             commands::tasks::get_task,
