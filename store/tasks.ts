@@ -34,6 +34,13 @@ export interface TasksList {
   tasks: Task[]
 }
 
+export interface CreateTask {
+  agent_id: number
+  title: string
+  summary: string
+  ancestry: undefined | string
+}
+
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
     tasks: [] as Task[]
@@ -72,6 +79,11 @@ export const useTasksStore = defineStore('tasks', {
           this.tasks.push(task)
         }
       })
+    },
+
+    async createTask(task: CreateTask) {
+      const newTask = await invoke<Task>('create_task', { task })
+      this.tasks.push(newTask)
     },
 
     async getTask(id: number) {
