@@ -1,10 +1,8 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-
 <script setup lang="ts">
-  import { DefaultLayoutHeader } from '~/widgets/layout/default'
+import { DefaultLayoutHeader } from '~/widgets/layout/default'
 </script>
-
 <template>
   <div class="default-layout">
     <DefaultLayoutHeader />
@@ -13,17 +11,15 @@
     </div>
   </div>
 </template>
-
 <style scoped lang="scss">
-  .default-layout {
-    @include flex(column, flex-start, flex-start);
-  }
+.default-layout {
+  min-height: 100vh; // fallback for old browsers
+  min-height: 100svh;
+  @include flex(column, flex-start, stretch);
+}
 
-  .default-layout__page {
-    --header-height: 44px;
-    flex: 1;
-    height: 100%;
-    min-height: calc(100vh - var(--header-height)); // fallback for old browsers
-    min-height: calc(100svh - var(--header-height));
-  }
+.default-layout__page {
+  display: flex;
+  flex: 1;
+}
 </style>

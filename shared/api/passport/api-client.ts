@@ -7,6 +7,7 @@
  * Do not make direct changes to the file.
  */
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface paths {
   '/passport.idm.Idm/AddOAuth2ClientsToUsers': {
     /** Add OAuth2 clients to users */
@@ -130,8 +131,10 @@ export interface paths {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type webhooks = Record<string, never>
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface components {
   headers: never
   parameters: never
@@ -421,8 +424,10 @@ export interface components {
 
 export type $defs = Record<string, never>
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type external = Record<string, never>
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface operations {
   /** Add OAuth2 clients to users */
   Idm_AddOAuth2ClientsToUsers: {

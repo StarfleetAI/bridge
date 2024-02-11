@@ -2,26 +2,41 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  definePageMeta({
-    title: 'Tasks',
-    layout: 'only-content'
-  })
+// import { useTasksStore } from '@/store/tasks'
+
+import { TasksList, TaskFullItem } from '@/features/tasks'
+
+definePageMeta({
+  title: 'Tasks',
+})
+
+// const tasksStore = useTasksStore()
+
 </script>
 
 <template>
-  <div class="flex flex-col">
-    <NuxtLink
-      class=""
-      to="/"
-    >
-      &larr; Go back
-    </NuxtLink>
-    Tasks
+  <div class="main-content">
+    <TasksList />
+  </div>
+  <div class="side-content ">
+    <TaskFullItem />
   </div>
 </template>
 
 <style lang="scss" scoped>
-  div {
-    color: var(--text-primary);
-  }
+div {
+  color: var(--text-primary);
+}
+
+.main-content {
+  width: 60%;
+  min-height: calc(100vh - 44px);
+  padding: 20px;
+}
+
+.side-content {
+  width: 40%;
+  min-height: calc(100vh - 44px);
+  background: var(--side-panel);
+}
 </style>
