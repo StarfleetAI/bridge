@@ -13,8 +13,8 @@ import TaskStatus from './TaskStatus.vue';
       <TaskStatus status="Todo" :complete="1" :total="2" />
       <AvatarsList
 :persons="[
-        { name: 'Алексей', avatar: '', link: '' },
-        { name: 'Мария', avatar: '', link: '' },
+        { name: 'Alex', avatar: '', link: '' },
+        { name: 'Robert', avatar: '', link: '' },
       ]" />
     </div>
     <div class="task-list-item__body">
