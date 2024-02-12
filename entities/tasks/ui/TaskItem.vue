@@ -2,9 +2,9 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-import { TaskStatus } from '~/entities/tasks'
 import { AvatarsList } from '~/shared/ui/avatars';
 import { InlineFiles } from '~/shared/ui/files';
+import TaskStatus from './TaskStatus.vue'
 
 </script>
 <template>
