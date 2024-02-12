@@ -8,4 +8,4 @@ yarn.lock
 *.mjs
 protos
 shared/api-helpers
-shared/api/passport/api-client.ts
+shared/api

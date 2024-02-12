@@ -3,9 +3,10 @@
 
 <script setup lang="ts">
 import { TaskStatusTodo, TaskStatusInProgress, TaskStatusWaiting, TaskStatusPaused, TaskStatusDone, TaskStatusFailed, TaskStatusNew } from '~/shared/icons'
+import { type Status } from '../model'
 
 const props = defineProps<{
-  status: 'Todo' | 'InProgress' | 'WaitingForUser' | 'Paused' | 'Done' | 'Failed' | 'Canceled' | 'New';
+  status: Status
   complete: number
   total: number
 }>()

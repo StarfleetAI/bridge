@@ -2,10 +2,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
+import { TaskStatus } from '~/entities/tasks'
 import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/icons'
 import { AvatarsList } from '~/shared/ui/avatars';
 import { FilesList, LargeFilesPreview } from '~/shared/ui/files';
-import TaskStatus from './TaskStatus.vue'
 </script>
 <template>
   <div class="task-full-item">

@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-import { TaskItem } from "./taskItem"
+import { TaskItem } from "~/features/tasks"
 
 const view = ref("list")
 
