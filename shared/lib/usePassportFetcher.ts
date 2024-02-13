@@ -1,7 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { type BaseRequestParams, useUFetch } from '~/shared/utils'
+import { type BaseRequestParams, useUFetch } from '~/shared/lib'
 
 export const usePassportFetcher = <T>(params: BaseRequestParams) => {
   const config = useRuntimeConfig()

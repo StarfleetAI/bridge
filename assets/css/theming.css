@@ -5,8 +5,32 @@
 
 :root {
   --text-primary: #eaecf0;
+  --text-secondary: #b0b5c0;
   --text-tertiary: #677383;
   --surface-0: #0c0e12;
   --surface-1: #1a1d26;
+  --surface-2: #232733;
+  --surface-4: #313747;
   --status-progress: #62ac55;
+  --statuses-paused: #9e83ea;
+  --border-3: #383e52;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: Inter, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+}
+
+a {
+  cursor: default;
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type IdmUserProfile } from '~/shared/api-helpers/passport'
-import { usePassportFetcher } from '~/shared/utils'
+import { usePassportFetcher } from '~/shared/lib'
 import { type GetUserProfilesParams } from '../model'
 
 export const getUserProfiles = async (params: GetUserProfilesParams) => {

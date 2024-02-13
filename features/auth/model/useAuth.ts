@@ -5,7 +5,7 @@ import { UserManager, type UserManagerSettings, WebStorageStateStore } from 'oid
 import { acceptHMRUpdate } from 'pinia'
 
 import { useProfile } from '~/entities/profile'
-import { useResetStores } from '~/shared/utils'
+import { useResetStores } from '~/shared/lib'
 
 export const useAuth = defineStore('auth', () => {
   const userManager = ref<Nullable<UserManager>>(null)

@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import type { LocationQuery, RouteLocationRaw } from 'vue-router'
-  import { useNavigationHistory } from '~/shared/utils'
+  import { useNavigationHistory } from '~/shared/lib'
 
   const props = defineProps<{
     routeName: string
@@ -43,4 +43,4 @@
     @include font-inter-600(14px, 20px, var(--interactive-primary));
   }
 </style>
-~/shared/utils
+~/shared/lib

@@ -23,6 +23,23 @@ export default defineNuxtConfig({
   typescript: {
     strict: true
   },
+  dayjs: {
+    defaultLocale: [
+      'en',
+      {
+        weekStart: 1
+      }
+    ]
+  },
+
+  imports: {
+    presets: [
+      {
+        from: '@tauri-apps/api/tauri',
+        imports: ['invoke']
+      }
+    ]
+  },
 
   css: ['~/assets/css/theming.css'],
 

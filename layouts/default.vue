@@ -16,14 +16,15 @@
 
 <style scoped lang="scss">
   .default-layout {
-    @include flex(column, flex-start, flex-start);
+    height: 100vh; // fallback for old browsers
+    height: 100svh;
+
+    @include flex(column, flex-start, stretch);
   }
 
   .default-layout__page {
-    --header-height: 44px;
+    display: flex;
     flex: 1;
-    height: 100%;
-    min-height: calc(100vh - var(--header-height)); // fallback for old browsers
-    min-height: calc(100svh - var(--header-height));
+    overflow: hidden;
   }
 </style>

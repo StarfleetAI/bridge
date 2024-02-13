@@ -10,3 +10,22 @@
     display: none;
   }
 }
+
+@mixin add-scrollbar() {
+  /* width */
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  /* Track */
+  &::-webkit-scrollbar-track {
+    border-radius: 6px;
+    background: var(--surface-4);
+  }
+
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: var(--text-tertiary);
+  }
+}

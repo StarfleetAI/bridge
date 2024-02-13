@@ -2,23 +2,17 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  const props = defineProps<{ to: string }>()
+  import type { TypedRouteLocationFromName } from '@typed-router/__router'
+  import type { TabRoute } from '~/shared/lib'
+
+  const props = defineProps<{ to: string | { name: TabRoute }; name: string }>()
   const route = useRoute()
 
   const isActiveItem = computed(() => {
-    if (route.path === props.to) {
-      return true
-    }
-
-    if (route.path.startsWith(props.to)) {
-      const pathAfterTo = route.path.slice(props.to.length)
-      return pathAfterTo.startsWith('/') && pathAfterTo.length > 1
-    }
-
-    return false
+    return route.name === props.name
   })
   const handleClick = () => {
-    navigateTo(props.to)
+    navigateTo(props.to as TypedRouteLocationFromName<TabRoute>)
   }
 </script>
 
@@ -36,11 +30,9 @@
 <style scoped lang="scss">
   .header-item {
     color: var(--text-tertiary);
-    cursor: pointer;
 
     &.active {
       background: var(--surface-1);
-      cursor: auto;
     }
 
     @include flex($align-items: center, $gap: 8px);

@@ -5,7 +5,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 
 const STACK_LENGTH = 20
 
-const useRouteStore = defineStore('navigationHistory', () => {
+export const useRouteStore = defineStore('navigationHistory', () => {
   const previousRoutesStack = ref<RouteLocationNormalized[]>([])
 
   function savePreviousRoute(route: RouteLocationNormalized) {
