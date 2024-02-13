@@ -10,10 +10,13 @@
   --surface-0: #0c0e12;
   --surface-1: #1a1d26;
   --surface-2: #232733;
+  --surface-3: #2a2f3d;
   --surface-4: #313747;
   --status-progress: #62ac55;
   --statuses-paused: #9e83ea;
   --border-3: #383e52;
+  --side-panel: #232732;
+  --pill: #333743;
 }
 
 * {

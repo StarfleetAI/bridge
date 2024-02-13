@@ -1,10 +1,8 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-
 <script setup lang="ts">
   import { DefaultLayoutHeader } from '~/widgets/layout/default'
 </script>
-
 <template>
   <div class="default-layout">
     <DefaultLayoutHeader />
@@ -13,7 +11,6 @@
     </div>
   </div>
 </template>
-
 <style scoped lang="scss">
   .default-layout {
     height: 100vh; // fallback for old browsers
