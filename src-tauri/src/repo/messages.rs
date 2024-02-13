@@ -277,7 +277,7 @@ where
     Ok(())
 }
 
-/// Updates messages statuses from one to another.
+/// Transitions messages from one status to another.
 ///
 /// # Errors
 ///
