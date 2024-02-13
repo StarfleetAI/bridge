@@ -361,6 +361,7 @@ async fn get_chat_completion(
 
     // Get current agent.
     let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
+    let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
     let req_messages = messages
         .into_iter()
@@ -381,6 +382,10 @@ async fn get_chat_completion(
     .await
     .with_context(|| "Failed to insert dummy assistant message")?;
 
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
     window
         .emit_all("messages:created", &message)
         .with_context(|| "Failed to emit event")?;
@@ -392,8 +397,6 @@ async fn get_chat_completion(
             .as_ref()
             .with_context(|| "Failed to get openai api key")?,
     );
-
-    let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
     let mut tools = None;
     if !abilities.is_empty() {
@@ -446,7 +449,7 @@ async fn get_chat_completion(
                 };
 
                 repo::messages::update_with_completion_result(
-                    &mut *tx,
+                    &*pool,
                     UpdateWithCompletionResultParams {
                         id: message.id,
                         status: message.status,
@@ -468,10 +471,6 @@ async fn get_chat_completion(
                 .with_context(|| "Failed to emit event")?;
         }
     }
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
 
     Ok(())
 }
