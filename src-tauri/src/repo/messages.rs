@@ -34,6 +34,7 @@ pub enum Status {
     Writing,
     WaitingForToolCall,
     Completed,
+    Failed,
 }
 
 impl From<String> for Status {
@@ -41,6 +42,7 @@ impl From<String> for Status {
         match status.as_str() {
             "Writing" => Status::Writing,
             "WaitingForToolCall" => Status::WaitingForToolCall,
+            "Failed" => Status::Failed,
             _ => Status::Completed,
         }
     }
@@ -271,6 +273,27 @@ where
         .execute(executor)
         .await
         .with_context(|| "Failed to delete message")?;
+
+    Ok(())
+}
+
+/// Transitions messages from one status to another.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating messages.
+pub async fn transition_all<'a, E>(executor: E, from: Status, to: Status) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!(
+        "UPDATE messages SET status = $1 WHERE status = $2",
+        to,
+        from
+    )
+    .execute(executor)
+    .await
+    .with_context(|| "Failed to set `Writing` messages to `Failed`")?;
 
     Ok(())
 }

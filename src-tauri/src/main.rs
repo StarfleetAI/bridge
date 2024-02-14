@@ -11,10 +11,15 @@ use dotenvy::dotenv;
 use env_logger::{Builder, Env};
 use log::{debug, info};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite};
-use tauri::{generate_handler, Manager};
-
-use bridge::{commands, settings::Settings, types::Result};
+use tauri::{async_runtime::block_on, generate_handler, Manager};
 use tokio::sync::RwLock;
+
+use bridge::{
+    commands,
+    repo::{self, messages},
+    settings::Settings,
+    types::Result,
+};
 
 fn main() -> Result<()> {
     dotenv().ok();
@@ -98,7 +103,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     };
 
     let db_url = database_url.clone();
-    tauri::async_runtime::block_on(async move {
+    block_on(async move {
         if !Sqlite::database_exists(&db_url)
             .await
             .with_context(|| "Failed to check if database exists")?
@@ -113,7 +118,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     })?;
 
     info!("Connecting to a database");
-    let pool = tauri::async_runtime::block_on(async move {
+    let pool = block_on(async move {
         SqlitePoolOptions::new()
             .max_connections(5)
             .connect(&database_url)
@@ -122,11 +127,17 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     })?;
 
     info!("Running migrations");
-    tauri::async_runtime::block_on(async {
+    block_on(async {
         sqlx::migrate!("db/migrations")
             .run(&pool)
             .await
             .with_context(|| "Failed to run migrations")
+    })?;
+
+    debug!("Cleaning up after possible previous termination");
+    block_on(async {
+        repo::messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed)
+            .await
     })?;
 
     app_handle.manage(pool);
