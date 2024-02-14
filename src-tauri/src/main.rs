@@ -11,7 +11,7 @@ use dotenvy::dotenv;
 use env_logger::{Builder, Env};
 use log::{debug, info};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite};
-use tauri::{async_runtime::block_on, generate_handler, Manager};
+use tauri::{async_runtime::block_on, generate_handler, LogicalSize, Manager};
 use tokio::sync::RwLock;
 
 use bridge::{
@@ -80,6 +80,23 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     }
 
     let app_handle = app.handle();
+
+    // Set the minimum size of the main window
+    let logical_size: LogicalSize<i32> = [420, 690].into();
+
+    let main_window = app
+        .get_window("main")
+        .with_context(|| "Failed to get main window")?;
+
+    main_window
+        .set_min_size(Some(
+            logical_size.to_physical::<i32>(
+                main_window
+                    .scale_factor()
+                    .with_context(|| "Failed to get scale factor")?,
+            ),
+        ))
+        .with_context(|| "Failed to set min window size")?;
 
     // TODO: read `database_url` from `Settings` instead of env
     let database_url = if let Ok(url) = std::env::var("DATABASE_URL") {
