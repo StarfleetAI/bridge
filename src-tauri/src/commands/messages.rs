@@ -350,7 +350,7 @@ pub async fn deny_tool_call(
         CreateParams {
             chat_id: message.chat_id,
             status: Status::ToolCallDenied,
-            role: Role::System, // Adjust the role as necessary
+            role: Role::Tool,
             content: Some("Tool call denied".to_string()),
             tool_call_id: Some(tool_call_id_clone), 
 
@@ -364,7 +364,6 @@ pub async fn deny_tool_call(
         .await
         .with_context(|| "Failed to commit transaction")?;
 
-    // Emit an event to update the frontend or other listeners
     window
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit message update event")?;
