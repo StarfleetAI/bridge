@@ -140,7 +140,7 @@
       background: var(--surface-3);
       cursor: pointer;
 
-      @include flex(row, start, space-between);
+      @include flex(row, flex-start, space-between);
       @include font-inter-700(12px, 22px, var(--text-tertiary));
     }
 
@@ -197,7 +197,7 @@
       margin-bottom: 24px;
 
       @include font-inter-500(14px, 22px, var(--text-tertiary));
-      @include flex(row, start, center);
+      @include flex(row, flex-start, center);
     }
 
     &__result-text-wrapper {

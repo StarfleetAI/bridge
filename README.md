@@ -4,7 +4,7 @@ Bridge is a self-contained fully-featured IDE for building and running autonomou
 
 ## Development Setup
 
-0. Ensure you have Rust, `tauri-cli` and Bun installed locally
+0. Ensure you have Rust, `tauri-cli` and pnpm installed locally
 1. Clone the repository
 2. Prepare config file
 

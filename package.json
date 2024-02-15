@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "lint-staged": {
-    "*.{ts,vue}": "bun run --bun lint:quiet"
+    "*.{ts,vue}": "pnpm lint:quiet"
   },
   "scripts": {
     "build": "nuxt build",

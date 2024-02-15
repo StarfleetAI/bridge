@@ -87,6 +87,7 @@
   }
 
   .default-layout__header-tabs {
+    height: 100%;
     @include flex(row);
   }
 

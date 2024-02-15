@@ -2,7 +2,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { defineProps } from 'vue'
   import { NoAvatarIcon } from '~/shared/ui/icons'
   import { type Person } from '../model'
 

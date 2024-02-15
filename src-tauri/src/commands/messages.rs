@@ -331,7 +331,7 @@ pub async fn deny_tool_call(
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let mut message = repo::messages::get(&mut *tx, message_id).await?;
+    let message = repo::messages::get(&mut *tx, message_id).await?;
 
     // Ensure the message is waiting for a tool call
     if message.status != Status::WaitingForToolCall {
