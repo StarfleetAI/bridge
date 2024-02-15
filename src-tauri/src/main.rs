@@ -11,10 +11,15 @@ use dotenvy::dotenv;
 use env_logger::{Builder, Env};
 use log::{debug, info};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite};
-use tauri::{generate_handler, Manager};
-
-use bridge::{commands, settings::Settings, types::Result};
+use tauri::{async_runtime::block_on, generate_handler, LogicalSize, Manager};
 use tokio::sync::RwLock;
+
+use bridge::{
+    commands,
+    repo::{self, messages},
+    settings::Settings,
+    types::Result,
+};
 
 fn main() -> Result<()> {
     dotenv().ok();
@@ -78,6 +83,23 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
 
     let app_handle = app.handle();
 
+    // Set the minimum size of the main window
+    let logical_size: LogicalSize<i32> = [420, 690].into();
+
+    let main_window = app
+        .get_window("main")
+        .with_context(|| "Failed to get main window")?;
+
+    main_window
+        .set_min_size(Some(
+            logical_size.to_physical::<i32>(
+                main_window
+                    .scale_factor()
+                    .with_context(|| "Failed to get scale factor")?,
+            ),
+        ))
+        .with_context(|| "Failed to set min window size")?;
+
     // TODO: read `database_url` from `Settings` instead of env
     let database_url = if let Ok(url) = std::env::var("DATABASE_URL") {
         url
@@ -100,7 +122,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     };
 
     let db_url = database_url.clone();
-    tauri::async_runtime::block_on(async move {
+    block_on(async move {
         if !Sqlite::database_exists(&db_url)
             .await
             .with_context(|| "Failed to check if database exists")?
@@ -115,7 +137,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     })?;
 
     info!("Connecting to a database");
-    let pool = tauri::async_runtime::block_on(async move {
+    let pool = block_on(async move {
         SqlitePoolOptions::new()
             .max_connections(5)
             .connect(&database_url)
@@ -124,11 +146,17 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
     })?;
 
     info!("Running migrations");
-    tauri::async_runtime::block_on(async {
+    block_on(async {
         sqlx::migrate!("db/migrations")
             .run(&pool)
             .await
             .with_context(|| "Failed to run migrations")
+    })?;
+
+    debug!("Cleaning up after possible previous termination");
+    block_on(async {
+        repo::messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed)
+            .await
     })?;
 
     app_handle.manage(pool);
