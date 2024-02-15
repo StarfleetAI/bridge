@@ -2,10 +2,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import utc from 'dayjs/plugin/utc'
   import hljs from 'highlight.js'
   import CopyButtonPlugin from 'highlightjs-copy'
+  import { useAgentsStore } from '~/features/agents/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
-  import { Status } from '~/entities/chat'
+  import { Role, Status } from '~/entities/chat'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
 
@@ -21,6 +23,7 @@
   }
   const { messages } = storeToRefs(useMessagesStore())
   const { getById } = useChatsStore()
+  const { agents } = storeToRefs(useAgentsStore())
 
   const messagesListRef = ref<HTMLDivElement>()
   const scrollMessagesListToBottom = () => {
@@ -83,6 +86,24 @@
     }
     return false
   })
+  const dayjs = useDayjs()
+  dayjs.extend(utc)
+
+  const greeting = computed(() => {
+    return {
+      id: 0,
+      chat_id: 0,
+      agent_id: agents.value[0].id,
+      status: Status.COMPLETED,
+      role: Role.SYSTEM,
+      content: agents.value[0].system_message,
+      prompt_tokens: null,
+      completion_tokens: null,
+      tool_call_id: null,
+      tool_calls: null,
+      created_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss')
+    }
+  })
 </script>
 
 <template>
@@ -95,14 +116,20 @@
       class="current-chat__messages-wrapper"
     >
       <div class="current-chat__messages">
-        <ChatMessage
-          v-for="message in currentChatMessages"
-          :key="message.id"
-          class="message"
-          :message="message"
-        >
-          {{ message.content }}
-        </ChatMessage>
+        <template v-if="currentChatMessages.length">
+          <ChatMessage
+            v-for="message in currentChatMessages"
+            :key="message.id"
+            class="message"
+            :message="message"
+          />
+        </template>
+        <template v-else>
+          <ChatMessage
+            class="message"
+            :message="greeting"
+          />
+        </template>
       </div>
     </div>
     <ChatInput

@@ -15,5 +15,5 @@ export interface Message {
   completion_tokens: Nullable<number>
   tool_calls: Nullable<string>
   tool_call_id: Nullable<string>
-  created_at: Date
+  created_at: string
 }

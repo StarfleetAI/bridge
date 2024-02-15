@@ -50,7 +50,14 @@
     }
   })
   const dayjs = useDayjs()
-  const createdAt = computed(() => dayjs(`${props.message.created_at}Z`).format('MMM D, YYYY, HH:mm'))
+  const createdAt = computed(() => {
+    let dateString = props.message.created_at
+
+    if (props.message.created_at.at(-1) !== 'Z') {
+      dateString += 'Z'
+    }
+    return dayjs(dateString).format('MMM D, YYYY, HH:mm')
+  })
 
   const toolCalls = computed<ToolCallType[]>(() => {
     return props.message.tool_calls ? JSON.parse(props.message.tool_calls) : ([] as ToolCallType[])
