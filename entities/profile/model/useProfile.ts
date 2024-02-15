@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type User } from 'oidc-client-ts'
-import { acceptHMRUpdate } from 'pinia'
 
 import { getCurrentUserProfile } from '../api'
 import { type Profile } from './Profile'

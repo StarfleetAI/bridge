@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { UserManager, type UserManagerSettings, WebStorageStateStore } from 'oidc-client-ts'
-import { acceptHMRUpdate } from 'pinia'
 
 import { useProfile } from '~/entities/profile'
 import { useResetStores } from '~/shared/lib'
