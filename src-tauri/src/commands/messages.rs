@@ -320,6 +320,12 @@ pub async fn approve_tool_call(
 }
 
 
+
+/// Deny tool call.
+/// 
+/// # Errors
+/// 
+/// Returns error if message with given id does not exist.
 #[tauri::command]
 pub async fn deny_tool_call(
     message_id: i64,

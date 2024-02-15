@@ -109,7 +109,7 @@ where
     )
     .execute(executor)
     .await
-    .with_context(|| format!("Failed to update title for chat with id {}", id))?;
+    .with_context(|| format!("Failed to update title for chat with id: {id}"))?;
 
     Ok(())
 }
