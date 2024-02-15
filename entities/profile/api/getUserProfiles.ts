@@ -1,7 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { type IdmUserProfile } from '~/shared/api-helpers/passport'
+import { type IdmUserProfile } from '~/shared/api/passport'
 import { usePassportFetcher } from '~/shared/lib'
 import { type GetUserProfilesParams } from '../model'
 

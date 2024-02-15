@@ -8,8 +8,7 @@
   import { PrismEditor } from 'vue-prism-editor'
   import 'vue-prism-editor/dist/prismeditor.min.css'
 
-  import type { UpdateAbility } from '@/store/abilities'
-  import { useAbilitiesStore } from '@/store/abilities'
+  import { useAbilitiesStore, type UpdateAbility } from '~/features/abilities'
 
   definePageMeta({
     title: 'Abilities &raquo; Edit'

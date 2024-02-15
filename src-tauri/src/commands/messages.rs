@@ -319,6 +319,64 @@ pub async fn approve_tool_call(
     Ok(())
 }
 
+
+#[tauri::command]
+pub async fn deny_tool_call(
+    message_id: i64,
+    pool: State<'_, DbPool>,
+    window: Window,
+) -> Result<()> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let mut message = repo::messages::get(&mut *tx, message_id).await?;
+
+    // Ensure the message is waiting for a tool call
+    if message.status != Status::WaitingForToolCall {
+        return Err(anyhow::anyhow!("Message is not waiting for tool call").into());
+    }
+
+    // Update the message status to ToolCallDenied
+    repo::messages::update_status(&mut *tx, message.id, Status::ToolCallDenied).await?;
+
+    // Assuming tool_call_id is already set in the original message
+    let tool_call_id_clone = message.tool_call_id.clone().unwrap_or_default();
+
+    // Create a new message indicating the tool call was denied
+    let denied_message = repo::messages::create(
+        &mut *tx,
+        CreateParams {
+            chat_id: message.chat_id,
+            status: Status::ToolCallDenied,
+            role: Role::System, // Adjust the role as necessary
+            content: Some("Tool call denied".to_string()),
+            tool_call_id: Some(tool_call_id_clone), 
+
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    // Commit the transaction
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    // Emit an event to update the frontend or other listeners
+    window
+        .emit_all("messages:updated", &message)
+        .with_context(|| "Failed to emit message update event")?;
+    window
+        .emit_all("messages:created", &denied_message)
+        .with_context(|| "Failed to emit message creation event")?;
+
+    Ok(())
+}
+
+
+
 /// Delete message by id.
 ///
 /// # Errors

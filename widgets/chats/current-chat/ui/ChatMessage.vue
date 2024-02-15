@@ -4,10 +4,9 @@
 <script lang="ts" setup>
   import 'highlight.js/styles/atom-one-dark.min.css'
   import hljs from 'highlight.js'
-  import { Marked } from 'marked'
-  import { markedHighlight } from 'marked-highlight'
-  import { agentsInjectionKey } from '~/features/chats/list-agents'
-  import { type Message, Role } from '~/entities/chat'
+  import { useAgentsStore } from '~/features/agents'
+  import { type Message, Role, type ToolCall as ToolCallType } from '~/entities/chat'
+  import { getMarkdown } from '~/shared/lib'
   import { SystemIcon, NoAvatarIcon } from '~/shared/ui/icons'
   import ToolCall from './ToolCall.vue'
 
@@ -15,23 +14,7 @@
     message: Message
   }>()
 
-  const agents = inject(agentsInjectionKey)
-  const marked = new Marked(
-    markedHighlight({
-      langPrefix: 'language-',
-      highlight(code, lang) {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext'
-        if (['react', 'vue'].includes(lang)) {
-          return hljs.highlight(code, { language: 'html' }).value
-        }
-
-        return hljs.highlight(code, { language }).value
-      }
-    })
-  )
-  const markdown = (text: string) => {
-    return marked.parse(text)
-  }
+  const { agents } = storeToRefs(useAgentsStore())
 
   const getAgentById = (id: number) => {
     return agents?.value.find((agent) => agent.id === id)
@@ -67,7 +50,33 @@
     }
   })
   const dayjs = useDayjs()
-  const createdAt = computed(() => dayjs(props.message.created_at).format('MMM D, YYYY, hh:mm'))
+  const createdAt = computed(() => dayjs(`${props.message.created_at}Z`).format('MMM D, YYYY, HH:mm'))
+
+  const toolCalls = computed<ToolCallType[]>(() => {
+    return props.message.tool_calls ? JSON.parse(props.message.tool_calls) : ([] as ToolCallType[])
+  })
+
+  const messageRef = ref<HTMLDivElement>()
+
+  watch(
+    () => [props.message, messageRef.value],
+    () => {
+      if (props.message.content) {
+        messageRef.value?.querySelectorAll('pre code').forEach((el) => {
+          if (el.getAttribute('data-highlighted') !== 'yes') {
+            hljs.highlightElement(el as HTMLElement)
+          }
+        })
+      }
+    },
+    {
+      deep: true,
+      immediate: true
+    }
+  )
+  const markedContent = computed(() => {
+    return getMarkdown(props.message.content)
+  })
 </script>
 
 <template>
@@ -93,16 +102,28 @@
       >
         <div
           v-if="message.content?.length > 0 && message.role !== Role.TOOL"
+          ref="messageRef"
           class="message__content-markdown"
-          v-html="markdown(message.content)"
+          v-html="markedContent"
         />
-        <div v-if="message.content?.length > 0 && message.role === Role.TOOL">
-          <pre><code>{{ message.content }}</code></pre>
+        <div
+          v-if="message.content?.length > 0 && message.role === Role.TOOL"
+          class="tool__content"
+        >
+          {{ message.content }}
         </div>
-        <ToolCall
-          v-if="message.tool_calls"
-          :message="message"
-        />
+        <div
+          v-if="toolCalls.length"
+          class="message__toolcallsz"
+        >
+          <ToolCall
+            v-for="toolCall in toolCalls"
+            :key="toolCall.id"
+            :tool-call="toolCall"
+            :status="message.status"
+            :message-id="message.id"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -111,6 +132,8 @@
 <style lang="scss" scoped>
   .message {
     gap: 8px;
+    cursor: auto;
+    user-select: initial;
 
     @include flex(row, flex-start, stretch);
   }
@@ -143,22 +166,88 @@
   }
 
   .message__content {
-    padding: 0 12px;
     border-radius: 6px;
 
     &.system {
       padding: 12px;
       background-color: var(--surface-2);
       color: var(--text-secondary);
-      box-shadow: -2px 0 0 0 var(--statuses-paused);
+      box-shadow: -2px 0 0 0 var(--status-paused);
     }
 
     @include font-inter-400(14px, 20px, var(--text-primary));
+  }
+
+  .tool__content {
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    @include font-mono;
   }
 
   .message__content-markdown {
     gap: 1.25em;
 
     @include flex(column, flex-start, flex-start);
+  }
+
+  :deep(.hljs-copy-wrapper) {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 646px;
+    border-radius: 6px;
+
+    &:before {
+      content: 'Code';
+      order: 1;
+      width: 100%;
+      padding: 8px;
+      background-color: var(--surface-5);
+      font-family: Inter, sans-serif;
+
+      @include font-inter-500(14px, 20px, var(--text-primary));
+    }
+
+    & > code {
+      overflow: visible auto;
+
+      @include add-scrollbar;
+    }
+
+    @include flex(column-reverse);
+  }
+
+  :deep(.hljs-copy-button) {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    align-items: center;
+    align-self: flex-end;
+    width: auto;
+    min-width: 52px;
+    padding-left: 16px;
+    font-family: Inter, sans-serif;
+    text-align: end;
+
+    &:before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      background: url('~/assets/svg/copy-icon.svg') no-repeat left;
+    }
+
+    @include font-inter-500(14px, 20px, var(--text-secondary));
+  }
+
+  :deep(.hljs-copy-alert) {
+    display: none;
+  }
+
+  :deep(.code-snippet) {
+    background-color: var(--surface-3);
   }
 </style>

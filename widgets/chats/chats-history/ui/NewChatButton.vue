@@ -3,10 +3,19 @@
 
 <script lang="ts" setup>
   import { PlusIcon } from '~/shared/ui/icons'
+
+  const handleClick = () => {
+    navigateTo({ name: 'chats-id' })
+  }
 </script>
 
 <template>
-  <div class="new-chat__btn"><PlusIcon class="new-chat__btn-icon" />New chat</div>
+  <div
+    class="new-chat__btn"
+    @click="handleClick"
+  >
+    <PlusIcon class="new-chat__btn-icon" />New chat
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -15,6 +24,7 @@
     align-self: center;
     width: 148px;
     height: 32px;
+    margin-right: 7px;
     margin-bottom: 40px;
     padding: 6px 10px;
     border: 1px solid var(--text-tertiary);

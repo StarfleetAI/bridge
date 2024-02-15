@@ -2,42 +2,25 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useQuery } from '@tanstack/vue-query'
-  import type { UnlistenFn } from '@tauri-apps/api/event'
-  import { listen } from '@tauri-apps/api/event'
-  import { listAbilities, abilitiesInjectionKey } from '~/features/abilities/list-abilities'
-  import { createMessage } from '~/features/chats/create-message'
-  import { getChat } from '~/features/chats/get-chat'
-  import { listChatMessages } from '~/features/chats/list-chat-messages'
-  import type { Ability } from '~/entities/ability'
-  import type { Message } from '~/entities/chat'
+  import hljs from 'highlight.js'
+  import CopyButtonPlugin from 'highlightjs-copy'
+  import { useChatsStore, useMessagesStore } from '~/features/chats'
+  import { Status } from '~/entities/chat'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
 
-  const emits = defineEmits<{
-    (e: 'set-current-chat-is-empty', val: boolean): void
-  }>()
+  const copyButtonPlugin = new CopyButtonPlugin()
+  hljs.addPlugin(copyButtonPlugin)
   const route = useRoute('chats-id')
-  const isNewChat = computed(() => route.params.id === undefined)
 
-  const { data: chatInfo } = useQuery({
-    queryKey: ['get-chat', route.params.id],
-    queryFn: () => getChat(Number(route.params.id))
-    // enabled: chatFetchEnabled
-  })
-  const { data: abilities } = useQuery({
-    queryKey: ['get-chat-abilities', route.params.id],
-    queryFn: listAbilities
-  })
-  provide(abilitiesInjectionKey, readonly(abilities as Ref<Ability[]>))
+  const { createMessage, listMessages, $reset: resetMessagesStore, denyToolCall } = useMessagesStore()
 
-  const messages = ref<Message[]>([])
-  if (!isNewChat.value) {
-    messages.value = await listChatMessages(Number(route.params.id))
-    if (messages.value.length === 1 && messages.value[0].role === 'System') {
-      emits('set-current-chat-is-empty', true)
-    }
+  const chatId = computed(() => (route.params.id ? Number(route.params.id) : undefined))
+  if (chatId.value) {
+    await listMessages(chatId.value)
   }
+  const { messages } = storeToRefs(useMessagesStore())
+  const { getById } = useChatsStore()
 
   const messagesListRef = ref<HTMLDivElement>()
   const scrollMessagesListToBottom = () => {
@@ -53,51 +36,67 @@
     if (!chatInput.value) {
       return
     }
-
-    createMessage({ chat_id: Number(route.params.id), text: chatInput.value })
+    if (chatId.value && messages.value[chatId.value].at(-1)?.status === Status.WAITING_FOR_TOOL_CALL) {
+      await denyToolCall(chatId.value)
+    }
+    createMessage(chatInput.value, chatId.value)
     chatInput.value = ''
   }
 
-  let msgCreatedUnlisten: Promise<UnlistenFn>
-  let msgUpdatedUnlisten: Promise<UnlistenFn>
-
   onMounted(async () => {
     await nextTick()
-
     scrollMessagesListToBottom()
-
-    msgCreatedUnlisten = listen('messages:created', (event) => {
-      messages.value?.push(event.payload as Message)
-    })
-
-    msgUpdatedUnlisten = listen('messages:updated', (event) => {
-      const msg = event.payload as Message
-      const idx = messages.value?.findIndex((m) => m.id === msg.id)
-
-      if (idx) {
-        messages.value?.splice(idx, 1, msg)
-      }
-    })
   })
 
-  onBeforeUnmount(async () => {
-    await msgCreatedUnlisten
-    await msgUpdatedUnlisten
+  onBeforeUnmount(() => {
+    hljs.removePlugin(copyButtonPlugin)
+  })
+
+  const currentChatMessages = computed(() => {
+    if (!chatId.value) {
+      return []
+    }
+    return messages.value[chatId.value]
+  })
+  const currentChat = computed(() => {
+    if (!chatId.value) {
+      return null
+    }
+    return getById(chatId.value)
+  })
+
+  onBeforeRouteLeave(async () => {
+    await resetMessagesStore()
+  })
+  const chatTitle = computed(() => {
+    if (!currentChat.value) {
+      return 'New chat'
+    }
+    if (currentChat.value.title) {
+      return currentChat.value.title
+    }
+    return `Chat #${currentChat.value?.id}`
+  })
+  const isProcessing = computed(() => {
+    if (chatId.value && messages.value[chatId.value]) {
+      return messages.value[chatId.value].at(-1)?.status === Status.WRITING
+    }
+    return false
   })
 </script>
 
 <template>
   <div class="current-chat">
     <div class="current-chat__title">
-      {{ chatInfo?.title }}
+      {{ chatTitle }}
     </div>
-    <div class="current-chat__messages-wrapper">
-      <div
-        ref="messagesListRef"
-        class="current-chat__messages"
-      >
+    <div
+      ref="messagesListRef"
+      class="current-chat__messages-wrapper"
+    >
+      <div class="current-chat__messages">
         <ChatMessage
-          v-for="message in messages"
+          v-for="message in currentChatMessages"
           :key="message.id"
           class="message"
           :message="message"
@@ -108,6 +107,7 @@
     </div>
     <ChatInput
       v-model="chatInput"
+      :is-processing="isProcessing"
       @submit="handleSendMessage"
     />
   </div>
@@ -115,13 +115,26 @@
 
 <style lang="scss" scoped>
   .current-chat {
+    position: relative;
     flex: 1;
 
     @include flex(column, flex-start, stretch);
   }
 
   .current-chat__title {
+    position: absolute;
+    top: 0;
+    z-index: 2;
+    width: 100%;
     height: 56px;
+    padding: 18px 48px;
+    background-color: var(--surface-1);
+
+    @include font-inter-700(14px, 20px, var(--text-secondary));
+
+    // background-color: rgba(var(--surface-1), 0.2);
+
+    // backdrop-filter: blur(1px);
   }
 
   .current-chat__messages-wrapper {
@@ -144,5 +157,9 @@
     margin: 0 auto;
 
     @include flex(column, flex-start, stretch);
+  }
+
+  .message:first-child {
+    margin-top: 56px;
   }
 </style>

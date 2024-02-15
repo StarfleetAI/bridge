@@ -2,22 +2,18 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { AttachmentIcon } from '~/shared/ui/icons'
+  import { AttachmentIcon, SendIcon } from '~/shared/ui/icons'
 
+  const props = defineProps<{
+    isProcessing: boolean
+  }>()
   const emits = defineEmits<{
     (e: 'submit'): void
   }>()
   const textModel = defineModel<string>()
   const fileModel = defineModel<File>('file')
 
-  const textarea = ref<HTMLTextAreaElement>()
-
-  //   const autoResize = () => {
-  //     if (textarea.value) {
-  //       textarea.value.style.height = 'auto'
-  //       textarea.value.style.height = `${textarea.value.scrollHeight}px`
-  //     }
-  //   }
+  const { textarea, input } = useTextareaAutosize({ input: textModel })
   const handleFileInput = (event: Event) => {
     const target = event.target as HTMLInputElement
     const file = target.files?.[0]
@@ -25,14 +21,10 @@
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    const isCmdOrCtrl = event.metaKey || event.ctrlKey // Cmd for Mac, Ctrl for Windows/Linux
-    const isAlt = event.altKey
-    if (!isCmdOrCtrl && !isAlt && event.key === 'Enter' && textModel.value) {
-      event.preventDefault()
-      emits('submit')
-      return
-    }
-    if ((isCmdOrCtrl || isAlt) && event.key === 'Enter') {
+    const isShiftKey = event.shiftKey
+    const isEnterKey = event.key === 'Enter'
+
+    const moveToNextLine = () => {
       event.preventDefault() // Prevent the default action
       const eventTarget = event.target as HTMLInputElement
       // Calculate the new position and insert the newline
@@ -41,6 +33,19 @@
       const after = textModel.value?.substring(cursorPosition!)
       textModel.value = `${before}\n${after}`
     }
+
+    if (!isShiftKey && isEnterKey && textModel.value) {
+      if (props.isProcessing) {
+        moveToNextLine()
+        return
+      }
+      event.preventDefault()
+      emits('submit')
+      return
+    }
+    if (isShiftKey && isEnterKey) {
+      moveToNextLine()
+    }
   }
 </script>
 
@@ -48,11 +53,17 @@
   <div class="current-chat__input">
     <textarea
       ref="textarea"
-      v-model="textModel"
+      v-model="input"
       class="current-chat__input-text"
       placeholder="Message"
       @keydown="handleKeyDown"
     />
+    <SendIcon
+      v-if="!isProcessing"
+      class="current-chat__input-send"
+      @click="$emit('submit')"
+    />
+
     <label
       for="currrent-chat__input-file"
       class="current-chat__input-file-icon"
@@ -65,7 +76,6 @@
       class="current-chat__input-file"
       @input="handleFileInput"
     />
-    <div class="current-chat__input-help"><b>Enter</b> to send</div>
   </div>
 </template>
 
@@ -75,6 +85,7 @@
     gap: 7px;
     align-self: center;
     width: calc(100% - 96px);
+    max-width: 680px;
     margin-top: auto;
     margin-bottom: 56px;
 
@@ -83,15 +94,17 @@
 
   .current-chat__input-text {
     width: 100%;
-    height: 86px;
+    min-height: 56px;
     max-height: 200px;
-    padding: 16px 52px 16px 16px;
+    padding: 16px 52px;
     border: 1px solid var(--text-tertiary);
     border-radius: 8px;
     background-color: var(--surface-1);
     resize: none;
+    transition: border-color 0.1s ease;
 
     &:focus {
+      border-color: var(--border-standart);
       outline: none;
     }
 
@@ -108,18 +121,14 @@
   .current-chat__input-file-icon {
     position: absolute;
     top: 16px;
-    right: 16px;
-    color: var(--text-tertiary);
+    left: 16px;
+    color: var(--text-secondary);
   }
 
-  .current-chat__input-help {
-    width: 100%;
-    text-align: center;
-
-    & b {
-      color: var(--text-tertiary);
-    }
-
-    @include font-inter-400(12px, 17px, var(--text-tertiary));
+  .current-chat__input-send {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--text-secondary);
   }
 </style>

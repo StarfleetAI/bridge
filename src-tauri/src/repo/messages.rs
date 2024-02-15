@@ -34,6 +34,7 @@ pub enum Status {
     Writing,
     WaitingForToolCall,
     Completed,
+    ToolCallDenied
 }
 
 impl From<String> for Status {
@@ -271,6 +272,23 @@ where
         .execute(executor)
         .await
         .with_context(|| "Failed to delete message")?;
+
+    Ok(())
+}
+
+/// Delete messages for chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while deleting messages.
+pub async fn delete_for_chat<'a, E>(executor: E, chat_id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!("DELETE FROM messages WHERE chat_id = $1", chat_id)
+        .execute(executor)
+        .await
+        .with_context(|| "Failed to delete messages for chat")?;
 
     Ok(())
 }

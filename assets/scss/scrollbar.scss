@@ -14,18 +14,19 @@
 @mixin add-scrollbar() {
   /* width */
   &::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
+    height: 4px;
   }
 
   /* Track */
   &::-webkit-scrollbar-track {
     border-radius: 6px;
-    background: var(--surface-4);
+    background: transparent;
   }
 
   /* Handle */
   &::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background: var(--text-tertiary);
+    background: var(--surface-5);
   }
 }

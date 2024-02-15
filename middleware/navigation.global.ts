@@ -1,3 +1,6 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
 import { useRouteStore, useLastTabRoute, type TabRoute } from '~/shared/lib'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {

@@ -89,3 +89,27 @@ where
     .await
     .with_context(|| "Failed to create chat")?)
 }
+
+
+/// Update chat title by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database or if the chat with the given ID does not exist.
+pub async fn update_title<'a, E>(executor: E, id: i64, title: &str) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+     let now = Utc::now();
+    query!(
+        "UPDATE chats SET title = $1, updated_at = $2 WHERE id = $3",
+        title,
+        now,
+        id
+    )
+    .execute(executor)
+    .await
+    .with_context(|| format!("Failed to update title for chat with id {}", id))?;
+
+    Ok(())
+}

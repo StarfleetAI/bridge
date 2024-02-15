@@ -2,10 +2,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-  import type { UpdateAgent } from '@/store/agents'
-
-  import { useAgentsStore } from '@/store/agents'
+  import { useAgentsStore, type UpdateAgent } from '@/features/agents'
+  import { useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({
     title: 'Agents &raquo; Edit'

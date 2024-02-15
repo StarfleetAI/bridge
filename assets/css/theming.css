@@ -12,15 +12,22 @@
   --surface-2: #232733;
   --surface-3: #2a2f3d;
   --surface-4: #313747;
+  --surface-5: #3a4154;
   --status-progress: #62ac55;
-  --statuses-paused: #9e83ea;
+  --status-paused: #9e83ea;
+  --status-done: #00a140;
+  --status-failed: #dc493e;
+  --border-standart: #d0d5dd;
   --border-3: #383e52;
   --side-panel: #232732;
   --pill: #333743;
+  --text-on-button: #fcfcfd;
+  --button-primary: #646bf0;
 }
 
 * {
   box-sizing: border-box;
+  overscroll-behavior: none;
 }
 
 html {
@@ -28,6 +35,7 @@ html {
 }
 
 body {
+  overflow: hidden;
   margin: 0;
   padding: 0;
   background-color: var(--surface-1);

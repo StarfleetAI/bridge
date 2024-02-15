@@ -351,3 +351,23 @@ pub async fn delete_children<'a, E: Executor<'a, Database = Sqlite>>(
 
     Ok(())
 }
+
+/// Delete tasks from chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while deleting `tasks` records.
+pub async fn delete_for_chat<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    chat_id: i64,
+) -> Result<()> {
+        query!(
+        "DELETE FROM tasks WHERE origin_chat_id = $1 OR control_chat_id = $1 OR execution_chat_id = $1",
+        chat_id
+    )
+        .execute(executor)
+        .await
+        .context("Failed to delete `tasks` records")?;
+
+    Ok(())
+}

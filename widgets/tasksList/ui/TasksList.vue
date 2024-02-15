@@ -2,10 +2,9 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-import { TaskItem } from "~/entities/tasks"
+  import { TaskItem } from '~/entities/tasks'
 
-const view = ref("list")
-
+  const view = ref('list')
 </script>
 
 <template>
@@ -13,7 +12,10 @@ const view = ref("list")
     <div class="tasks-list__title">Active tasks</div>
     <div class="tasks-list__views" />
   </div>
-  <div class="tasks-list" :class="{ 'tasks-list--list': view === 'list', 'tasks-list--grid': view === 'grid' }">
+  <div
+    class="tasks-list"
+    :class="{ 'tasks-list--list': view === 'list', 'tasks-list--grid': view === 'grid' }"
+  >
     <TaskItem />
     <TaskItem />
     <TaskItem />
@@ -21,20 +23,20 @@ const view = ref("list")
   </div>
 </template>
 <style scoped lang="scss">
-.tasks-list {
-  &__header {
-    margin-bottom: 24px;
+  .tasks-list {
+    &__header {
+      margin-bottom: 24px;
 
-    @include flex(row, space-between, center);
-  }
+      @include flex(row, space-between, center);
+    }
 
-  &__title {
-    @include font-inter-700(16px, 22px, var(--text-secondary));
-  }
+    &__title {
+      @include font-inter-700(16px, 22px, var(--text-secondary));
+    }
 
-  &--grid {
-    display: grid;
-    columns: 2;
+    &--grid {
+      display: grid;
+      columns: 2;
+    }
   }
-}
 </style>
