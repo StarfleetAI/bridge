@@ -52,7 +52,3 @@ export const useProfile = defineStore('profile', () => {
     setupUser
   }
 })
-
-if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useProfile, import.meta.hot))
-}
