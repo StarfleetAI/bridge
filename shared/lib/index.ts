@@ -14,3 +14,5 @@ export * from './stringToDate'
 export * from './useLastTabRoute'
 export * from './bridgeAgentId'
 export * from './getMarkdown'
+
+export * from './useDevTools'

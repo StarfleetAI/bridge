@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     '/': { redirect: '/agents' }
   },
 
+  runtimeConfig: {
+    public: {
+      devtoolsPort: ''
+    }
+  },
+
   ssr: false,
 
   devtools: { enabled: false },

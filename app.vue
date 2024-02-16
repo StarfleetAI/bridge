@@ -3,15 +3,14 @@
 <script lang="ts" setup>
   import { useAbilitiesStore } from '@/features/abilities'
   import { useAgentsStore } from '@/features/agents'
+  import { useDevTools } from '~/shared/lib'
+
+  useDevTools()
 
   const abilitiesStore = useAbilitiesStore()
   const agentsStore = useAgentsStore()
 
   const loaded = ref(false)
-
-  useHead({
-    script: [{ src: 'http://localhost:8098' }]
-  })
 
   onMounted(async () => {
     await nextTick()
