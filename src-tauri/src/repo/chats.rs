@@ -90,7 +90,6 @@ where
     .with_context(|| "Failed to create chat")?)
 }
 
-
 /// Update chat title by id.
 ///
 /// # Errors
@@ -100,7 +99,7 @@ pub async fn update_title<'a, E>(executor: E, id: i64, title: &str) -> Result<()
 where
     E: Executor<'a, Database = Sqlite>,
 {
-     let now = Utc::now();
+    let now = Utc::now();
     query!(
         "UPDATE chats SET title = $1, updated_at = $2 WHERE id = $3",
         title,

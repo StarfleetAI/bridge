@@ -35,7 +35,7 @@ pub enum Status {
     WaitingForToolCall,
     Completed,
     Failed,
-    ToolCallDenied
+    ToolCallDenied,
 }
 
 impl From<String> for Status {

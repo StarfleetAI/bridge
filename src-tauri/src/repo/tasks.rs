@@ -361,7 +361,7 @@ pub async fn delete_for_chat<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     chat_id: i64,
 ) -> Result<()> {
-        query!(
+    query!(
         "DELETE FROM tasks WHERE origin_chat_id = $1 OR control_chat_id = $1 OR execution_chat_id = $1",
         chat_id
     )

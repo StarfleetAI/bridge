@@ -319,12 +319,10 @@ pub async fn approve_tool_call(
     Ok(())
 }
 
-
-
 /// Deny tool call.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Returns error if message with given id does not exist.
 #[tauri::command]
 pub async fn deny_tool_call(
@@ -358,7 +356,7 @@ pub async fn deny_tool_call(
             status: Status::ToolCallDenied,
             role: Role::Tool,
             content: Some("Tool call denied".to_string()),
-            tool_call_id: Some(tool_call_id_clone), 
+            tool_call_id: Some(tool_call_id_clone),
 
             ..Default::default()
         },
@@ -379,8 +377,6 @@ pub async fn deny_tool_call(
 
     Ok(())
 }
-
-
 
 /// Delete message by id.
 ///
