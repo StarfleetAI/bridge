@@ -30,7 +30,7 @@ export const useMessagesStore = defineStore('messages', () => {
       const { createChat } = useChatsStore()
       const newChat = await createChat({ agent_id: BRIDGE_AGENT_ID })
       chat_id = newChat.id
-      await navigateTo({ name: 'chats-id', params: { id: newChat.id } })
+      await navigateTo({ name: 'chats', query: { id: newChat.id } })
     }
     await createMessageReq({ text, chat_id })
   }

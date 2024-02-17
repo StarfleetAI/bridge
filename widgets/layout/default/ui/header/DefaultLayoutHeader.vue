@@ -22,8 +22,8 @@
   <div class="default-layout__header">
     <div class="default-layout__header-tabs">
       <HeaderNavigationItem
-        name="chats-id"
-        :to="getTabRoute('chats-id')"
+        name="chats"
+        :to="getTabRoute('chats')"
       >
         <template #icon>
           <ChatsIcon />
@@ -88,6 +88,7 @@
 
   .default-layout__header-tabs {
     height: 100%;
+
     @include flex(row);
   }
 

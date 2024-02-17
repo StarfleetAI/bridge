@@ -5,7 +5,7 @@
   import { PlusIcon } from '~/shared/ui/icons'
 
   const handleClick = () => {
-    navigateTo({ name: 'chats-id' })
+    navigateTo({ name: 'chats' })
   }
 </script>
 

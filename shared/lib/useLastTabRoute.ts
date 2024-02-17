@@ -1,5 +1,5 @@
 interface TabsLastRoutes {
-  'chats-id': string
+  chats: string
   tasks: string
   agents: string
   documents: string
@@ -10,7 +10,7 @@ export type TabRoute = keyof TabsLastRoutes
 
 export const useLastTabRoute = defineStore('lastTabRoute', () => {
   const tabsNavigationHistory = ref<TabsLastRoutes>({
-    'chats-id': '',
+    chats: '',
     tasks: '',
     agents: '',
     documents: '',
@@ -27,7 +27,7 @@ export const useLastTabRoute = defineStore('lastTabRoute', () => {
 
   const $reset = () => {
     tabsNavigationHistory.value = {
-      'chats-id': '',
+      chats: '',
       tasks: '',
       agents: '',
       documents: '',

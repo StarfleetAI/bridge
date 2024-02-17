@@ -13,11 +13,11 @@
 
   const copyButtonPlugin = new CopyButtonPlugin()
   hljs.addPlugin(copyButtonPlugin)
-  const route = useRoute('chats-id')
+  const route = useRoute('chats')
 
   const { createMessage, listMessages, $reset: resetMessagesStore, denyToolCall } = useMessagesStore()
 
-  const chatId = computed(() => (route.params.id ? Number(route.params.id) : undefined))
+  const chatId = computed(() => (route.query.id ? Number(route.query.id) : undefined))
   if (chatId.value) {
     await listMessages(chatId.value)
   }
@@ -116,7 +116,7 @@
       class="current-chat__messages-wrapper"
     >
       <div class="current-chat__messages">
-        <template v-if="currentChatMessages.length">
+        <template v-if="currentChatMessages?.length">
           <ChatMessage
             v-for="message in currentChatMessages"
             :key="message.id"

@@ -14,14 +14,20 @@
   const { listChats } = useChatsStore()
   const { listAgents } = useAgentsStore()
   await Promise.all([(listChats(), listAgents())])
+
+  const router = useRouter()
+
+  const currentChatId = computed(() => {
+    return router.currentRoute.value.query.id ? Number(router.currentRoute.value.query.id) : undefined
+  })
 </script>
 
 <template>
   <BaseContainer>
     <template #main>
       <div class="chats-base">
-        <ChatsHistory />
-        <CurrentChat />
+        <ChatsHistory :key="currentChatId" />
+        <CurrentChat :key="currentChatId" />
       </div>
     </template>
   </BaseContainer>

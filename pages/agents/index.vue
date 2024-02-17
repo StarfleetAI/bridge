@@ -19,7 +19,7 @@
       agent_id: agentId
     })
 
-    useRouter().push(`/chats/show?id=${chat.id}`)
+    useRouter().push({ name: 'chats', query: { id: chat.id } })
   }
 </script>
 

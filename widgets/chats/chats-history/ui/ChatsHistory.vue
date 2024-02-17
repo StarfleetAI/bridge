@@ -17,9 +17,9 @@
     return chatsToGroupsByDate(chats.value)
   })
 
-  const route = useRoute('chats-id')
+  const route = useRoute('chats')
 
-  const currentChatId = computed(() => Number(route.params.id))
+  const currentChatId = computed(() => Number(route.query.id))
 
   const chatToEditTitle = ref<Nullable<number>>(null)
 
@@ -37,7 +37,7 @@
 
   const handleClick = (chatId: number) => {
     if (currentChatId.value !== chatId) {
-      navigateTo({ name: 'chats-id', params: { id: chatId } })
+      navigateTo({ name: 'chats', query: { id: chatId } })
       chatToEditTitle.value = null
     } else {
       chatToEditTitle.value = chatId
