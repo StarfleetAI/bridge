@@ -377,7 +377,7 @@ pub async fn deny_tool_call(
         .with_context(|| "Failed to emit message creation event")?;
     get_chat_completion(denied_message.chat_id, window, pool, settings)
         .await
-        .with_context(|| format!("Failed to get chat completion for chat",))?;
+        .with_context(|| "Failed to get chat completion for chat")?;
 
     Ok(())
 }
