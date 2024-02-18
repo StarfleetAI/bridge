@@ -72,6 +72,14 @@
         messageRef.value?.querySelectorAll('pre code').forEach((el) => {
           if (el.getAttribute('data-highlighted') !== 'yes') {
             hljs.highlightElement(el as HTMLElement)
+            // add data-language attribute to show it in the highlighter
+            const lang = el.className
+              .split(' ')
+              .find((item) => item.startsWith('language-'))
+              ?.slice(9)
+            if (lang) {
+              el.parentElement?.setAttribute('data-language', lang)
+            }
           }
         })
       }
@@ -205,7 +213,7 @@
     border-radius: 6px;
 
     &:before {
-      content: 'Code';
+      content: attr(data-language);
       order: 1;
       width: 100%;
       padding: 8px;
@@ -253,7 +261,7 @@
     display: none;
   }
 
-  :deep(.code-snippet) {
+  :deep(code[data-highlighted='yes']) {
     background-color: var(--surface-3);
   }
 </style>
