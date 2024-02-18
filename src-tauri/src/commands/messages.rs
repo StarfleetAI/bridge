@@ -328,6 +328,7 @@ pub async fn approve_tool_call(
 pub async fn deny_tool_call(
     message_id: i64,
     pool: State<'_, DbPool>,
+    settings: State<'_, RwLock<Settings>>,
     window: Window,
 ) -> Result<()> {
     let mut tx = pool
@@ -374,6 +375,9 @@ pub async fn deny_tool_call(
     window
         .emit_all("messages:created", &denied_message)
         .with_context(|| "Failed to emit message creation event")?;
+    get_chat_completion(denied_message.chat_id, window, pool, settings)
+        .await
+        .with_context(|| format!("Failed to get chat completion for chat",))?;
 
     Ok(())
 }

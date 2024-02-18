@@ -116,9 +116,8 @@
         <div
           v-if="message.content?.length > 0 && message.role === Role.TOOL"
           class="tool__content"
-        >
-          {{ message.content }}
-        </div>
+          v-html="message.content"
+        />
         <div
           v-if="toolCalls.length"
           class="message__toolcallsz"
