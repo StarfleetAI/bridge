@@ -2,17 +2,19 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-import { FileCSVIcon, FileFrameIcon } from '~/shared/icons'
-import { type File } from '../model'
+  import { FileCSVIcon, FileFrameIcon } from '~/shared/icons'
+  import { type File } from '../model'
 
-defineProps<{
-  files: File[]
-}>()
-
+  defineProps<{
+    files: File[]
+  }>()
 </script>
 <template>
   <div class="files-large-items">
-    <div v-for="file in files" class="files-large-item">
+    <div
+      v-for="file in files"
+      class="files-large-item"
+    >
       <div class="files-large-item__title">
         {{ file?.name }}
       </div>
@@ -28,64 +30,62 @@ defineProps<{
   </div>
 </template>
 <style scoped lang="scss">
-.files-large-items {
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
+  .files-large-items {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
 
-  @include flex(row, space-between, center);
-}
-
-.files-large-item {
-  width: 30%;
-  height: 120px;
-  background: var(--surface-3);
-  position: relative;
-  border-radius: 12px;
-
-  &__title {
-    position: absolute;
-    z-index: 2;
-    top: 12px;
-    left: 12px;
-
-    @include font-inter-500(12px, 17px, var(--text-primary));
+    @include flex(row, space-between, center);
   }
 
-  &__size {
-    position: absolute;
-    z-index: 2;
-    bottom: 12px;
-    left: 12px;
+  .files-large-item {
+    position: relative;
+    width: 30%;
+    height: 120px;
+    border-radius: 12px;
+    background: var(--surface-3);
 
-    @include font-inter-500(12px, 17px, var(--text-tertiary));
+    &__title {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 2;
+
+      @include font-inter-500(12px, 17px, var(--text-primary));
+    }
+
+    &__size {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 2;
+
+      @include font-inter-500(12px, 17px, var(--text-tertiary));
+    }
+
+    &__icon {
+      position: absolute;
+      right: 12px;
+      bottom: 8px;
+      z-index: 2;
+    }
+
+    &__type {
+      position: absolute;
+      top: 8px;
+      left: 6px;
+      z-index: 3;
+    }
+
+    &__type-title {
+      position: absolute;
+      bottom: 6px;
+      left: 0;
+      z-index: 3;
+      width: 100%;
+      text-align: center;
+
+      @include font-inter-700(10px, 14px, var(--text-tertiary));
+    }
   }
-
-  &__icon {
-    z-index: 2;
-    position: absolute;
-    right: 12px;
-    bottom: 8px;
-  }
-
-  &__frame {}
-
-  &__type {
-    position: absolute;
-    z-index: 3;
-    top: 8px;
-    left: 6px;
-  }
-
-  &__type-title {
-    position: absolute;
-    z-index: 3;
-    left: 0;
-    width: 100%;
-    bottom: 6px;
-    text-align: center;
-
-    @include font-inter-500(12px, 17px, var(--text-tertiary));
-  }
-}
 </style>

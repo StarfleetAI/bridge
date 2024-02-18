@@ -2,10 +2,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-import { TaskStatus } from '~/entities/tasks'
-import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/icons'
-import { AvatarsList } from '~/shared/ui/avatars';
-import { FilesList, LargeFilesPreview } from '~/shared/ui/files';
+  import { TaskStatus } from '~/entities/tasks'
+  import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/icons'
+  import { AvatarsList } from '~/shared/ui/avatars'
+  import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
 </script>
 <template>
   <div class="task-full-item">
@@ -21,13 +21,14 @@ import { FilesList, LargeFilesPreview } from '~/shared/ui/files';
       </div>
       <div class="task-full-item__top">
         <div class="task-full-item__status">
-          <TaskStatus status="Todo" :complete="1" :total="2" />
+          <TaskStatus
+            status="Todo"
+            :complete="1"
+            :total="2"
+          />
         </div>
         <div class="task-full-item__status">
-          <AvatarsList
-:persons="[
-            { name: 'Product designer', avatar: '', link: '' },
-          ]" />
+          <AvatarsList :persons="[{ name: 'Product designer', avatar: '', link: '' }]" />
         </div>
       </div>
       <div class="task-full-item__middle">
@@ -35,148 +36,190 @@ import { FilesList, LargeFilesPreview } from '~/shared/ui/files';
           Develop a project schedule considering the stages of neural network development and service implementation.
         </div>
         <div class="task-full-item__text">
-          This task involves identifying and implementing robust methods to guarantee the security of data at every stage
-          of Brand Analytics, from collection through storage to analysis. It is crucial to establish a comprehensive
-          approach that safeguards sensitive information and maintains the integrity and confidentiality of the data
-          processed by the neural network. Below is a list of key actions and considerations for ensuring data security
+          This task involves identifying and implementing robust methods to guarantee the security of data at every
+          stage of Brand Analytics, from collection through storage to analysis. It is crucial to establish a
+          comprehensive approach that safeguards sensitive information and maintains the integrity and confidentiality
+          of the data processed by the neural network. Below is a list of key actions and considerations for ensuring
+          data security
         </div>
         <div class="task-full-item__attachments">
-          <div>
-            <DocumentIcon /> Linked Documents
-          </div>
-          <div>
-            + Add
-          </div>
+          <div><DocumentIcon /> Linked Documents</div>
+          <div>+ Add</div>
         </div>
         <FilesList
-:files="[
-          { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-          { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-          { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-        ]" />
+          :files="[
+            {
+              type: 'TXT',
+              url: 'file.txt',
+              name: 'file.txt',
+              created: '14.07.2024, 18:32',
+              rows: '10',
+              size: '1.2 MB',
+              name: 'file.txt'
+            },
+            {
+              type: 'TXT',
+              url: 'file.txt',
+              name: 'file.txt',
+              created: '14.07.2024, 18:32',
+              rows: '10',
+              size: '1.2 MB',
+              name: 'file.txt'
+            },
+            {
+              type: 'TXT',
+              url: 'file.txt',
+              name: 'file.txt',
+              created: '14.07.2024, 18:32',
+              rows: '10',
+              size: '1.2 MB',
+              name: 'file.txt'
+            }
+          ]"
+        />
       </div>
     </div>
     <div class="task-full-item__result">
-      <div class="task-full-item__result-head">
-        <ResultIcon /> Result
-      </div>
+      <div class="task-full-item__result-head"><ResultIcon /> Result</div>
       <LargeFilesPreview
-:files="[
-        { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-        { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-        { type: 'TXT', url: 'file.txt', name: 'file.txt', created: '14.07.2024, 18:32', rows: '10', size: '1.2 MB', name: 'file.txt' },
-      ]" />
+        :files="[
+          {
+            type: 'TXT',
+            url: 'file.txt',
+            name: 'file.txt',
+            created: '14.07.2024, 18:32',
+            rows: '10',
+            size: '1.2 MB',
+            name: 'file.txt'
+          },
+          {
+            type: 'TXT',
+            url: 'file.txt',
+            name: 'file.txt',
+            created: '14.07.2024, 18:32',
+            rows: '10',
+            size: '1.2 MB',
+            name: 'file.txt'
+          },
+          {
+            type: 'TXT',
+            url: 'file.txt',
+            name: 'file.txt',
+            created: '14.07.2024, 18:32',
+            rows: '10',
+            size: '1.2 MB',
+            name: 'file.txt'
+          }
+        ]"
+      />
       <div class="task-full-item__result-text-wrapper">
-        <div class="task-full-item__result-title">
-          Stage 1
-        </div>
+        <div class="task-full-item__result-title">Stage 1</div>
         <div class="task-full-item__result-text">
-          This task involves identifying and implementing robust methods to guarantee the security of data at every stage
-          of Brand Analytics, from collection through storage to analysis. It is crucial to establish a comprehensive
-          approach that safeguards sensitive information and maintains the integrity and confidentiality of the data
-          processed by the neural network.
+          This task involves identifying and implementing robust methods to guarantee the security of data at every
+          stage of Brand Analytics, from collection through storage to analysis. It is crucial to establish a
+          comprehensive approach that safeguards sensitive information and maintains the integrity and confidentiality
+          of the data processed by the neural network.
         </div>
       </div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
-.task-full-item {
-  &__head {
-    padding: 12px 24px;
-    border-bottom: 0.5px solid var(--pill);
+  .task-full-item {
+    &__head {
+      padding: 12px 24px;
+      border-bottom: 0.5px solid var(--pill);
 
-    @include flex(row, space-between, space-between);
-  }
-
-  &__title {
-    gap: 4px;
-
-    @include font-inter-500(14px, 22px, var(--text-tertiary));
-    @include flex(row, space-between, space-between);
-  }
-
-  &__back {
-    padding: 8px;
-    cursor: pointer;
-    background: var(--surface-3);
-    gap: 4px;
-
-    @include flex(row, start, space-between);
-    @include font-inter-700(12px, 22px, var(--text-tertiary));
-  }
-
-  &__body {
-    padding: 24px;
-
-    border-bottom: 0.5px solid var(--pill);
-  }
-
-  &__top {
-    padding: 24px 0;
-
-    @include flex(row, space-between, space-between);
-  }
-
-  &__text-title {
-    margin-bottom: 16px;
-
-    @include font-inter-500(16px, 22px, var(--text-primary));
-  }
-
-  &__text {
-    position: relative;
-
-    @include font-inter-400(14px, 19px, var(--text-secondary));
-
-    &:after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      background: linear-gradient(to bottom, rgba(36, 39, 49, 0), rgba(36, 39, 49, 1));
+      @include flex(row, space-between, space-between);
     }
-  }
 
-  &__attachments {
-    padding: 8px 0;
+    &__title {
+      gap: 4px;
 
-    @include font-inter-500(14px, 22px, var(--text-tertiary));
-    @include flex(row, space-between, center);
+      @include font-inter-500(14px, 22px, var(--text-tertiary));
+      @include flex(row, space-between, space-between);
+    }
 
-    div {
+    &__back {
+      gap: 4px;
+      padding: 8px;
+      background: var(--surface-3);
+      cursor: pointer;
+
+      @include flex(row, start, space-between);
+      @include font-inter-700(12px, 22px, var(--text-tertiary));
+    }
+
+    &__body {
+      padding: 24px;
+      border-bottom: 0.5px solid var(--pill);
+    }
+
+    &__top {
+      padding: 24px 0;
+
+      @include flex(row, space-between, space-between);
+    }
+
+    &__text-title {
+      margin-bottom: 16px;
+
+      @include font-inter-500(16px, 22px, var(--text-primary));
+    }
+
+    &__text {
+      position: relative;
+
+      &:after {
+        content: '';
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 50px;
+        background: linear-gradient(to bottom, rgba(36, 39, 49, 0), rgba(36, 39, 49, 1));
+      }
+
+      @include font-inter-400(14px, 19px, var(--text-secondary));
+    }
+
+    &__attachments {
+      padding: 8px 0;
+
+      div {
+        @include flex(row, space-between, center);
+      }
+
+      @include font-inter-500(14px, 22px, var(--text-tertiary));
       @include flex(row, space-between, center);
     }
+
+    &__result {
+      padding: 24px;
+    }
+
+    &__result-head {
+      gap: 2px;
+      margin-bottom: 24px;
+
+      @include font-inter-500(14px, 22px, var(--text-tertiary));
+      @include flex(row, start, center);
+    }
+
+    &__result-text-wrapper {
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface-3);
+    }
+
+    &__result-title {
+      margin-bottom: 24px;
+
+      @include font-inter-500(16px, 25px, var(--text-secondary));
+    }
+
+    &__result-text {
+      @include font-inter-500(14px, 22px, var(--text-secondary));
+    }
   }
-
-  &__result {
-    padding: 24px;
-  }
-
-  &__result-head {
-    gap: 2px;
-    margin-bottom: 24px;
-
-    @include font-inter-500(14px, 22px, var(--text-tertiary));
-    @include flex(row, start, center);
-  }
-
-  &__result-text-wrapper {
-    background: var(--surface-3);
-    padding: 12px;
-    border-radius: 12px;
-  }
-
-  &__result-title {
-    margin-bottom: 24px;
-
-    @include font-inter-500(16px, 25px, var(--text-secondary));
-  }
-
-  &__result-text {
-    @include font-inter-500(14px, 22px, var(--text-secondary));
-  }
-}
 </style>

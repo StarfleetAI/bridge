@@ -6,12 +6,14 @@
 :root {
   --text-primary: #eaecf0;
   --text-tertiary: #677383;
-  --text-secondary: #b0B5c0;
+  --text-secondary: #b0b5c0;
   --surface-0: #0c0e12;
   --surface-1: #1a1d26;
-  --surface-3: #2A2F3D;
+  --surface-3: #2a2f3d;
   --surface-4: #313747;
+  --surface-5: #3a4154;
   --status-progress: #62ac55;
   --side-panel: #232732;
   --pill: #333743;
+  --button-primary: #646bf0;
 }

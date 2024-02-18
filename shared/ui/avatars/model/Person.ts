@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export type Person = {
-  name: string;
-  avatar: string;
-  link?: string;
+  name: string
+  avatar: string
+  link?: string
 }

@@ -2,13 +2,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
-import { NoAvatarIcon } from '~/shared/icons'
-import { type Person } from "../model"
+  import { defineProps } from 'vue'
+  import { NoAvatarIcon } from '~/shared/icons'
+  import { type Person } from '../model'
 
-defineProps<{
-  persons: Person[];
-}>();
+  defineProps<{
+    persons: Person[]
+  }>()
 </script>
 
 <template>
@@ -17,7 +17,11 @@ defineProps<{
       <div class="avatar-list__single">
         <span class="avatar-list__name">{{ persons[0].name }}</span>
         <template v-if="persons[0].avatar">
-          <img :src="persons[0].avatar" alt="avatar" class="avatar-list__avatar" />
+          <img
+            :src="persons[0].avatar"
+            alt="avatar"
+            class="avatar-list__avatar"
+          />
         </template>
         <template v-else>
           <NoAvatarIcon class="avatar-list__avatar" />
@@ -26,9 +30,16 @@ defineProps<{
     </template>
     <template v-else>
       <div class="avatar-list__multiple">
-        <template v-for="(person, index) in persons" :key="index">
+        <template
+          v-for="(person, index) in persons"
+          :key="index"
+        >
           <template v-if="person.avatar">
-            <img :src="person.avatar" alt="avatar" class="avatar-list__avatar" />
+            <img
+              :src="person.avatar"
+              alt="avatar"
+              class="avatar-list__avatar"
+            />
           </template>
           <template v-else>
             <NoAvatarIcon class="avatar-list__avatar" />
@@ -40,28 +51,27 @@ defineProps<{
 </template>
 
 <style lang="scss" scoped>
-.avatar-list {
-  display: flex;
-  align-items: center;
+  .avatar-list {
+    display: flex;
+    align-items: center;
 
-  &__single,
-  &__multiple {
+    &__single,
+    &__multiple {
+      @include flex(row, space-between, center);
+    }
 
-    @include flex(row, space-between, center);
+    &__avatar {
+      object-fit: cover;
+      width: 24px;
+      height: 24px;
+      margin-left: -6px;
+      border-radius: 50%;
+    }
+
+    &__name {
+      margin-right: 8px;
+
+      @include font-inter-500(14px, 22px, var(--text-secondary));
+    }
   }
-
-  &__avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-left: -6px;
-  }
-
-  &__name {
-    margin-right: 8px;
-
-    @include font-inter-500(14px, 22px, var(--text-secondary));
-  }
-}
 </style>
