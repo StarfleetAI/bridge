@@ -343,7 +343,7 @@ where
                     executor,
                     CreateParams {
                         chat_id: message.chat_id,
-                        status: Status::ToolCallDenied,
+                        status: Status::Completed,
                         role: Role::Tool,
                         content: Some("Tool call denied".to_string()),
                         tool_call_id: Some(tool_call_id.to_string()),
