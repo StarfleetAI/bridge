@@ -5,13 +5,7 @@ import { listen } from '@tauri-apps/api/event'
 import { useChatsStore } from '~/features/chats'
 import { type Message } from '~/entities/chat'
 import { BRIDGE_AGENT_ID } from '~/shared/lib'
-import {
-  listChatMessages,
-  createMessage as createMessageReq,
-  deleteMessage as deleteMessageReq,
-  approveToolCall as approveToolCallReq,
-  denyToolCall as denyToolCallReq
-} from '../api'
+import { listChatMessages, createMessage as createMessageReq, deleteMessage as deleteMessageReq } from '../api'
 
 type ChatId = number
 
@@ -61,14 +55,6 @@ export const useMessagesStore = defineStore('messages', () => {
     }
   }
 
-  const approveToolCall = async (messageId: number) => {
-    await approveToolCallReq(messageId)
-  }
-
-  const denyToolCall = async (messageId: number) => {
-    await denyToolCallReq(messageId)
-  }
-
   const msgCreatedUnlisten: Promise<UnlistenFn> = listen('messages:created', (event) => {
     addMessage(event.payload as Message)
   })
@@ -91,8 +77,6 @@ export const useMessagesStore = defineStore('messages', () => {
     deleteMessage,
     addMessage,
     updateMessage,
-    approveToolCall,
-    denyToolCall,
     $reset
   }
 })

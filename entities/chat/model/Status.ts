@@ -4,5 +4,6 @@
 export const enum Status {
   WRITING = 'Writing',
   WAITING_FOR_TOOL_CALL = 'WaitingForToolCall',
-  COMPLETED = 'Completed'
+  COMPLETED = 'Completed',
+  TOOL_CALL_DENIED = 'ToolCallDenied',
 }

@@ -6,7 +6,7 @@
   import hljs from 'highlight.js'
   import CopyButtonPlugin from 'highlightjs-copy'
   import { useAgentsStore } from '~/features/agents/store'
-  import { useChatsStore, useMessagesStore } from '~/features/chats'
+  import { useChatsStore, useMessagesStore, denyToolCall } from '~/features/chats'
   import { Role, Status } from '~/entities/chat'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
@@ -15,7 +15,7 @@
   hljs.addPlugin(copyButtonPlugin)
   const route = useRoute('chats')
 
-  const { createMessage, listMessages, $reset: resetMessagesStore, denyToolCall } = useMessagesStore()
+  const { createMessage, listMessages, $reset: resetMessagesStore } = useMessagesStore()
 
   const chatId = computed(() => (route.query.id ? Number(route.query.id) : undefined))
   if (chatId.value) {
@@ -38,9 +38,6 @@
   const handleSendMessage = async () => {
     if (!chatInput.value) {
       return
-    }
-    if (chatId.value && messages.value[chatId.value].at(-1)?.status === Status.WAITING_FOR_TOOL_CALL) {
-      await denyToolCall(chatId.value)
     }
     createMessage(chatInput.value, chatId.value)
     chatInput.value = ''
@@ -101,9 +98,23 @@
       completion_tokens: null,
       tool_call_id: null,
       tool_calls: null,
-      created_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss')
+      created_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
     }
   })
+
+  // const isScrollingTimer = ref<NodeJS.Timer>()
+  // const handleShowScroll = (show: boolean) => {
+  //   if (show) {
+  //     messagesListRef.value?.classList.add('is-scrolling')
+  //     if (isScrollingTimer.value) {
+  //       clearTimeout(isScrollingTimer.value)
+  //     }
+  //   } else {
+  //     isScrollingTimer.value = setTimeout(() => {
+  //       messagesListRef.value?.classList.remove('is-scrolling')
+  //     }, 500)
+  //   }
+  // }
 </script>
 
 <template>
@@ -166,12 +177,14 @@
 
   .current-chat__messages-wrapper {
     flex: 1;
-    overflow-y: scroll;
+    overflow: hidden;
+    overflow: auto;
     width: 100%;
     height: calc(100vh - 242px);
     height: calc(100svh - 242px);
     padding: 0 48px;
     padding-bottom: 48px;
+    transition: all 0.2s ease;
 
     @include add-scrollbar;
   }

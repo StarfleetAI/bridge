@@ -5,7 +5,7 @@
   "arrowParens": "always",
   "vueIndentScriptAndStyle": true,
   "singleAttributePerLine": true,
-  "trailingComma": "none",
+  "trailingComma": "all",
   "tabWidth": 2,
   "useTabs": false,
   "semi": false,

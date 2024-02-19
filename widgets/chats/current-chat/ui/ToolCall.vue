@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import { useAbilitiesStore } from '~/features/abilities'
-  import { useMessagesStore } from '~/features/chats'
+  import { approveToolCall, denyToolCall } from '~/features/chats'
   import { type Ability } from '~/entities/ability'
   import { Status, type ToolCall } from '~/entities/chat'
   import { ChatLoader } from '~/shared/ui/base'
@@ -15,7 +15,6 @@
     messageId: number
   }>()
   const { abilities } = storeToRefs(useAbilitiesStore())
-  const { approveToolCall, denyToolCall } = useMessagesStore()
   const ability = computed(() => {
     return abilities?.value?.find((item) => {
       let parsedParameters: Record<string, unknown> = {}
@@ -39,7 +38,7 @@
       return Object.keys(abilityParams.parameters.properties).map((param) => ({
         name: param,
         description: abilityParams.parameters.properties[param].description,
-        value: parsedArgs[param]
+        value: parsedArgs[param],
       }))
     } catch {
       return {}
@@ -51,8 +50,8 @@
       ...ability.value,
       function: {
         name: props.toolCall.function.name,
-        arguments: parsedFunctionArguments.value
-      }
+        arguments: parsedFunctionArguments.value,
+      },
     }
   })
   const showActions = computed(() => {
@@ -64,7 +63,7 @@
 </script>
 
 <template>
-  <div :class="['tool', { done: status === Status.COMPLETED }]">
+  <div :class="['tool', { done: status === Status.COMPLETED, denied: status === Status.TOOL_CALL_DENIED }]">
     <CodeIcon class="tool__icon" />
     <div class="tool__content">
       <div class="tool__name">{{ ability?.name }}</div>
@@ -127,6 +126,10 @@
 
     &.done {
       border-left: 2px solid var(--status-done);
+    }
+
+    &.denied {
+      border-left: 2px solid var(--status-failed);
     }
 
     @include flex(row);

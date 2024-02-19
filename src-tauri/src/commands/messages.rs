@@ -11,6 +11,7 @@ use askama::Template;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sqlx::{Sqlite, Transaction};
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::{fs::create_dir_all, process::Command, sync::RwLock};
 
@@ -93,6 +94,27 @@ pub async fn create_message(
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
+
+    // Retrieve the last message for the chat
+    let last_message_id = repo::messages::get_last_message_id(&mut *tx, request.chat_id).await?;
+    let mut last_message = repo::messages::get(&mut *tx, last_message_id).await?;
+
+    // If last message status is waiting for tool call, deny it
+    if last_message.status == Status::WaitingForToolCall {
+        // Update the message status to ToolCallDenied
+        repo::messages::update_status(&mut *tx, last_message_id, Status::ToolCallDenied).await?;
+        // Create a new message indicating the tool call was denied
+        let denied_message =
+            repo::messages::create_tool_call_denied(&mut *tx, &last_message).await?;
+
+        last_message.status = Status::ToolCallDenied;
+        window
+            .emit_all("messages:updated", &last_message)
+            .with_context(|| "Failed to emit message update event")?;
+        window
+            .emit_all("messages:created", &denied_message)
+            .with_context(|| "Failed to emit message creation event")?;
+    }
 
     let message = repo::messages::create(
         &mut *tx,
@@ -319,7 +341,7 @@ pub async fn approve_tool_call(
     Ok(())
 }
 
-/// Deny tool call.
+/// Deny tool call
 ///
 /// # Errors
 ///
@@ -335,8 +357,7 @@ pub async fn deny_tool_call(
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
-
-    let message = repo::messages::get(&mut *tx, message_id).await?;
+    let mut message = repo::messages::get(&mut *tx, message_id).await?;
 
     // Ensure the message is waiting for a tool call
     if message.status != Status::WaitingForToolCall {
@@ -346,36 +367,22 @@ pub async fn deny_tool_call(
     // Update the message status to ToolCallDenied
     repo::messages::update_status(&mut *tx, message.id, Status::ToolCallDenied).await?;
 
-    // Assuming tool_call_id is already set in the original message
-    let tool_call_id_clone = message.tool_call_id.clone().unwrap_or_default();
-
     // Create a new message indicating the tool call was denied
-    let denied_message = repo::messages::create(
-        &mut *tx,
-        CreateParams {
-            chat_id: message.chat_id,
-            status: Status::ToolCallDenied,
-            role: Role::Tool,
-            content: Some("Tool call denied".to_string()),
-            tool_call_id: Some(tool_call_id_clone),
-
-            ..Default::default()
-        },
-    )
-    .await?;
+    let denied_message = repo::messages::create_tool_call_denied(&mut *tx, &message).await?;
 
     // Commit the transaction
     tx.commit()
         .await
         .with_context(|| "Failed to commit transaction")?;
-
+    message.status = Status::ToolCallDenied;
     window
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit message update event")?;
     window
         .emit_all("messages:created", &denied_message)
         .with_context(|| "Failed to emit message creation event")?;
-    get_chat_completion(denied_message.chat_id, window, pool, settings)
+
+    get_chat_completion(message.chat_id, window, pool, settings)
         .await
         .with_context(|| "Failed to get chat completion for chat")?;
 

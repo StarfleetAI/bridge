@@ -315,3 +315,30 @@ where
 
     Ok(())
 }
+
+/// Create tool call denied
+///
+/// #Errors
+///
+/// Returns error if there was a problem while creating message.
+pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Message>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let tool_call_id_clone = message.tool_call_id.clone();
+    let denied_message = create(
+        executor,
+        CreateParams {
+            chat_id: message.chat_id,
+            status: Status::ToolCallDenied,
+            role: Role::Tool,
+            content: Some("Tool call denied".to_string()),
+            tool_call_id: tool_call_id_clone,
+
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    Ok(denied_message)
+}
