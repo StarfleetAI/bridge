@@ -46,7 +46,7 @@
   const messageAuthor = computed(() => {
     return {
       name: getAuthorName(props.message),
-      avatar: getAuthorAvatar(props.message)
+      avatar: getAuthorAvatar(props.message),
     }
   })
   const dayjs = useDayjs()
@@ -71,14 +71,17 @@
       if (props.message.content) {
         messageRef.value?.querySelectorAll('pre code').forEach((el) => {
           if (el.getAttribute('data-highlighted') !== 'yes') {
-            hljs.highlightElement(el as HTMLElement)
             // add data-language attribute to show it in the highlighter
             const lang = el.className
               .split(' ')
               .find((item) => item.startsWith('language-'))
               ?.slice(9)
             if (lang) {
+              if (!hljs.getLanguage(lang)) {
+                el.classList.value = 'language-html'
+              }
               el.parentElement?.setAttribute('data-language', lang)
+              hljs.highlightElement(el as HTMLElement)
             }
           }
         })
@@ -86,8 +89,8 @@
     },
     {
       deep: true,
-      immediate: true
-    }
+      immediate: true,
+    },
   )
   const markedContent = computed(() => {
     return getMarkdown(props.message.content)
@@ -111,8 +114,8 @@
           {
             system: message.role === Role.SYSTEM,
             assistant: message.role === Role.ASSISTANT,
-            tool: message.role === Role.TOOL
-          }
+            tool: message.role === Role.TOOL,
+          },
         ]"
       >
         <div
