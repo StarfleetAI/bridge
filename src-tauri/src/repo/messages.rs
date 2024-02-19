@@ -46,6 +46,7 @@ impl From<String> for Status {
             "Writing" => Status::Writing,
             "WaitingForToolCall" => Status::WaitingForToolCall,
             "Failed" => Status::Failed,
+            "ToolCallDenied" => Status::ToolCallDenied,
             _ => Status::Completed,
         }
     }
@@ -329,17 +330,18 @@ where
 {
     match &message.tool_calls {
         Some(tool_calls) => {
-            let tool_calls: Vec<Value> = serde_json::from_str(tool_calls)
-                .with_context(|| "Failed to parse tool calls")?;
+            let tool_calls: Vec<Value> =
+                serde_json::from_str(tool_calls).with_context(|| "Failed to parse tool calls")?;
 
             let mut messages = Vec::with_capacity(tool_calls.len());
 
             // TODO: This is a temporary solution. We need to handle multiple tool calls.
             let tool_call = tool_calls[0].as_object().ok_or(Error::NoToolCallsFound)?;
 
-                let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
+            let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
 
-                messages.push(create(
+            messages.push(
+                create(
                     executor,
                     CreateParams {
                         chat_id: message.chat_id,
@@ -351,7 +353,8 @@ where
                         ..Default::default()
                     },
                 )
-                .await?);
+                .await?,
+            );
 
             Ok(messages)
         }

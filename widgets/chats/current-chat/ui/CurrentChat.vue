@@ -6,7 +6,7 @@
   import hljs from 'highlight.js'
   import CopyButtonPlugin from 'highlightjs-copy'
   import { useAgentsStore } from '~/features/agents/store'
-  import { useChatsStore, useMessagesStore, denyToolCall } from '~/features/chats'
+  import { useChatsStore, useMessagesStore } from '~/features/chats'
   import { Role, Status } from '~/entities/chat'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
