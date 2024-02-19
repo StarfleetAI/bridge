@@ -2,42 +2,42 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-// import { useTasksStore } from '@/store/tasks'
+  // import { useTasksStore } from '@/store/tasks'
 
-import { TaskFullItem } from '~/widgets/TaskFullItem'
-import { TasksList } from '~/widgets/tasksList'
+  import { TaskFullItem } from '~/widgets/TaskFullItem'
+  import { TasksList } from '~/widgets/tasksList'
 
-definePageMeta({
-  title: 'Tasks',
-})
+  definePageMeta({
+    title: 'Tasks'
+  })
 
-// const tasksStore = useTasksStore()
-
+  // const tasksStore = useTasksStore()
 </script>
 
 <template>
   <div class="main-content">
     <TasksList />
   </div>
-  <div class="side-content ">
+  <div class="side-content">
     <TaskFullItem />
   </div>
 </template>
 
 <style lang="scss" scoped>
-div {
-  color: var(--text-primary);
-}
+  div {
+    color: var(--text-primary);
+  }
 
-.main-content {
-  width: 60%;
-  min-height: calc(100vh - 44px);
-  padding: 20px;
-}
+  .main-content {
+    width: 60%;
+    min-height: calc(100vh - 44px);
+    padding: 20px;
+  }
 
-.side-content {
-  width: 40%;
-  min-height: calc(100vh - 44px);
-  background: var(--side-panel);
-}
+  .side-content {
+    overflow-y: auto;
+    width: 40%;
+    min-height: calc(100vh - 44px);
+    background: var(--side-panel);
+  }
 </style>

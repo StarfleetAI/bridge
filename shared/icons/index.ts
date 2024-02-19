@@ -1,9 +1,15 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+export { default as AgentIcon } from './AgentIcon.vue'
 export { default as AgentsIcon } from './AgentsIcon.vue'
+export { default as AbilitiesIcon } from './AbilitiesIcon.vue'
 export { default as ChatsIcon } from './ChatsIcon.vue'
+export { default as CloudIcon } from './CloudIcon.vue'
 export { default as DocumentsIcon } from './DocumentsIcon.vue'
+export { default as DocumentCheck } from './DocumentCheck.vue'
+export { default as DocumentPreview } from './DocumentPreview.vue'
+export { default as DocumentTitleIcon } from './DocumentTitleIcon.vue'
 export { default as SettingsIcon } from './SettingsIcon.vue'
 export { default as TasksIcon } from './TasksIcon.vue'
 export { default as SearchIcon } from './SearchIcon.vue'
@@ -23,3 +29,5 @@ export { default as DocumentIcon } from './DocumentIcon.vue'
 export { default as ResultIcon } from './ResultIcon.vue'
 export { default as ArrowLeftIcon } from './ArrowLeftIcon.vue'
 export { default as FileFrameIcon } from './FileFrameIcon.vue'
+export { default as LibraryIcon } from './LibraryIcon.vue'
+export { default as StoreIcon } from './StoreIcon.vue'
