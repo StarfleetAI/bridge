@@ -4,8 +4,10 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 
+use crate::errors::Error;
 use crate::types::Result;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::Type, Default)]
@@ -321,24 +323,38 @@ where
 /// #Errors
 ///
 /// Returns error if there was a problem while creating message.
-pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Message>
+pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Vec<Message>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    let tool_call_id_clone = message.tool_call_id.clone();
-    let denied_message = create(
-        executor,
-        CreateParams {
-            chat_id: message.chat_id,
-            status: Status::ToolCallDenied,
-            role: Role::Tool,
-            content: Some("Tool call denied".to_string()),
-            tool_call_id: tool_call_id_clone,
+    match &message.tool_calls {
+        Some(tool_calls) => {
+            let tool_calls: Vec<Value> = serde_json::from_str(tool_calls)
+                .with_context(|| "Failed to parse tool calls")?;
 
-            ..Default::default()
-        },
-    )
-    .await?;
+            let mut messages = Vec::with_capacity(tool_calls.len());
 
-    Ok(denied_message)
+            // TODO: This is a temporary solution. We need to handle multiple tool calls.
+            let tool_call = tool_calls[0].as_object().ok_or(Error::NoToolCallsFound)?;
+
+                let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
+
+                messages.push(create(
+                    executor,
+                    CreateParams {
+                        chat_id: message.chat_id,
+                        status: Status::ToolCallDenied,
+                        role: Role::Tool,
+                        content: Some("Tool call denied".to_string()),
+                        tool_call_id: Some(tool_call_id.to_string()),
+
+                        ..Default::default()
+                    },
+                )
+                .await?);
+
+            Ok(messages)
+        }
+        None => Err(Error::NoToolCallsFound.into()),
+    }
 }

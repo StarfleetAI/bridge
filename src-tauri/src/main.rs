@@ -155,7 +155,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
 
     debug!("Cleaning up after possible previous termination");
     block_on(async {
-        repo::messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed)
+        messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed)
             .await
     })?;
 

@@ -104,16 +104,19 @@ pub async fn create_message(
         // Update the message status to ToolCallDenied
         repo::messages::update_status(&mut *tx, last_message_id, Status::ToolCallDenied).await?;
         // Create a new message indicating the tool call was denied
-        let denied_message =
+        let denied_messages =
             repo::messages::create_tool_call_denied(&mut *tx, &last_message).await?;
 
         last_message.status = Status::ToolCallDenied;
         window
             .emit_all("messages:updated", &last_message)
             .with_context(|| "Failed to emit message update event")?;
-        window
-            .emit_all("messages:created", &denied_message)
-            .with_context(|| "Failed to emit message creation event")?;
+
+        for denied_message in denied_messages {
+            window
+                .emit_all("messages:created", &denied_message)
+                .with_context(|| "Failed to emit message creation event")?;
+        }
     }
 
     let message = repo::messages::create(
@@ -374,7 +377,9 @@ pub async fn deny_tool_call(
     tx.commit()
         .await
         .with_context(|| "Failed to commit transaction")?;
+
     message.status = Status::ToolCallDenied;
+
     window
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit message update event")?;
@@ -433,10 +438,10 @@ async fn get_chat_completion(
     let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
     let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
-    let req_messages = messages
-        .into_iter()
-        .map(|message| crate::clients::openai::Message::try_from(message).unwrap())
-        .collect();
+    let mut req_messages = Vec::with_capacity(messages.len());
+    for message in messages {
+        req_messages.push(crate::clients::openai::Message::try_from(message)?);
+    }
 
     // Insert dummy message to chat.
     let mut message = repo::messages::create(
@@ -604,18 +609,18 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
                         });
                     }
 
+                    if let Some(id) = tool_calls[0].get("id") {
+                        debug!("ID: {:?}", id);
+
+                        message_tool_call
+                            .as_mut()
+                            .with_context(|| "Failed to get tool call")?
+                            .id
+                            .push_str(id.as_str().with_context(|| "Failed to get id as str")?);
+                    }
+
                     if let Some(function) = tool_calls[0].get("function") {
                         debug!("Function: {:?}", function);
-
-                        if let Some(id) = function.get("id") {
-                            debug!("ID: {:?}", id);
-
-                            message_tool_call
-                                .as_mut()
-                                .with_context(|| "Failed to get tool call")?
-                                .id
-                                .push_str(id.as_str().with_context(|| "Failed to get id as str")?);
-                        }
 
                         if let Some(name) = function.get("name") {
                             debug!("Name: {:?}", name);

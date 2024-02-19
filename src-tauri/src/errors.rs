@@ -14,6 +14,8 @@ pub enum Error {
 
     #[error("Ability is used by agents")]
     AbilityIsUsedByAgents,
+    #[error("No `tool_calls` found in message")]
+    NoToolCallsFound,
 }
 
 impl serde::Serialize for Error {
