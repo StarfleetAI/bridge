@@ -321,7 +321,7 @@ where
 
 /// Create tool call denied
 ///
-/// #Errors
+/// # Errors
 ///
 /// Returns error if there was a problem while creating message.
 pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Vec<Message>>
@@ -358,6 +358,6 @@ where
 
             Ok(messages)
         }
-        None => Err(Error::NoToolCallsFound.into()),
+        None => Err(Error::NoToolCallsFound),
     }
 }

@@ -14,12 +14,7 @@ use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite};
 use tauri::{async_runtime::block_on, generate_handler, LogicalSize, Manager};
 use tokio::sync::RwLock;
 
-use bridge::{
-    commands,
-    repo::{self, messages},
-    settings::Settings,
-    types::Result,
-};
+use bridge::{commands, repo::messages, settings::Settings, types::Result};
 
 fn main() -> Result<()> {
     dotenv().ok();
@@ -155,8 +150,7 @@ fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::e
 
     debug!("Cleaning up after possible previous termination");
     block_on(async {
-        messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed)
-            .await
+        messages::transition_all(&pool, messages::Status::Writing, messages::Status::Failed).await
     })?;
 
     app_handle.manage(pool);

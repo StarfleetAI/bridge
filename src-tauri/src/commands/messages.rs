@@ -11,7 +11,6 @@ use askama::Template;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sqlx::{Sqlite, Transaction};
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::{fs::create_dir_all, process::Command, sync::RwLock};
 
@@ -438,10 +437,10 @@ async fn get_chat_completion(
     let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
     let abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
 
-    let mut req_messages = Vec::with_capacity(messages.len());
-    for message in messages {
-        req_messages.push(crate::clients::openai::Message::try_from(message)?);
-    }
+    let req_messages = messages
+        .into_iter()
+        .map(crate::clients::openai::Message::try_from)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
 
     // Insert dummy message to chat.
     let mut message = repo::messages::create(

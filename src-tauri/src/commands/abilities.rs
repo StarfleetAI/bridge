@@ -51,7 +51,7 @@ struct GetFunctionDefinitionTemplate<'a> {
     code: &'a str,
 }
 
-/// Get function definition by it's code.
+/// Get function definition by its code.
 ///
 /// # Errors
 ///
