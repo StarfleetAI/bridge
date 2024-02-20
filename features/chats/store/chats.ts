@@ -39,6 +39,6 @@ export const useChatsStore = defineStore('chats', () => {
     getById,
     listChats,
     createChat,
-    deleteChat
+    deleteChat,
   }
 })

@@ -9,7 +9,7 @@ const MediaQueries = {
   IS_MOBILE: '(max-width: 767px)',
   IS_TABLET: '(max-width: 1023px)',
   IS_TABLET_MEDIUM: '(max-width: 987px)',
-  IS_TABLET_ONLY: '(min-width: 768px) and (max-width: 1023px)'
+  IS_TABLET_ONLY: '(min-width: 768px) and (max-width: 1023px)',
 } as const
 
 export const useScreenSize = defineStore('screenSize', () => {
@@ -17,52 +17,52 @@ export const useScreenSize = defineStore('screenSize', () => {
     () => {
       return useMediaQuery(MediaQueries.IS_MOBILE).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const isTabletOnly = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_TABLET_ONLY).value
     },
     {
-      flush: 'pre'
-    }
+      flush: 'pre',
+    },
   )
   const isTablet = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_TABLET).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const isTabletMedium = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_TABLET_MEDIUM).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const isLaptop = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_LAPTOP).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
 
   const isDesktopSmall = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_DESKTOP_SMALL).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const isDesktopMedium = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.IS_DESKTOP_MEDIUM).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const fromDesktopMedium = eagerComputed(
     () => {
       return useMediaQuery(MediaQueries.FROM_DESKTOP_MEDIUM).value
     },
-    { flush: 'pre' }
+    { flush: 'pre' },
   )
   const $reset = () => ({})
   return {
@@ -74,6 +74,6 @@ export const useScreenSize = defineStore('screenSize', () => {
     isMobile,
     isTablet,
     isTabletMedium,
-    isTabletOnly
+    isTabletOnly,
   }
 })

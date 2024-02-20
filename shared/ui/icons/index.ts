@@ -1,15 +1,21 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+export { default as AbilitiesIcon } from './AbilitiesIcon.vue'
 export { default as AgentsIcon } from './AgentsIcon.vue'
+export { default as AgentIcon } from './AgentIcon.vue'
 export { default as ArrowLeftIcon } from './ArrowLeftIcon.vue'
 export { default as AttachmentIcon } from './AttachmentIcon.vue'
 export { default as ChatsIcon } from './ChatsIcon.vue'
 export { default as CheckIcon } from './CheckIcon.vue'
+export { default as CloudIcon } from './CloudIcon.vue'
 export { default as CodeIcon } from './CodeIcon.vue'
 export { default as CrossIcon } from './CrossIcon.vue'
 export { default as DocumentIcon } from './DocumentIcon.vue'
 export { default as DocumentsIcon } from './DocumentsIcon.vue'
+export { default as DocumentCheck } from './DocumentCheck.vue'
+export { default as DocumentPreview } from './DocumentPreview.vue'
+
 export { default as FileCSVIcon } from './FileCSVIcon.vue'
 export { default as FileFrameIcon } from './FileFrameIcon.vue'
 export { default as FileIcon } from './FileIcon.vue'
@@ -31,3 +37,6 @@ export { default as TaskStatusTodo } from './TaskStatusTodo.vue'
 export { default as TaskStatusWaiting } from './TaskStatusWaiting.vue'
 export { default as SendIcon } from './SendIcon.vue'
 export { default as ChevronDownIcon } from './ChevronDownIcon.vue'
+export { default as LibraryIcon } from './LibraryIcon.vue'
+export { default as StoreIcon } from './StoreIcon.vue'
+export { default as DocumentTitleIcon } from './DocumentTitleIcon.vue'

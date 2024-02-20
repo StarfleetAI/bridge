@@ -21,7 +21,7 @@
     arg2: Annotated[int, "Integer argument"]
 ) -> str:
     # Do the actual job here
-    return "Something was successful!"`
+    return "Something was successful!"`,
   })
 </script>
 

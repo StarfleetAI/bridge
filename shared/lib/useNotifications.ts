@@ -26,18 +26,18 @@ export const useNotifications = () => {
   const successNotification = (message: string) => {
     toastController.add({
       color: 'green',
-      title: message
+      title: message,
     })
   }
   const errorNotification = (message: string) => {
     toastController.add({
       color: 'red',
-      title: message
+      title: message,
     })
   }
 
   return {
     errorNotification,
-    successNotification
+    successNotification,
   }
 }

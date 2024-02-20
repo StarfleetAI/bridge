@@ -14,7 +14,7 @@ export const useLastTabRoute = defineStore('lastTabRoute', () => {
     tasks: '',
     agents: '',
     documents: '',
-    settings: ''
+    settings: '',
   })
 
   const setTabLastRoute = (key: keyof TabsLastRoutes, value: string) => {
@@ -31,7 +31,7 @@ export const useLastTabRoute = defineStore('lastTabRoute', () => {
       tasks: '',
       agents: '',
       documents: '',
-      settings: ''
+      settings: '',
     }
   }
   const resetTabLastRoute = (key: keyof TabsLastRoutes) => {
@@ -42,6 +42,6 @@ export const useLastTabRoute = defineStore('lastTabRoute', () => {
     setTabLastRoute,
     getTabLastRoute,
     resetTabLastRoute,
-    $reset
+    $reset,
   }
 })

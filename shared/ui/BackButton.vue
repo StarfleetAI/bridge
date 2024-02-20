@@ -15,7 +15,7 @@
     const savedRoute = findClosestRoute(props.routeName)
     const result: { name: string; params?: unknown; query?: LocationQuery } = {
       name: props.routeName,
-      params: route.params
+      params: route.params,
     }
     if (savedRoute) {
       result.query = savedRoute.query

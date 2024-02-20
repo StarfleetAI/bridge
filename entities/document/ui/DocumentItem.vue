@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { DocumentCheck, DocumentPreview } from '~/shared/icons'
+  import { DocumentCheck, DocumentPreview } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="document-item">

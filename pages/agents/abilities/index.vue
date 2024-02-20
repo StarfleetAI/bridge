@@ -7,7 +7,7 @@
   const abilitiesStore = useAbilitiesStore()
 
   definePageMeta({
-    title: 'Abilities'
+    title: 'Abilities',
   })
 </script>
 

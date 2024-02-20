@@ -48,6 +48,6 @@ export const useProfile = defineStore('profile', () => {
     isLoggedIn,
     profile,
     resetUser,
-    setupUser
+    setupUser,
   }
 })

@@ -79,30 +79,26 @@
   </div>
 </template>
 <style scoped lang="scss">
-    .task-status {
-      display: flex;
-      align-items: center;
+  .task-status {
+    display: flex;
+    align-items: center;
 
-      .icon {
-        margin-right: 12px;
-      }
-
-      &__label {
-        display: inline-block;
-        margin-right: 8px;
-  <<<<<<< HEAD
-        margin-left: 8px;
-  =======
-        margin-left: 6px;
-  >>>>>>> main
-
-        @include font-inter-500(14px, 20px);
-      }
-
-      &__complete {
-        display: inline-block;
-
-        @include font-inter-400(14px, 20px, var(--text-tertiary));
-      }
+    .icon {
+      margin-right: 12px;
     }
+
+    &__label {
+      display: inline-block;
+      margin-right: 8px;
+      margin-left: 6px;
+
+      @include font-inter-500(14px, 20px);
+    }
+
+    &__complete {
+      display: inline-block;
+
+      @include font-inter-400(14px, 20px, var(--text-tertiary));
+    }
+  }
 </style>

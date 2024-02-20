@@ -31,7 +31,7 @@ export const useRouteStore = defineStore('navigationHistory', () => {
     findClosestRoute,
     previousRoutesStack,
     routeQueries,
-    savePreviousRoute
+    savePreviousRoute,
   }
 })
 
@@ -45,6 +45,6 @@ export const useNavigationHistory = () => {
     findClosestRoute,
     previousRoutesStack,
     routeQueries,
-    savePreviousRoute
+    savePreviousRoute,
   }
 }

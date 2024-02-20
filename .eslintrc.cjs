@@ -6,6 +6,6 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 'off',
     'no-restricted-syntax': 'off',
-    '@typescript-eslint/naming-convention': 'off'
-  }
+    '@typescript-eslint/naming-convention': 'off',
+  },
 }

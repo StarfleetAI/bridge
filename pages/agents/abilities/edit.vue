@@ -11,7 +11,7 @@
   import { useAbilitiesStore, type UpdateAbility } from '~/features/abilities'
 
   definePageMeta({
-    title: 'Abilities &raquo; Edit'
+    title: 'Abilities &raquo; Edit',
   })
 
   const abilitiesStore = useAbilitiesStore()
@@ -31,7 +31,7 @@
     id: ability.value?.id || 0,
     name: ability.value?.name || '',
     description: ability.value?.description || '',
-    code: ability.value?.code || ''
+    code: ability.value?.code || '',
   })
 
   const updateAbility = async () => {

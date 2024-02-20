@@ -1,19 +1,6 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-<template>
-  <div class="toggle-switch">
-    <div
-      v-for="(slotName, index) in slotElements"
-      :key="index"
-      :class="{ active: modelValue === clearTitle(slotName) }"
-      @click="setActive(slotName)"
-    >
-      <slot :name="slotName" />
-    </div>
-  </div>
-</template>
-
 <script lang="ts" setup>
   interface Props {
     modelValue: string
@@ -38,6 +25,19 @@
     }
   })
 </script>
+
+<template>
+  <div class="toggle-switch">
+    <div
+      v-for="(slotName, index) in slotElements"
+      :key="index"
+      :class="{ active: modelValue === clearTitle(slotName) }"
+      @click="setActive(slotName)"
+    >
+      <slot :name="slotName" />
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
   .toggle-switch {

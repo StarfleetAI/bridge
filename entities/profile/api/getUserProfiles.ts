@@ -7,10 +7,10 @@ import { type GetUserProfilesParams } from '../model'
 
 export const getUserProfiles = async (params: GetUserProfilesParams) => {
   const {
-    data: { userProfiles }
+    data: { userProfiles },
   } = await usePassportFetcher<{ userProfiles: IdmUserProfile[] }>({
     body: params,
-    endpoint: '/ListUserProfiles'
+    endpoint: '/ListUserProfiles',
   })
 
   return userProfiles

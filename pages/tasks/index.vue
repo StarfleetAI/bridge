@@ -4,7 +4,7 @@
 <script lang="ts" setup>
   // import { useTasksStore } from '@/store/tasks'
 
-  import { TaskFullItem } from '~/widgets/TaskFullItem'
+  import { TaskFullItem } from '~/widgets/taskFullItem'
   import { TasksList } from '~/widgets/tasksList'
 
   definePageMeta({

@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { AgentIcon, AbilitiesIcon, CloudIcon } from '~/shared/icons'
+  import { AgentIcon, AbilitiesIcon, CloudIcon } from '~/shared/ui/icons'
   import AgentAbilities from './AgentAbilities.vue'
 </script>
 <template>

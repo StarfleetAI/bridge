@@ -12,7 +12,7 @@
   import { type CreateAbility, useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({
-    title: 'Abilities &raquo; New'
+    title: 'Abilities &raquo; New',
   })
 
   const abilitiesStore = useAbilitiesStore()
@@ -29,7 +29,7 @@
     arg2: Annotated[int, "Integer argument"]
 ) -> str:
     # Do the actual job here
-    return "Something was successful!"`
+    return "Something was successful!"`,
   })
   const router = useRouter()
 

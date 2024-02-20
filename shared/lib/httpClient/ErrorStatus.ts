@@ -50,5 +50,5 @@ export enum ErrorStatus {
   /**
    * Used when we need to show a custom error message
    */
-  CUSTOM = 599
+  CUSTOM = 599,
 }

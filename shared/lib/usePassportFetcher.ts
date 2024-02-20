@@ -9,6 +9,6 @@ export const usePassportFetcher = <T>(params: BaseRequestParams) => {
 
   return fetcher<T>({
     ...params,
-    method: params.method || 'POST'
+    method: params.method || 'POST',
   })
 }

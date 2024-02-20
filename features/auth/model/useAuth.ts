@@ -21,7 +21,7 @@ export const useAuth = defineStore('auth', () => {
         response_type: 'code',
         scope: 'openid profile offline_access',
         silent_redirect_uri: `${config.public.host}/silent-renew`,
-        userStore: new WebStorageStateStore({ prefix: 'uplatform_writer_' })
+        userStore: new WebStorageStateStore({ prefix: 'uplatform_writer_' }),
       }
       userManager.value = new UserManager(settings)
     } catch (error) {
@@ -107,6 +107,6 @@ export const useAuth = defineStore('auth', () => {
     signInCallback,
     signInRedirect,
     signOut,
-    userManager
+    userManager,
   }
 })

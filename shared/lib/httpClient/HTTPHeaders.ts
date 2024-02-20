@@ -4,6 +4,6 @@
 export const HTTPHeaders = {
   contentType: {
     applicationJson: 'application/json',
-    urlEncoded: 'application/x-www-form-urlencoded'
-  }
+    urlEncoded: 'application/x-www-form-urlencoded',
+  },
 }

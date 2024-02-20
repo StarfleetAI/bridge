@@ -9,7 +9,7 @@
   import { BaseContainer } from '~/shared/ui/base'
 
   definePageMeta({
-    title: 'Chats'
+    title: 'Chats',
   })
   const { listChats } = useChatsStore()
   const { listAgents } = useAgentsStore()

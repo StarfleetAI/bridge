@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon, AbilitiesIcon } from '~/shared/icons'
+  import { CloudIcon, AbilitiesIcon } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="abilities-list-item">

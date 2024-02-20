@@ -16,8 +16,8 @@
       color: 'currentColor',
       height: 22,
       viewBoxValue: `0 0 23 22`,
-      width: 23
-    }
+      width: 23,
+    },
   )
 </script>
 

@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-import { AbilityItem } from '~/entities/ability'
+  import { AbilityItem } from '~/entities/ability'
 </script>
 
 <template>
@@ -10,5 +10,4 @@ import { AbilityItem } from '~/entities/ability'
   <AbilityItem />
   <AbilityItem />
 </template>
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

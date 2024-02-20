@@ -11,6 +11,6 @@ export const useCreateChat = (agent_id: number) => {
   }
 
   return {
-    createNewChat
+    createNewChat,
   }
 }

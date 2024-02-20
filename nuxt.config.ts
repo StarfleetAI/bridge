@@ -5,21 +5,21 @@ export default defineNuxtConfig({
   app: {
     head: {
       bodyAttrs: {
-        class: ['select-none', 'cursor-default']
-      }
-    }
+        class: ['select-none', 'cursor-default'],
+      },
+    },
   },
 
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', 'nuxt-typed-router', '@vueuse/nuxt', 'dayjs-nuxt'],
 
   routeRules: {
-    '/': { redirect: '/agents' }
+    '/': { redirect: '/agents' },
   },
 
   runtimeConfig: {
     public: {
-      devtoolsPort: ''
-    }
+      devtoolsPort: '',
+    },
   },
 
   ssr: false,
@@ -27,24 +27,24 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
 
   typescript: {
-    strict: true
+    strict: true,
   },
   dayjs: {
     defaultLocale: [
       'en',
       {
-        weekStart: 1
-      }
-    ]
+        weekStart: 1,
+      },
+    ],
   },
 
   imports: {
     presets: [
       {
         from: '@tauri-apps/api/tauri',
-        imports: ['invoke']
-      }
-    ]
+        imports: ['invoke'],
+      },
+    ],
   },
 
   css: ['~/assets/css/theming.css'],
@@ -53,9 +53,9 @@ export default defineNuxtConfig({
     presets: [
       {
         from: '@tauri-apps/api/tauri',
-        imports: ['invoke']
-      }
-    ]
+        imports: ['invoke'],
+      },
+    ],
   },
 
   vite: {
@@ -64,9 +64,9 @@ export default defineNuxtConfig({
         scss: {
           additionalData: `
             @import "@/assets/scss/default.scss";
-          `
-        }
-      }
-    }
-  }
+          `,
+        },
+      },
+    },
+  },
 })

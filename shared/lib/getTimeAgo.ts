@@ -9,7 +9,7 @@ dayjs.extend(relativeTime)
 export const getTimeAgo = ({
   date,
   shortDate,
-  shortYear
+  shortYear,
 }: {
   date?: Date | string
   shortDate?: boolean

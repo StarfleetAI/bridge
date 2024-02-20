@@ -5,7 +5,7 @@ import {
   listAbilities as listAbilitiesReq,
   createAbility as createAbilityReq,
   updateAbility as updateAbilityReq,
-  deleteAbility as deleteAbilityReq
+  deleteAbility as deleteAbilityReq,
 } from '../api'
 import { type CreateAbility, type UpdateAbility } from '../model'
 
@@ -53,6 +53,6 @@ export const useAbilitiesStore = defineStore('abilities', () => {
     listAbilities,
     createAbility,
     updateAbility,
-    deleteAbility
+    deleteAbility,
   }
 })

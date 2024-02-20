@@ -3,7 +3,7 @@
 
 <script setup lang="ts">
   import { TaskItem } from '~/entities/tasks'
-  import { DocumentTitleIcon, TaskHeaderIcon, FileFrameIcon, FileCSVIcon } from '~/shared/icons'
+  import { DocumentTitleIcon, TaskHeaderIcon, FileFrameIcon, FileCSVIcon } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="document-full-item">

@@ -1,3 +1,6 @@
+<!-- Copyright 2024 StarfleetAI -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 <script lang="ts" setup>
   const props = defineProps<{
     content: string

@@ -6,7 +6,7 @@
   import { useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({
-    title: 'Agents &raquo; Edit'
+    title: 'Agents &raquo; Edit',
   })
 
   const abilitiesStore = useAbilitiesStore()
@@ -24,7 +24,7 @@
     name: agent.value?.name || '',
     description: agent.value?.description || '',
     system_message: agent.value?.system_message || '',
-    ability_ids: agent.value?.ability_ids || []
+    ability_ids: agent.value?.ability_ids || [],
   })
 
   const updateAgent = async () => {

@@ -256,7 +256,6 @@
 
     & > code {
       overflow: auto;
-      height: 200px;
       overscroll-behavior: auto;
 
       @include add-scrollbar;

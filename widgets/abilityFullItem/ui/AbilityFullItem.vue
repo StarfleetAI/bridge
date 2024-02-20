@@ -2,8 +2,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { AbilitiesIcon, CloudIcon } from '~/shared/icons'
   import { Code } from '~/shared/ui/code'
+  import { AbilitiesIcon, CloudIcon } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="ability-full-item">

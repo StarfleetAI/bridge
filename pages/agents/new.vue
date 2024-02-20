@@ -6,7 +6,7 @@
   import { useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({
-    title: 'Agents &raquo; New'
+    title: 'Agents &raquo; New',
   })
 
   const abilitiesStore = useAbilitiesStore()
@@ -16,7 +16,7 @@
     name: '',
     description: '',
     system_message: '',
-    ability_ids: []
+    ability_ids: [],
   })
   const router = useRouter()
 

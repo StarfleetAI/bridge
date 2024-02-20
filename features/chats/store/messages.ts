@@ -77,6 +77,6 @@ export const useMessagesStore = defineStore('messages', () => {
     deleteMessage,
     addMessage,
     updateMessage,
-    $reset
+    $reset,
   }
 })

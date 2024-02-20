@@ -40,7 +40,7 @@ export function useUFetch(baseURL: string) {
     const { body, endpoint, formData, method } = params
     const { applicationJson } = HTTPHeaders.contentType
     const headers = new Headers({
-      Accept: applicationJson
+      Accept: applicationJson,
     })
     const contentType = getContentType(params.body, params.formData)
     if (contentType) {
@@ -54,8 +54,8 @@ export function useUFetch(baseURL: string) {
         page: 1,
         perPage: 1,
         total: 1,
-        totalPages: 1
-      }
+        totalPages: 1,
+      },
     }
     const fetchFn = async (retry = true) => {
       const { accessToken } = storeToRefs(useProfile())
@@ -65,7 +65,7 @@ export function useUFetch(baseURL: string) {
       const response = await fetch(fullURL, {
         body: formData ? (body as FormData) : JSON.stringify(body),
         headers,
-        method
+        method,
       })
       const parsedResponse = await response.text()
       const { headers: resHeaders, status: statusCode } = response
@@ -74,7 +74,7 @@ export function useUFetch(baseURL: string) {
         page: resHeaders.get('X-Page') ? Number(resHeaders.get('X-Page')) : 1,
         perPage: resHeaders.get('X-Per-Page') ? Number(resHeaders.get('X-Per-Page')) : 1,
         total: resHeaders.get('X-Total') ? Number(resHeaders.get('X-total')) : 1,
-        totalPages: resHeaders.get('X-Total-Pages') ? Number(resHeaders.get('X-Total-Pages')) : 1
+        totalPages: resHeaders.get('X-Total-Pages') ? Number(resHeaders.get('X-Total-Pages')) : 1,
       }
       result.data = parseResultData(parsedResponse, statusCode)
 
@@ -103,6 +103,6 @@ export function useUFetch(baseURL: string) {
   }
 
   return {
-    fetcher
+    fetcher,
   }
 }

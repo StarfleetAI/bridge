@@ -7,6 +7,6 @@ import { type Profile } from '../model'
 export const getCurrentUserProfile = () => {
   return usePassportFetcher<Profile>({
     endpoint: '/GetCurrentUser',
-    method: 'POST'
+    method: 'POST',
   })
 }
