@@ -2,75 +2,82 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsStore } from '@/features/agents'
-  import { useChatsStore } from '@/features/chats'
-  import { useAbilitiesStore } from '~/features/abilities'
+  import { AbilitiesList } from '~/widgets/abilitiesList'
+  import { AbilityFullItem } from '~/widgets/abilityFullItem'
+  import { AgentFullItem } from '~/widgets/agentFullItem'
+  import { AgentsList } from '~/widgets/agentsList'
+  import { AgentIcon, AbilitiesIcon, LibraryIcon, StoreIcon } from '~/shared/ui/icons'
+  import { ToggleSwitch } from '~/shared/ui/toggle-switch'
 
   definePageMeta({
-    title: 'Agents'
+    title: 'Agents',
   })
 
-  const abilitiesStore = useAbilitiesStore()
-  const agentsStore = useAgentsStore()
-  const chatsStore = useChatsStore()
-
-  const createChat = async (agentId: number) => {
-    const chat = await chatsStore.createChat({
-      agent_id: agentId
-    })
-
-    useRouter().push({ name: 'chats', query: { id: chat.id } })
-  }
+  const entity: Ref<string> = ref('agents')
 </script>
 
 <template>
-  <div>
-    <NuxtLink
-      to="/agents/new"
-      class="inline-block bg-blue-500 hover:bg-blue-400 text-white py-2 px-4 rounded"
-    >
-      + Add New
-    </NuxtLink>
-    <NuxtLink
-      to="/agents/abilities"
-      class="ml-3 inline-block bg-blue-500 hover:bg-blue-400 text-white py-2 px-4 rounded"
-    >
-      to Abilities &rarr;
-    </NuxtLink>
-
-    <div class="flex mt-3">
-      <div
-        v-for="agent in agentsStore.agents"
-        :key="agent.id"
-        class="flex-grow-0 flex-shrink-0 w-1/4"
-      >
-        <strong>{{ agent.name }}</strong>
-        <div class="block text-grey-300">
-          {{ agent.description }}
-        </div>
-        <div class="block text-grey-400 py-2 text-xs">
-          <span
-            v-for="abilityId in agent.ability_ids"
-            :key="abilityId"
-            class="inline-block bg-gray-600 rounded-full px-2 py-1 font-semibold text-gray-400 mr-1"
-          >
-            {{ abilitiesStore.getById(abilityId)?.name }}
-          </span>
-        </div>
-        <a
-          href="#"
-          class="inline-block bg-blue-500 hover:bg-blue-400 text-white py-0 px-2 rounded"
-          @click.prevent="createChat(agent.id)"
-        >
-          Chat
-        </a>
-        <NuxtLink
-          :to="`/agents/edit?id=${agent.id}`"
-          class="inline-block bg-blue-500 hover:bg-blue-400 text-white py-0 px-2 rounded ml-2"
-        >
-          Edit
-        </NuxtLink>
-      </div>
+  <div class="main-content">
+    <div class="main-content__header">
+      <ToggleSwitch v-model="entity">
+        <template #option-agents>
+          <AgentIcon :color="entity === 'agents' ? 'var(--text-primary)' : 'var(--text-tertiary)'" /> Agents
+        </template>
+        <template #option-abilities>
+          <AbilitiesIcon :color="entity === 'abilities' ? 'var(--text-primary)' : 'var(--text-tertiary)'" /> Abilities
+        </template>
+      </ToggleSwitch>
+    </div>
+    <div v-if="entity === 'agents'">
+      <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
+      <AgentsList />
+      <div class="list-title"><StoreIcon /> Store <span>4</span></div>
+      <AgentsList />
+    </div>
+    <div v-if="entity === 'abilities'">
+      <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
+      <AbilitiesList />
+      <div class="list-title"><StoreIcon /> Store <span>4</span></div>
+      <AbilitiesList />
     </div>
   </div>
+  <div class="side-content">
+    <AgentFullItem v-if="entity === 'agents'" />
+    <AbilityFullItem v-if="entity === 'abilities'" />
+  </div>
 </template>
+
+<style lang="scss" scoped>
+  div {
+    color: var(--text-primary);
+  }
+
+  .main-content {
+    width: 60%;
+    min-height: calc(100vh - 44px);
+    padding: 20px;
+  }
+
+  .side-content {
+    overflow-y: auto;
+    width: 40%;
+    min-height: calc(100vh - 44px);
+    background: var(--side-panel);
+  }
+
+  .main-content__header {
+    @include flex(row, space-between, center);
+  }
+
+  .list-title {
+    gap: 8px;
+    margin: 24px 0;
+
+    span {
+      @include font-inter-400(16px, 22px, var(--text-tertiary));
+    }
+
+    @include font-inter-700(16px, 22px, var(--text-secondary));
+    @include flex(row, start, center);
+  }
+</style>

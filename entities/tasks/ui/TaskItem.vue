@@ -17,7 +17,7 @@
       <AvatarsList
         :persons="[
           { name: 'Alex', avatar: '', link: '' },
-          { name: 'Robert', avatar: '', link: '' }
+          { name: 'Robert', avatar: '', link: '' },
         ]"
       />
     </div>
@@ -29,7 +29,7 @@
         :files="[
           { type: 'TXT', url: 'file.txt', name: 'file.txt' },
           { type: 'TXT', url: 'file.txt', name: 'file.txt' },
-          { type: 'TXT', url: 'file.txt', name: 'file.txt' }
+          { type: 'TXT', url: 'file.txt', name: 'file.txt' },
         ]"
       />
     </div>
@@ -37,10 +37,10 @@
 </template>
 <style scoped lang="scss">
   .task-list-item {
-    background: var(--side-panel);
     margin-bottom: 15px;
-    border-radius: 6px;
     padding: 12px 16px;
+    border-radius: 6px;
+    background: var(--side-panel);
 
     &__head {
       @include flex(row, space-between, space-between);

@@ -54,7 +54,7 @@
               name: 'file.txt',
               created: '14.07.2024, 18:32',
               rows: 10,
-              size: '1.2 MB'
+              size: '1.2 MB',
             },
             {
               type: 'TXT',
@@ -62,7 +62,7 @@
               name: 'file.txt',
               created: '14.07.2024, 18:32',
               rows: 10,
-              size: '1.2 MB'
+              size: '1.2 MB',
             },
             {
               type: 'TXT',
@@ -70,8 +70,8 @@
               name: 'file.txt',
               created: '14.07.2024, 18:32',
               rows: 10,
-              size: '1.2 MB'
-            }
+              size: '1.2 MB',
+            },
           ]"
         />
       </div>
@@ -86,7 +86,7 @@
             name: 'file.txt',
             created: '14.07.2024, 18:32',
             rows: 10,
-            size: '1.2 MB'
+            size: '1.2 MB',
           },
           {
             type: 'TXT',
@@ -94,7 +94,7 @@
             name: 'file.txt',
             created: '14.07.2024, 18:32',
             rows: 10,
-            size: '1.2 MB'
+            size: '1.2 MB',
           },
           {
             type: 'TXT',
@@ -102,8 +102,8 @@
             name: 'file.txt',
             created: '14.07.2024, 18:32',
             rows: 10,
-            size: '1.2 MB'
-          }
+            size: '1.2 MB',
+          },
         ]"
       />
       <div class="task-full-item__result-text-wrapper">

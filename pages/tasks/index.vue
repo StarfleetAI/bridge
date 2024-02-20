@@ -4,11 +4,11 @@
 <script lang="ts" setup>
   // import { useTasksStore } from '@/store/tasks'
 
-  import { TaskFullItem } from '~/widgets/taskFullItem'
+  import { TaskFullItem } from '~/widgets/TaskFullItem'
   import { TasksList } from '~/widgets/tasksList'
 
   definePageMeta({
-    title: 'Tasks'
+    title: 'Tasks',
   })
 
   // const tasksStore = useTasksStore()
@@ -35,6 +35,7 @@
   }
 
   .side-content {
+    overflow-y: auto;
     width: 40%;
     min-height: calc(100vh - 44px);
     background: var(--side-panel);

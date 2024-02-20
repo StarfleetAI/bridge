@@ -5,7 +5,7 @@ import {
   listAgents as listAgentsReq,
   deleteAgent as deleteAgentReq,
   createAgent as createAgentReq,
-  updateAgent as updateAgentReq
+  updateAgent as updateAgentReq,
 } from '../api'
 import { type CreateAgent, type UpdateAgent } from '../model'
 
@@ -56,6 +56,6 @@ export const useAgentsStore = defineStore('agents', () => {
     createAgent,
     updateAgent,
     deleteAgent,
-    $reset
+    $reset,
   }
 })

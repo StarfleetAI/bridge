@@ -49,6 +49,15 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/theming.css'],
 
+  imports: {
+    presets: [
+      {
+        from: '@tauri-apps/api/tauri',
+        imports: ['invoke']
+      }
+    ]
+  },
+
   vite: {
     css: {
       preprocessorOptions: {
