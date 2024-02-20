@@ -28,6 +28,7 @@
     "@types/highlightjs": "^9.12.6",
     "@types/node": "^20.11.19",
     "@types/prismjs": "^1.26.3",
+    "clipboard-polyfill": "^4.0.2",
     "eslint": "^8.56.0",
     "eslint-config-aurora-vue": "^1.0.4",
     "highlightjs-copy": "^1.0.5",

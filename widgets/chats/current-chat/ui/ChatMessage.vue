@@ -7,6 +7,7 @@
   import { useAgentsStore } from '~/features/agents'
   import { type Message, Role, type ToolCall as ToolCallType } from '~/entities/chat'
   import { getMarkdown } from '~/shared/lib'
+  import { CopyButton } from '~/shared/ui/base'
   import { SystemIcon, NoAvatarIcon } from '~/shared/ui/icons'
   import ToolCall from './ToolCall.vue'
 
@@ -124,11 +125,19 @@
           class="message__content-markdown"
           v-html="markedContent"
         />
+
         <div
           v-if="message.content?.length > 0 && message.role === Role.TOOL"
-          class="tool__content"
-          v-html="message.content"
-        />
+          class="tool__content-wrapper"
+        >
+          <div class="tool__content-header">
+            <CopyButton :content="message.content" />
+          </div>
+          <div
+            class="tool__content"
+            v-html="message.content"
+          />
+        </div>
         <div
           v-if="toolCalls.length"
           class="message__toolcalls"
@@ -193,9 +202,28 @@
     @include font-inter-400(14px, 20px, var(--text-primary));
   }
 
+  .tool__content-wrapper {
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: var(--surface-2);
+
+    @include flex(column, flex-start, flex-start);
+  }
+
+  .tool__content-header {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: var(--surface-5);
+
+    @include flex($justify-content: flex-end);
+  }
+
   .tool__content {
+    padding: 8px 12px;
     white-space: pre-wrap;
     word-break: break-word;
+    cursor: auto;
+    user-select: initial;
 
     @include font-mono;
   }
@@ -227,7 +255,9 @@
     }
 
     & > code {
-      overflow: visible auto;
+      overflow: auto;
+      height: 200px;
+      overscroll-behavior: auto;
 
       @include add-scrollbar;
     }
@@ -249,6 +279,7 @@
     padding-left: 16px;
     font-family: Inter, sans-serif;
     text-align: end;
+    cursor: default;
 
     &:before {
       content: '';
@@ -268,7 +299,12 @@
     background-color: var(--surface-3);
   }
 
+  :deep(pre code) {
+    white-space: pre-wrap;
+  }
+
   :deep(pre code.hljs) {
     padding: 8px 12px;
+    white-space: pre;
   }
 </style>

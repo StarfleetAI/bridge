@@ -25,6 +25,10 @@
     background: transparent;
   }
 
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   /* Handle */
   &::-webkit-scrollbar-thumb {
     border-radius: 4px;

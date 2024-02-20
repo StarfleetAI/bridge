@@ -76,6 +76,9 @@ devDependencies:
   '@types/prismjs':
     specifier: ^1.26.3
     version: 1.26.3
+  clipboard-polyfill:
+    specifier: ^4.0.2
+    version: 4.0.2
   eslint:
     specifier: ^8.56.0
     version: 8.56.0
@@ -3354,6 +3357,10 @@ packages:
     dependencies:
       slice-ansi: 5.0.0
       string-width: 7.1.0
+    dev: true
+
+  /clipboard-polyfill@4.0.2:
+    resolution: {integrity: sha512-AkdRB9bWwdrfb4U9vLxC1zrzp1dzV5+AZinGv8gFtrH5hWTnGUXWHIyo+alenqr+hfNFY5p7HJ+khxs2YSpxww==}
     dev: true
 
   /clipboardy@4.0.0:
