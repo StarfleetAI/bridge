@@ -7,7 +7,7 @@
   import { type Ability } from '~/entities/ability'
   import { Status, type ToolCall } from '~/entities/chat'
   import { ChatLoader } from '~/shared/ui/base'
-  import { CheckIcon, CodeIcon, CrossIcon } from '~/shared/ui/icons'
+  import { CheckIcon, ChevronDownIcon, CodeIcon, CrossIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{
     toolCall: ToolCall
@@ -60,6 +60,22 @@
   const isProcessing = computed(() => {
     return props.status === Status.WRITING
   })
+
+  const showMore = ref(false)
+  const parametersWrapperRef = ref<HTMLElement>()
+  const toggleShowMore = () => {
+    showMore.value = !showMore.value
+  }
+
+  const parametersListRef = ref<HTMLElement[]>([])
+
+  const showMoreButtonIsVisible = computed(() => {
+    return parametersListRef.value.some((item) => item.scrollHeight > item.clientHeight)
+  })
+
+  const showMoreButtonText = computed(() => {
+    return showMore.value ? 'Less' : 'More'
+  })
 </script>
 
 <template>
@@ -76,8 +92,9 @@
         Processing
       </div>
       <div
-        v-if="showActions && !isProcessing"
-        class="tool__parameters"
+        v-if="!isProcessing"
+        ref="parametersWrapperRef"
+        :class="['tool__parameters', { full: showMore }]"
       >
         <div
           v-for="{ name, description, value } in fullAction.function.arguments"
@@ -86,13 +103,26 @@
         >
           <div class="tool__parameters-item-name">
             <div class="tool__parameter-name">{{ name }}</div>
-            <div class="tool__parameter-description">{{ description }}</div>
+            <div class="tool__parameter-description">
+              {{ description }}
+            </div>
           </div>
-          <div class="tool__parameters-item-value">
+          <div
+            ref="parametersListRef"
+            class="tool__parameters-item-value"
+          >
             {{ value }}
           </div>
         </div>
+        <div
+          v-if="showMoreButtonIsVisible"
+          :class="['tool__show-more', { visible: showMore }]"
+          @click="toggleShowMore"
+        >
+          {{ showMoreButtonText }} <ChevronDownIcon />
+        </div>
       </div>
+
       <div
         v-if="showActions"
         class="tool__actions"
@@ -167,10 +197,22 @@
   }
 
   .tool__parameters {
+    overflow: hidden;
     width: 100%;
+    max-height: 200px;
     margin-top: 16px;
     border-radius: 6px;
     background-color: var(--surface-3);
+    transition: all 0.2s ease;
+
+    &.full {
+      max-height: 5000px;
+
+      & .tool__parameters-item-value,
+      & .tool__parameters-item-description {
+        display: block;
+      }
+    }
 
     @include flex(column);
   }
@@ -178,12 +220,10 @@
   .tool__parameters-item {
     gap: 8px;
     width: 100%;
-
-    // min-height: 56px;
     padding: 8px 12px;
 
-    &:not(:last-child) {
-      border-bottom: 1px solid var(--border-3);
+    &:not(:first-child) {
+      border-top: 1px solid var(--border-3);
     }
 
     @include flex(row);
@@ -207,6 +247,7 @@
 
   .tool__parameter-description {
     @include font-inter-400(12px, 17px, var(--text-tertiary));
+    @include line-clamp(2);
   }
 
   .tool__parameters-item-value {
@@ -214,8 +255,26 @@
     font-size: 12px;
     line-height: 17px;
     white-space: pre-wrap;
+    cursor: auto;
+    user-select: initial;
 
+    @include line-clamp(3);
     @include font-mono;
+  }
+
+  .tool__show-more {
+    gap: 4px;
+    margin-bottom: 8px;
+    margin-left: 178px;
+
+    &.visible {
+      & svg {
+        transform: rotate(180deg);
+      }
+    }
+
+    @include font-inter-400(12px, 17px, var(--text-tertiary));
+    @include flex(row, flex-start, center);
   }
 
   .tool__actions {

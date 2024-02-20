@@ -131,7 +131,7 @@
         />
         <div
           v-if="toolCalls.length"
-          class="message__toolcallsz"
+          class="message__toolcalls"
         >
           <ToolCall
             v-for="toolCall in toolCalls"
@@ -149,8 +149,6 @@
 <style lang="scss" scoped>
   .message {
     gap: 8px;
-    cursor: auto;
-    user-select: initial;
 
     @include flex(row, flex-start, stretch);
   }
@@ -204,6 +202,8 @@
 
   .message__content-markdown {
     gap: 1.25em;
+    cursor: auto;
+    user-select: initial;
 
     @include flex(column, flex-start, flex-start);
   }
@@ -219,7 +219,7 @@
       content: attr(data-language);
       order: 1;
       width: 100%;
-      padding: 8px;
+      padding: 8px 12px;
       background-color: var(--surface-5);
       font-family: Inter, sans-serif;
 
@@ -266,5 +266,9 @@
 
   :deep(code[data-highlighted='yes']) {
     background-color: var(--surface-3);
+  }
+
+  :deep(pre code.hljs) {
+    padding: 8px 12px;
   }
 </style>

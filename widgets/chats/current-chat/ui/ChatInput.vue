@@ -87,7 +87,7 @@
     width: calc(100% - 96px);
     max-width: 680px;
     margin-top: auto;
-    margin-bottom: 56px;
+    margin-bottom: 32px;
 
     @include flex(column);
   }

@@ -90,7 +90,7 @@
           :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
           :class="[
             'history-item',
-            { active: currentChatId === chat.id, 'is-input': getItemComponent(chat.id) === 'input' }
+            { active: currentChatId === chat.id, 'is-input': getItemComponent(chat.id) === 'input' },
           ]"
           :value="titleToEdit"
           @click="handleClick(chat.id)"
@@ -122,7 +122,7 @@
 
   .chats-list {
     gap: 32px;
-    overflow-y: auto;
+    overflow: auto;
 
     @include add-scrollbar;
     @include flex(column, flex-start, stretch);
