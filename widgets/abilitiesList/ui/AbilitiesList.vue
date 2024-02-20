@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { AbilityItem } from '~/entities/ability'
+  import { AbilityItem } from '~/entities/abilities'
 </script>
 
 <template>

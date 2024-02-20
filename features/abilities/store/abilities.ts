@@ -1,6 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
-import { type Ability } from '~/entities/ability'
+import { type Ability } from '~/entities/abilities'
 import {
   listAbilities as listAbilitiesReq,
   createAbility as createAbilityReq,

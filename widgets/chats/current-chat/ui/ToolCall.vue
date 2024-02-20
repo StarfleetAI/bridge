@@ -4,7 +4,7 @@
 <script lang="ts" setup>
   import { useAbilitiesStore } from '~/features/abilities'
   import { approveToolCall, denyToolCall } from '~/features/chats'
-  import { type Ability } from '~/entities/ability'
+  import { type Ability } from '~/entities/abilities'
   import { Status, type ToolCall } from '~/entities/chat'
   import { ChatLoader } from '~/shared/ui/base'
   import { CheckIcon, ChevronDownIcon, CodeIcon, CrossIcon } from '~/shared/ui/icons'
