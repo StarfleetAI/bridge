@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import type { LocationQuery, RouteLocationRaw } from 'vue-router'
-  import { useNavigationHistory } from '~/shared/utils'
+  import { useNavigationHistory } from '~/shared/lib'
 
   const props = defineProps<{
     routeName: string
@@ -15,7 +15,7 @@
     const savedRoute = findClosestRoute(props.routeName)
     const result: { name: string; params?: unknown; query?: LocationQuery } = {
       name: props.routeName,
-      params: route.params
+      params: route.params,
     }
     if (savedRoute) {
       result.query = savedRoute.query
@@ -43,4 +43,4 @@
     @include font-inter-600(14px, 20px, var(--interactive-primary));
   }
 </style>
-~/shared/utils
+~/shared/lib

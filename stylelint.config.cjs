@@ -9,7 +9,7 @@ module.exports = {
       [
         {
           type: 'at-rule',
-          name: 'import'
+          name: 'import',
         },
         'dollar-variables',
         'custom-properties',
@@ -18,14 +18,14 @@ module.exports = {
         'at-rules',
         {
           type: 'at-rule',
-          name: 'supports'
+          name: 'supports',
         },
         {
           type: 'at-rule',
-          name: 'media'
-        }
+          name: 'media',
+        },
       ],
-      { severity: 'warning' }
+      { severity: 'warning' },
     ],
     'order/properties-order': [
       [
@@ -276,12 +276,12 @@ module.exports = {
         'animation-delay',
         'animation-iteration-count',
         'animation-direction',
-        'animation-fill-mode'
+        'animation-fill-mode',
       ],
       {
         unspecified: 'bottom',
-        severity: 'warning'
-      }
+        severity: 'warning',
+      },
     ],
     'selector-class-pattern': null,
     'selector-pseudo-element-no-unknown': null,
@@ -294,6 +294,6 @@ module.exports = {
     'no-empty-source': null,
     'number-max-precision': 7,
     'alpha-value-notation': 'number',
-    'color-function-notation': 'legacy'
-  }
+    'color-function-notation': 'legacy',
+  },
 }

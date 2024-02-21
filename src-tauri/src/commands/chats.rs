@@ -101,8 +101,31 @@ pub async fn delete_chat(id: i64, pool: State<'_, DbPool>) -> Result<()> {
         .await
         .with_context(|| "Failed to begin transaction")?;
 
+    repo::tasks::delete_for_chat(&mut *tx, id).await?;
+    repo::messages::delete_for_chat(&mut *tx, id).await?;
     repo::agents_chats::delete_for_chat(&mut *tx, id).await?;
     repo::chats::delete(&mut *tx, id).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(())
+}
+
+/// Update chat title by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating the chat title or if the chat with the given ID does not exist.
+#[tauri::command]
+pub async fn update_chat_title(id: i64, title: String, pool: State<'_, DbPool>) -> Result<()> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    repo::chats::update_title(&mut *tx, id, &title).await?;
 
     tx.commit()
         .await

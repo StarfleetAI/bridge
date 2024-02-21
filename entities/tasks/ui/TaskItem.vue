@@ -17,7 +17,7 @@
       <AvatarsList
         :persons="[
           { name: 'Alex', avatar: '', link: '' },
-          { name: 'Robert', avatar: '', link: '' }
+          { name: 'Robert', avatar: '', link: '' },
         ]"
       />
     </div>
@@ -29,7 +29,7 @@
         :files="[
           { type: 'TXT', url: 'file.txt', name: 'file.txt' },
           { type: 'TXT', url: 'file.txt', name: 'file.txt' },
-          { type: 'TXT', url: 'file.txt', name: 'file.txt' }
+          { type: 'TXT', url: 'file.txt', name: 'file.txt' },
         ]"
       />
     </div>

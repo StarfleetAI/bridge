@@ -10,3 +10,28 @@
     display: none;
   }
 }
+
+@mixin add-scrollbar() {
+  /* width */
+  &::-webkit-scrollbar {
+    display: inline;
+    width: 4px;
+    height: 4px;
+  }
+
+  /* Track */
+  &::-webkit-scrollbar-track {
+    border-radius: 6px;
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: var(--surface-5);
+  }
+}

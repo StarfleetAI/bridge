@@ -4,11 +4,13 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 
+use crate::errors::Error;
 use crate::types::Result;
 
-#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default)]
+#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq)]
 pub enum Role {
     #[default]
     System,
@@ -35,6 +37,7 @@ pub enum Status {
     WaitingForToolCall,
     Completed,
     Failed,
+    ToolCallDenied,
 }
 
 impl From<String> for Status {
@@ -43,6 +46,7 @@ impl From<String> for Status {
             "Writing" => Status::Writing,
             "WaitingForToolCall" => Status::WaitingForToolCall,
             "Failed" => Status::Failed,
+            "ToolCallDenied" => Status::ToolCallDenied,
             _ => Status::Completed,
         }
     }
@@ -296,4 +300,64 @@ where
     .with_context(|| "Failed to set `Writing` messages to `Failed`")?;
 
     Ok(())
+}
+
+/// Delete messages for chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while deleting messages.
+pub async fn delete_for_chat<'a, E>(executor: E, chat_id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!("DELETE FROM messages WHERE chat_id = $1", chat_id)
+        .execute(executor)
+        .await
+        .with_context(|| "Failed to delete messages for chat")?;
+
+    Ok(())
+}
+
+/// Create tool call denied
+///
+/// # Errors
+///
+/// Returns error if there was a problem while creating message.
+pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Vec<Message>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    match &message.tool_calls {
+        Some(tool_calls) => {
+            let tool_calls: Vec<Value> =
+                serde_json::from_str(tool_calls).with_context(|| "Failed to parse tool calls")?;
+
+            let mut messages = Vec::with_capacity(tool_calls.len());
+
+            // TODO: This is a temporary solution. We need to handle multiple tool calls.
+            let tool_call = tool_calls[0].as_object().ok_or(Error::NoToolCallsFound)?;
+
+            let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
+
+            messages.push(
+                create(
+                    executor,
+                    CreateParams {
+                        chat_id: message.chat_id,
+                        status: Status::Completed,
+                        role: Role::Tool,
+                        content: Some("Tool call denied".to_string()),
+                        tool_call_id: Some(tool_call_id.to_string()),
+
+                        ..Default::default()
+                    },
+                )
+                .await?,
+            );
+
+            Ok(messages)
+        }
+        None => Err(Error::NoToolCallsFound),
+    }
 }

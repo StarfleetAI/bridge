@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { FileIcon } from '~/shared/icons'
+  import { FileIcon } from '~/shared/ui/icons'
   import { type File } from '../model'
 
   defineProps<{
@@ -13,6 +13,7 @@
   <div class="files-list-items">
     <div
       v-for="file in files"
+      :key="file?.name"
       class="files-list-item"
     >
       <div class="files-list-item__icon">

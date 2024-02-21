@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM tasks WHERE origin_chat_id = $1 OR control_chat_id = $1 OR execution_chat_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "51c3e0ae37c9e42f7c34da6b73bbe6e218e6d4cad05d12d1d85a30e5d5552214"
+}

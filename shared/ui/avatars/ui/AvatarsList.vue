@@ -2,8 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { defineProps } from 'vue'
-  import { NoAvatarIcon } from '~/shared/icons'
+  import { NoAvatarIcon } from '~/shared/ui/icons'
   import { type Person } from '../model'
 
   defineProps<{
@@ -30,19 +29,20 @@
     </template>
     <template v-else>
       <div class="avatar-list__multiple">
-        <template
-          v-for="(person, index) in persons"
-          :key="index"
-        >
+        <template v-for="(person, index) in persons">
           <template v-if="person.avatar">
             <img
+              :key="index"
               :src="person.avatar"
               alt="avatar"
               class="avatar-list__avatar"
             />
           </template>
           <template v-else>
-            <NoAvatarIcon class="avatar-list__avatar" />
+            <NoAvatarIcon
+              :key="index"
+              class="avatar-list__avatar"
+            />
           </template>
         </template>
       </div>

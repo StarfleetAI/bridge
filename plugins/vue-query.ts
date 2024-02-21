@@ -7,7 +7,7 @@ import {
   VueQueryPlugin,
   type VueQueryPluginOptions,
   dehydrate,
-  hydrate
+  hydrate,
 } from '@tanstack/vue-query'
 import { useState } from '#app'
 
@@ -16,7 +16,7 @@ export default defineNuxtPlugin((nuxt) => {
 
   // Modify your Vue Query global settings here
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { staleTime: 5000 } }
+    defaultOptions: { queries: { staleTime: 5000 } },
   })
   const options: VueQueryPluginOptions = { queryClient }
 

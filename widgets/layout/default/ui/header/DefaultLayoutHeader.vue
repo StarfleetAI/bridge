@@ -3,38 +3,64 @@
 
 <script setup lang="ts">
   import { UserAvatar } from '~/entities/profile'
-  import { AgentsIcon, ChatsIcon, DocumentsIcon, SearchIcon, SettingsIcon, TasksIcon } from '~/shared/icons'
+  import { useLastTabRoute, type TabRoute } from '~/shared/lib'
+  import { AgentsIcon, ChatsIcon, DocumentsIcon, SearchIcon, SettingsIcon, TasksIcon } from '~/shared/ui/icons'
   import HeaderNavigationItem from './HeaderNavigationItem.vue'
+
+  const { getTabLastRoute } = useLastTabRoute()
+
+  const getTabRoute = (tab: TabRoute) => {
+    const tabRoute = getTabLastRoute(tab)
+    if (tabRoute) {
+      return tabRoute
+    }
+    return { name: tab }
+  }
 </script>
 
 <template>
   <div class="default-layout__header">
     <div class="default-layout__header-tabs">
-      <HeaderNavigationItem to="/chats">
+      <HeaderNavigationItem
+        name="chats"
+        :to="getTabRoute('chats')"
+      >
         <template #icon>
           <ChatsIcon />
         </template>
         <template #name> Chats </template>
       </HeaderNavigationItem>
-      <HeaderNavigationItem to="/tasks">
+      <HeaderNavigationItem
+        name="tasks"
+        :to="getTabRoute('tasks')"
+      >
         <template #icon>
           <TasksIcon />
         </template>
         <template #name> Tasks </template>
       </HeaderNavigationItem>
-      <HeaderNavigationItem to="/agents">
+      <HeaderNavigationItem
+        name="agents"
+        :to="getTabRoute('agents')"
+      >
         <template #icon>
           <AgentsIcon />
         </template>
         <template #name> Agents </template>
       </HeaderNavigationItem>
-      <HeaderNavigationItem to="/documents">
+      <HeaderNavigationItem
+        name="documents"
+        :to="getTabRoute('documents')"
+      >
         <template #icon>
           <DocumentsIcon />
         </template>
         <template #name> Documents </template>
       </HeaderNavigationItem>
-      <HeaderNavigationItem to="/settings">
+      <HeaderNavigationItem
+        name="settings"
+        :to="getTabRoute('settings')"
+      >
         <template #icon>
           <SettingsIcon />
         </template>
@@ -61,6 +87,8 @@
   }
 
   .default-layout__header-tabs {
+    height: 100%;
+
     @include flex(row);
   }
 

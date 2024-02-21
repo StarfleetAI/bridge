@@ -25,6 +25,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-weight: 500;
+  font-style: normal;
+  font-family: IBMPlexMono;
+  src: url('/fonts/IBMPlexMono-Medium.ttf') format('truetype');
+  font-display: swap;
+}
+
 @mixin font-inter-400($size, $line-height, $color: var(--text-primary)) {
   color: $color;
   font-weight: 400;
@@ -49,4 +57,9 @@
 @mixin no-text-selection() {
   user-select: none; /* Safari */
   -webkit-touch-callout: none; /* iOS Safari */
+}
+
+@mixin font-mono {
+  font-family: IBMPlexMono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
 }

@@ -9,8 +9,8 @@
     TaskStatusPaused,
     TaskStatusDone,
     TaskStatusFailed,
-    TaskStatusNew
-  } from '~/shared/icons'
+    TaskStatusNew,
+  } from '~/shared/ui/icons'
   import { type Status } from '../model'
 
   const props = defineProps<{

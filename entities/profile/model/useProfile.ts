@@ -1,8 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { User } from 'oidc-client-ts'
-import { acceptHMRUpdate } from 'pinia'
+import { type User } from 'oidc-client-ts'
 
 import { getCurrentUserProfile } from '../api'
 import { type Profile } from './Profile'
@@ -49,10 +48,6 @@ export const useProfile = defineStore('profile', () => {
     isLoggedIn,
     profile,
     resetUser,
-    setupUser
+    setupUser,
   }
 })
-
-if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useProfile, import.meta.hot))
-}

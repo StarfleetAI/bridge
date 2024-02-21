@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { FileCSVIcon, FileFrameIcon } from '~/shared/icons'
+  import { FileCSVIcon, FileFrameIcon } from '~/shared/ui/icons'
   import { type File } from '../model'
 
   defineProps<{
@@ -13,6 +13,7 @@
   <div class="files-large-items">
     <div
       v-for="file in files"
+      :key="file.url"
       class="files-large-item"
     >
       <div class="files-large-item__title">

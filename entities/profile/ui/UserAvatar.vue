@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { NoAvatarIcon } from '~/shared/icons'
+  import { NoAvatarIcon } from '~/shared/ui/icons'
 </script>
 
 <template>

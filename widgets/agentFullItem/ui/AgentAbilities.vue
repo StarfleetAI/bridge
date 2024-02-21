@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon } from '~/shared/icons'
+  import { CloudIcon } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="agent-abilities">

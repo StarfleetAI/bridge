@@ -6,7 +6,7 @@ export type FileType = 'TXT' | 'CSV'
 export interface File {
   name: string
   type: FileType
-  size?: number
+  size?: number | string
   url?: string
   preview?: string
   created?: string

@@ -3,12 +3,12 @@
 
 <script lang="ts" setup>
   // import { useTasksStore } from '@/store/tasks'
-  import { DocumentFullItem } from '~/widgets/DocumentFullItem'
+  import { DocumentFullItem } from '~/widgets/documentFullItem'
   import { DocumentsList } from '~/widgets/documentsList'
-  import { DocumentTitleIcon } from '~/shared/icons'
+  import { DocumentTitleIcon } from '~/shared/ui/icons'
 
   definePageMeta({
-    title: 'Tasks'
+    title: 'Tasks',
   })
 
   // const tasksStore = useTasksStore()

@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon } from '~/shared/icons'
+  import { CloudIcon } from '~/shared/ui/icons'
   import { Switch } from '~/shared/ui/switch'
 
   const active = ref(true)

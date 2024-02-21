@@ -5,15 +5,45 @@
 
 :root {
   --text-primary: #eaecf0;
-  --text-tertiary: #677383;
   --text-secondary: #b0b5c0;
+  --text-tertiary: #677383;
   --surface-0: #0c0e12;
   --surface-1: #1a1d26;
+  --surface-2: #232733;
   --surface-3: #2a2f3d;
   --surface-4: #313747;
   --surface-5: #3a4154;
   --status-progress: #62ac55;
+  --status-paused: #9e83ea;
+  --status-done: #00a140;
+  --status-failed: #dc493e;
+  --border-standart: #d0d5dd;
+  --border-3: #383e52;
   --side-panel: #232732;
   --pill: #333743;
+  --text-on-button: #fcfcfd;
   --button-primary: #646bf0;
+}
+
+* {
+  box-sizing: border-box;
+  overscroll-behavior: none;
+}
+
+html {
+  font-family: Inter, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+}
+
+a {
+  cursor: default;
 }

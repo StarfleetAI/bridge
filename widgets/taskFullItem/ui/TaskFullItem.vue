@@ -3,9 +3,9 @@
 
 <script setup lang="ts">
   import { TaskStatus } from '~/entities/tasks'
-  import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/icons'
   import { AvatarsList } from '~/shared/ui/avatars'
   import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
+  import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/ui/icons'
 </script>
 <template>
   <div class="task-full-item">
@@ -53,28 +53,25 @@
               url: 'file.txt',
               name: 'file.txt',
               created: '14.07.2024, 18:32',
-              rows: '10',
+              rows: 10,
               size: '1.2 MB',
-              name: 'file.txt'
             },
             {
               type: 'TXT',
               url: 'file.txt',
               name: 'file.txt',
               created: '14.07.2024, 18:32',
-              rows: '10',
+              rows: 10,
               size: '1.2 MB',
-              name: 'file.txt'
             },
             {
               type: 'TXT',
               url: 'file.txt',
               name: 'file.txt',
               created: '14.07.2024, 18:32',
-              rows: '10',
+              rows: 10,
               size: '1.2 MB',
-              name: 'file.txt'
-            }
+            },
           ]"
         />
       </div>
@@ -88,28 +85,25 @@
             url: 'file.txt',
             name: 'file.txt',
             created: '14.07.2024, 18:32',
-            rows: '10',
+            rows: 10,
             size: '1.2 MB',
-            name: 'file.txt'
           },
           {
             type: 'TXT',
             url: 'file.txt',
             name: 'file.txt',
             created: '14.07.2024, 18:32',
-            rows: '10',
+            rows: 10,
             size: '1.2 MB',
-            name: 'file.txt'
           },
           {
             type: 'TXT',
             url: 'file.txt',
             name: 'file.txt',
             created: '14.07.2024, 18:32',
-            rows: '10',
+            rows: 10,
             size: '1.2 MB',
-            name: 'file.txt'
-          }
+          },
         ]"
       />
       <div class="task-full-item__result-text-wrapper">
@@ -146,7 +140,7 @@
       background: var(--surface-3);
       cursor: pointer;
 
-      @include flex(row, start, space-between);
+      @include flex(row, flex-start, space-between);
       @include font-inter-700(12px, 22px, var(--text-tertiary));
     }
 
@@ -203,7 +197,7 @@
       margin-bottom: 24px;
 
       @include font-inter-500(14px, 22px, var(--text-tertiary));
-      @include flex(row, start, center);
+      @include flex(row, flex-start, center);
     }
 
     &__result-text-wrapper {

@@ -12,7 +12,7 @@ export enum Status {
   PAUSED = 'Paused',
   DONE = 'Done',
   FAILED = 'Failed',
-  CANCELED = 'Canceled'
+  CANCELED = 'Canceled',
 }
 
 export interface Task {
@@ -43,7 +43,7 @@ export interface CreateTask {
 
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
-    tasks: [] as Task[]
+    tasks: [] as Task[],
   }),
 
   getters: {
@@ -59,7 +59,7 @@ export const useTasksStore = defineStore('tasks', {
         }
 
         return state.tasks.find((a) => a.id === id)
-      }
+      },
   },
 
   actions: {
@@ -97,6 +97,6 @@ export const useTasksStore = defineStore('tasks', {
       if (index !== undefined && index !== -1) {
         this.tasks.splice(index, 1)
       }
-    }
-  }
+    },
+  },
 })

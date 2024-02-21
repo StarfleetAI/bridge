@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { UserManager, type UserManagerSettings, WebStorageStateStore } from 'oidc-client-ts'
-import { acceptHMRUpdate } from 'pinia'
 
 import { useProfile } from '~/entities/profile'
-import { useResetStores } from '~/shared/utils'
+import { useResetStores } from '~/shared/lib'
 
 export const useAuth = defineStore('auth', () => {
   const userManager = ref<Nullable<UserManager>>(null)
@@ -22,7 +21,7 @@ export const useAuth = defineStore('auth', () => {
         response_type: 'code',
         scope: 'openid profile offline_access',
         silent_redirect_uri: `${config.public.host}/silent-renew`,
-        userStore: new WebStorageStateStore({ prefix: 'uplatform_writer_' })
+        userStore: new WebStorageStateStore({ prefix: 'uplatform_writer_' }),
       }
       userManager.value = new UserManager(settings)
     } catch (error) {
@@ -108,10 +107,6 @@ export const useAuth = defineStore('auth', () => {
     signInCallback,
     signInRedirect,
     signOut,
-    userManager
+    userManager,
   }
 })
-
-if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useAuth, import.meta.hot))
-}

@@ -22,6 +22,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "types": ["node", "vite/client"],
 
     // Some stricter flags
     "useUnknownInCatchVariables": true,

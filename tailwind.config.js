@@ -5,8 +5,8 @@
 export default {
   content: [],
   theme: {
-    extend: {}
+    extend: {},
   },
   plugins: [],
-  safelist: ['cursor-default', 'select-none']
+  safelist: ['cursor-default', 'select-none'],
 }

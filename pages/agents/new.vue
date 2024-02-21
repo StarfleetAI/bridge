@@ -2,12 +2,11 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
-  import type { CreateAgent } from '@/store/agents'
-  import { useAgentsStore } from '@/store/agents'
+  import { useAgentsStore, type CreateAgent } from '@/features/agents'
+  import { useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({
-    title: 'Agents &raquo; New'
+    title: 'Agents &raquo; New',
   })
 
   const abilitiesStore = useAbilitiesStore()
@@ -17,7 +16,7 @@
     name: '',
     description: '',
     system_message: '',
-    ability_ids: []
+    ability_ids: [],
   })
   const router = useRouter()
 

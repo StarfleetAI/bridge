@@ -2,12 +2,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAbilitiesStore } from '@/store/abilities'
+  import { useAbilitiesStore } from '~/features/abilities'
 
   const abilitiesStore = useAbilitiesStore()
 
   definePageMeta({
-    title: 'Abilities'
+    title: 'Abilities',
   })
 </script>
 

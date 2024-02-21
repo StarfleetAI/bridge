@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-import { AgentItem } from '~/entities/agents'
+  import { AgentItem } from '~/entities/agents'
 </script>
 
 <template>
@@ -10,5 +10,4 @@ import { AgentItem } from '~/entities/agents'
   <AgentItem />
   <AgentItem />
 </template>
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

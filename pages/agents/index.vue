@@ -6,11 +6,11 @@
   import { AbilityFullItem } from '~/widgets/abilityFullItem'
   import { AgentFullItem } from '~/widgets/agentFullItem'
   import { AgentsList } from '~/widgets/agentsList'
-  import { AgentIcon, AbilitiesIcon, LibraryIcon, StoreIcon } from '~/shared/icons'
+  import { AgentIcon, AbilitiesIcon, LibraryIcon, StoreIcon } from '~/shared/ui/icons'
   import { ToggleSwitch } from '~/shared/ui/toggle-switch'
 
   definePageMeta({
-    title: 'Agents'
+    title: 'Agents',
   })
 
   const entity: Ref<string> = ref('agents')

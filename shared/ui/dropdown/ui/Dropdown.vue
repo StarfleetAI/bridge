@@ -10,7 +10,7 @@
   }>()
 
   const model = defineModel<DropdownOption[]>('modelValue', {
-    default: () => [] as DropdownOption[]
+    default: () => [] as DropdownOption[],
   })
 
   const isOpen = ref(false)
