@@ -10,7 +10,7 @@ use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 use crate::errors::Error;
 use crate::types::Result;
 
-#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default)]
+#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq)]
 pub enum Role {
     #[default]
     System,

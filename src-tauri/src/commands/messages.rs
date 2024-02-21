@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use askama::Template;
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -139,14 +139,132 @@ pub async fn create_message(
         .emit_all("messages:created", &message)
         .with_context(|| "Failed to emit event")?;
 
-    get_chat_completion(request.chat_id, window, pool, settings)
+    get_chat_completion(
+        request.chat_id,
+        window.clone(),
+        pool.clone(),
+        settings.clone(),
+    )
+    .await
+    .with_context(|| {
+        format!(
+            "Failed to get chat completion for chat with id {}",
+            request.chat_id
+        )
+    })?;
+
+    generate_chat_title(request.chat_id, window, pool, settings).await?;
+
+    Ok(())
+}
+
+/// Generates a title for a chat.
+///
+/// The function will ask LLM to give chat a title if all the following conditions are met:
+///
+/// * The chat has one message from user
+/// * The chat has one message from assistant
+/// * Last message in the chat is from assistant
+/// * The chat has no title yet
+///
+/// # Errors
+///
+/// Returns error if there was a problem while generating chat title.
+async fn generate_chat_title(
+    chat_id: i64,
+    window: Window,
+    pool: State<'_, DbPool>,
+    settings: State<'_, RwLock<Settings>>,
+) -> Result<()> {
+    debug!("Generating chat title for chat with id {}", chat_id);
+
+    let mut chat = repo::chats::get(&*pool, chat_id).await?;
+    debug!("Chat: {:?}", chat);
+
+    if !chat.title.is_empty() {
+        debug!("Chat already has a title");
+        return Ok(());
+    }
+
+    let settings_guard = settings.read().await;
+
+    let messages = repo::messages::list(&*pool, ListParams { chat_id }).await?;
+
+    if messages.len() < 3 {
+        debug!("Chat has less than 3 messages");
+        return Ok(());
+    }
+
+    let user_message = messages.iter().find(|message| message.role == Role::User);
+    let assistant_message = messages
+        .iter()
+        .find(|message| message.role == Role::Assistant);
+
+    if user_message.is_none() || assistant_message.is_none() {
+        debug!("Chat has no user or assistant messages");
+        return Ok(());
+    }
+
+    let last_message = messages.last().unwrap();
+
+    if last_message.role != Role::Assistant {
+        debug!("Last message in the chat is not from assistant");
+        return Ok(());
+    }
+
+    debug!("Messages so far: {:?}", messages);
+
+    let mut req_messages = messages
+        .into_iter()
+        .map(crate::clients::openai::Message::try_from)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+
+    req_messages.push(crate::clients::openai::Message::User {
+        content: "Provide a short title for the current conversation (4-6 words)".to_string(),
+        name: None,
+    });
+
+    // Send request to LLM
+    let client = Client::new(
+        settings_guard
+            .openai_api_key
+            .as_ref()
+            .with_context(|| "Failed to get openai api key")?,
+    );
+
+    let response = client
+        .create_chat_completion(CreateChatCompletionRequest {
+            model: "gpt-4".to_string(),
+            messages: req_messages,
+            stream: false,
+            tools: None,
+        })
         .await
-        .with_context(|| {
-            format!(
-                "Failed to get chat completion for chat with id {}",
-                request.chat_id
-            )
-        })?;
+        .with_context(|| "Failed to create chat completion")?;
+
+    let mut title = match &response.choices[0].message {
+        crate::clients::openai::Message::Assistant { content, .. } => match content {
+            Some(title) => title,
+            _ => return Err(anyhow!("Received empty response from LLM").into()),
+        },
+        _ => return Err(anyhow!("Failed to get title from LLM").into()),
+    }
+    .to_string();
+
+    // Clean up title
+    if title.starts_with('"') && title.ends_with('"') {
+        title = title
+            .trim_start_matches('"')
+            .trim_end_matches('"')
+            .to_string();
+    }
+
+    repo::chats::update_title(&*pool, chat_id, &title).await?;
+    chat = repo::chats::get(&*pool, chat_id).await?;
+
+    window
+        .emit_all("chats:updated", &chat)
+        .with_context(|| "Failed to emit message update event")?;
 
     Ok(())
 }
@@ -175,7 +293,7 @@ pub async fn approve_tool_call(
 
     // Check if message is waiting for tool call
     if message.status != Status::WaitingForToolCall {
-        return Err(anyhow::anyhow!("Message is not waiting for tool call").into());
+        return Err(anyhow!("Message is not waiting for tool call").into());
     }
 
     // Check if message is a last message in chat
@@ -191,13 +309,13 @@ pub async fn approve_tool_call(
             .emit_all("messages:updated", &message)
             .with_context(|| "Failed to emit event")?;
 
-        return Err(anyhow::anyhow!("Message is not a last message in chat").into());
+        return Err(anyhow!("Message is not a last message in chat").into());
     }
 
     // Load agent abilities
     let ablts = match message.agent_id {
         Some(agent_id) => repo::abilities::list_for_agent(&mut *tx, agent_id).await?,
-        None => return Err(anyhow::anyhow!("Agent is not set for the message").into()),
+        None => return Err(anyhow!("Agent is not set for the message").into()),
     };
 
     // Join the abilities code into one string
@@ -229,7 +347,7 @@ pub async fn approve_tool_call(
     let settings_guard = settings.read().await;
 
     let Some(tool_calls) = &message.tool_calls else {
-        return Err(anyhow::anyhow!("Tool calls are not set for the message").into());
+        return Err(anyhow!("Tool calls are not set for the message").into());
     };
 
     let script_name = format!("script-{}.py", message.id);
@@ -265,7 +383,7 @@ pub async fn approve_tool_call(
             .output()
             .await
             .with_context(|| "Failed to execute tool_calls script")?,
-        None => return Err(anyhow::anyhow!("Python path is not set").into()),
+        None => return Err(anyhow!("Python path is not set").into()),
     };
 
     debug!("Function call script output: {:?}", output);
@@ -331,14 +449,21 @@ pub async fn approve_tool_call(
 
     drop(settings_guard);
 
-    get_chat_completion(message.chat_id, window, pool, settings)
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to get chat completion for chat with id {}",
-                message.chat_id
-            )
-        })?;
+    get_chat_completion(
+        message.chat_id,
+        window.clone(),
+        pool.clone(),
+        settings.clone(),
+    )
+    .await
+    .with_context(|| {
+        format!(
+            "Failed to get chat completion for chat with id {}",
+            message.chat_id
+        )
+    })?;
+
+    generate_chat_title(message.chat_id, window, pool, settings).await?;
 
     Ok(())
 }
@@ -363,7 +488,7 @@ pub async fn deny_tool_call(
 
     // Ensure the message is waiting for a tool call
     if message.status != Status::WaitingForToolCall {
-        return Err(anyhow::anyhow!("Message is not waiting for tool call").into());
+        return Err(anyhow!("Message is not waiting for tool call").into());
     }
 
     // Update the message status to ToolCallDenied
@@ -386,9 +511,16 @@ pub async fn deny_tool_call(
         .emit_all("messages:created", &denied_message)
         .with_context(|| "Failed to emit message creation event")?;
 
-    get_chat_completion(message.chat_id, window, pool, settings)
-        .await
-        .with_context(|| "Failed to get chat completion for chat")?;
+    get_chat_completion(
+        message.chat_id,
+        window.clone(),
+        pool.clone(),
+        settings.clone(),
+    )
+    .await
+    .with_context(|| "Failed to get chat completion for chat")?;
+
+    generate_chat_title(message.chat_id, window, pool, settings).await?;
 
     Ok(())
 }
