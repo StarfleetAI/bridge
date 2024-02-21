@@ -135,11 +135,14 @@
   }
 
   .history-item {
+    overflow: hidden;
     width: 176px;
     padding: 6px 8px;
     border-radius: 4px;
     color: var(--text-secondary);
     font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &:hover,
     &.active {

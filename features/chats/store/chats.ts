@@ -1,5 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
+import type { UnlistenFn } from '@tauri-apps/api/event'
+import { listen } from '@tauri-apps/api/event'
 
 import { type Chat } from '~/entities/chat'
 import { listChats as listChatsReq, deleteChat as deleteChatReq, createChat as createChatReq } from '../api'
@@ -33,6 +35,21 @@ export const useChatsStore = defineStore('chats', () => {
       chats.value.splice(index, 1)
     }
   }
+  const updateChat = (chat: Chat) => {
+    const index = chats.value.findIndex((a) => a.id === chat.id)
+    if (index !== undefined && index !== -1) {
+      chats.value[index].title = chat.title
+    }
+  }
+  const chatsUpdatedUnlisten: Promise<UnlistenFn> = listen('chats:updated', (event) => {
+    const chat = event.payload as Chat
+    updateChat(chat)
+  })
+
+  const $reset = async () => {
+    chats.value = []
+    await chatsUpdatedUnlisten
+  }
 
   return {
     chats,
@@ -40,5 +57,6 @@ export const useChatsStore = defineStore('chats', () => {
     listChats,
     createChat,
     deleteChat,
+    $reset,
   }
 })
