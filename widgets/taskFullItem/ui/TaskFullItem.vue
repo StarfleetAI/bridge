@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { TaskStatus } from '~/entities/tasks'
+  import { TaskStatusBadge } from '~/entities/tasks'
   import { AvatarsList } from '~/shared/ui/avatars'
   import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
   import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/ui/icons'
@@ -21,7 +21,7 @@
       </div>
       <div class="task-full-item__top">
         <div class="task-full-item__status">
-          <TaskStatus
+          <TaskStatusBadge
             status="Todo"
             :complete="1"
             :total="2"

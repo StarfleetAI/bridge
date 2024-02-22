@@ -2,25 +2,47 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  // import { useTasksStore } from '@/store/tasks'
-
-  import { TaskFullItem } from '~/widgets/taskFullItem'
   import { TasksList } from '~/widgets/tasksList'
+  import { useTasksNavigation } from '~/features/task'
+  import { BaseContainer } from '~/shared/ui/base'
 
   definePageMeta({
     title: 'Tasks',
   })
 
-  // const tasksStore = useTasksStore()
+  const { isCreateTask, selectedTask } = useTasksNavigation()
+  const TaskFullItem = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/taskFullItem')
+    return module.TaskFullItem
+  })
+  const TaskForm = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/taskForm')
+    return module.TaskForm
+  })
+  const sideContentComponent = computed(() => {
+    if (isCreateTask.value) {
+      return TaskForm
+    }
+    if (selectedTask.value) {
+      return TaskFullItem
+    }
+    return null
+  })
 </script>
 
 <template>
-  <div class="main-content">
-    <TasksList />
-  </div>
-  <div class="side-content">
-    <TaskFullItem />
-  </div>
+  <BaseContainer>
+    <template #main>
+      <div class="main-content">
+        <TasksList />
+      </div>
+    </template>
+    <template #additional>
+      <div class="side-content">
+        <component :is="sideContentComponent" />
+      </div>
+    </template>
+  </BaseContainer>
 </template>
 
 <style lang="scss" scoped>
@@ -29,15 +51,12 @@
   }
 
   .main-content {
-    width: 60%;
-    min-height: calc(100vh - 44px);
-    padding: 20px;
+    flex: 1;
   }
 
   .side-content {
-    overflow-y: auto;
-    width: 40%;
-    min-height: calc(100vh - 44px);
-    background: var(--side-panel);
+    width: 100%;
+    height: 100%;
+    background: var(--surface-2);
   }
 </style>

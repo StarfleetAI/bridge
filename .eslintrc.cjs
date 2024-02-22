@@ -7,5 +7,6 @@ module.exports = {
     'vue/multi-word-component-names': 'off',
     'no-restricted-syntax': 'off',
     '@typescript-eslint/naming-convention': 'off',
+    'generator-star-spacing': 'off',
   },
 }

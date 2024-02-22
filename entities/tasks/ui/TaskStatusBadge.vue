@@ -11,10 +11,10 @@
     TaskStatusFailed,
     TaskStatusNew,
   } from '~/shared/ui/icons'
-  import { type Status } from '../model'
+  import { type TaskStatus } from '../model'
 
   const props = defineProps<{
-    status: Status
+    status: TaskStatus
     complete: number
     total: number
   }>()
