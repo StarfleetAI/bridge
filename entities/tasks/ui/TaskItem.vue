@@ -7,7 +7,7 @@
   import type { Task } from '../model'
   import TaskStatusBadge from './TaskStatusBadge.vue'
 
-  const props = defineProps<{
+  defineProps<{
     task: Task
   }>()
 </script>

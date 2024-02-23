@@ -2,33 +2,70 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  defineProps<{
-    type: 'primary' | 'secondary' | 'approve' | 'decline' | 'update'
-    disabled: boolean
-    outlined?: boolean
-    size: 'small' | 'medium'
-  }>()
+  withDefaults(
+    defineProps<{
+      type?: 'primary' | 'secondary' | 'approve' | 'decline' | 'update'
+      disabled?: boolean
+      outlined?: boolean
+      size?: 'small' | 'medium'
+    }>(),
+    {
+      type: 'primary',
+      disabled: false,
+      outlined: false,
+      size: 'medium',
+    },
+  )
 </script>
 
 <template>
-  <div :class="['base-button', type, { disabled, outlined }]">
+  <div :class="['base-button', type, size, { disabled, outlined }]">
     <slot name="icon" />
+    <slot />
   </div>
 </template>
 
 <style lang="scss" scoped>
   .base-button {
-    height: 28px;
-    padding: 4px 11px 4px 8px;
     border-radius: 4px;
-    background-color: var(--button-primary);
+
+    &.primary {
+      background-color: var(--button-primary);
+      color: var(--text-on-button);
+    }
+
+    &.secondary {
+      background-color: var(--surface-4);
+      color: var(--text-secondary) !important;
+    }
+
+    &.outlined {
+      border: 1px solid var(--border-2);
+      background-color: transparent !important;
+      color: var(--text-tertiary) !important;
+
+      &:hover {
+        color: var(--text-secondary) !important;
+      }
+    }
 
     &.disabled {
       opacity: 0.3;
       pointer-events: none;
     }
 
+    &.small {
+      padding: 4px 10px;
+
+      @include font-inter-500(12px, 17px, var(--text-on-button));
+    }
+
+    &.medium {
+      padding: 6px 10px;
+
+      @include font-inter-500(14px, 20px, var(--text-on-button));
+    }
+
     @include flex(row, center, center, $gap: 8px);
-    @include font-inter-500(14px, 20px, var(--text-on-button));
   }
 </style>

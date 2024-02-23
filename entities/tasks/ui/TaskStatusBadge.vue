@@ -2,6 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
+  import { useChangeCase } from '@vueuse/integrations/useChangeCase'
   import {
     TaskStatusTodo,
     TaskStatusInProgress,
@@ -10,78 +11,94 @@
     TaskStatusDone,
     TaskStatusFailed,
     TaskStatusNew,
+    TaskStatusDraft,
   } from '~/shared/ui/icons'
-  import { type TaskStatus } from '../model'
+  import { TaskStatus } from '../model'
 
   const props = defineProps<{
     status: TaskStatus
-    complete: number
-    total: number
+    complete?: number
+    total?: number
   }>()
   const statusComponent = computed(() => {
     switch (props.status) {
-      case 'Todo':
+      case TaskStatus.TODO:
         return TaskStatusTodo
-      case 'InProgress':
+      case TaskStatus.IN_PROGRESS:
         return TaskStatusInProgress
-      case 'WaitingForUser':
+      case TaskStatus.WAITING_FOR_USER:
         return TaskStatusWaiting
-      case 'Paused':
+      case TaskStatus.PAUSED:
         return TaskStatusPaused
-      case 'Done':
+      case TaskStatus.DONE:
         return TaskStatusDone
-      case 'Failed':
+      case TaskStatus.FAILED:
         return TaskStatusFailed
-      case 'Canceled':
+      case TaskStatus.CANCELED:
         return TaskStatusFailed
-      case 'New':
+      case TaskStatus.NEW:
         return TaskStatusNew
+      case TaskStatus.DRAFT:
+        return TaskStatusDraft
       default:
         return null
     }
   })
 
-  const statusColor = computed(() => {
-    switch (props.status) {
-      case 'Todo':
-        return '#32AAED'
-      case 'InProgress':
-        return '#62AC55'
-      case 'WaitingForUser':
-        return '#DA893E'
-      case 'Paused':
-        return '#9E83EA'
-      case 'Done':
-        return '#00A140'
-      case 'Failed':
-        return '#DC493E'
-      case 'Canceled':
-        return '#DC493E'
-      case 'New':
-        return '#677383'
-      default:
-        return 'transparent'
-    }
+  const statusToKebab = useChangeCase(props.status, 'paramCase')
+  const showComplete = computed(() => {
+    return typeof props.complete === 'number' && typeof props.total === 'number'
   })
 </script>
 <template>
-  <div
-    class="task-status"
-    :style="{ color: statusColor }"
-  >
+  <div :class="['task-status', statusToKebab]">
     <component :is="statusComponent" />
+    <span class="task-status__label">{{ props.status }}</span>
     <span
-      class="task-status__label"
-      :style="{ color: statusColor }"
-      >{{ props.status }}</span
+      v-if="showComplete"
+      class="task-status__complete"
     >
-    <span class="task-status__complete"> {{ props.complete }} / {{ props.total }} </span>
+      {{ props.complete }} / {{ props.total }}
+    </span>
   </div>
 </template>
 <style scoped lang="scss">
   .task-status {
     display: flex;
     align-items: center;
+
+    &.new,
+    &.draft {
+      color: var(--status-new);
+    }
+
+    &.todo {
+      color: var(--status-todo);
+    }
+
+    &.in-progress {
+      color: var(--status-progress);
+    }
+
+    &.waiting-for-user {
+      color: var(--status-waiting);
+    }
+
+    &.paused {
+      color: var(--status-paused);
+    }
+
+    &.done {
+      color: var(--status-done);
+    }
+
+    &.failed {
+      color: var(--status-failed);
+    }
+
+    &.canceled {
+      color: var(--text-tertiary);
+    }
 
     .icon {
       margin-right: 12px;
@@ -91,6 +108,7 @@
       display: inline-block;
       margin-right: 8px;
       margin-left: 6px;
+      color: inherit;
 
       @include font-inter-500(14px, 20px);
     }

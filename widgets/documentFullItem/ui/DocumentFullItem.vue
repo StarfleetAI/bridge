@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { TaskItem } from '~/entities/tasks'
+  // import { TaskItem } from '~/entities/tasks'
   import { DocumentTitleIcon, TaskHeaderIcon, FileFrameIcon, FileCSVIcon } from '~/shared/ui/icons'
 </script>
 <template>
@@ -30,9 +30,9 @@
         <TaskHeaderIcon />
         Associated Tasks
       </div>
+      <!-- <TaskItem class="document-full-item__task" />
       <TaskItem class="document-full-item__task" />
-      <TaskItem class="document-full-item__task" />
-      <TaskItem class="document-full-item__task" />
+      <TaskItem class="document-full-item__task" /> -->
     </div>
   </div>
 </template>

@@ -5,10 +5,11 @@
   import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { TaskItem } from '~/entities/tasks'
   import { type Pagination } from '~/shared/model'
+  import { BaseButton } from '~/shared/ui/base'
+  import { PlusIcon } from '~/shared/ui/icons'
   import type { TasksListView } from '../model'
-  import CreateTaskButton from './CreateTaskButton.vue'
 
-  const view = ref<TasksListView>('list')
+  const view = ref<TasksListView>('grid')
   const { listRootTasks } = useTasksStore()
   const pagination = ref<Pagination>({
     page: 1,
@@ -16,9 +17,9 @@
   })
   await listRootTasks({ pagination: pagination.value })
   const { tasksGroupsByStatus } = storeToRefs(useTasksStore())
-  const toggleView = (value: TasksListView) => {
-    view.value = value
-  }
+  // const toggleView = (value: TasksListView) => {
+  //   view.value = value
+  // }
   const { enableCreateTask, isCreateTask } = useTasksNavigation()
 </script>
 
@@ -26,17 +27,21 @@
   <div class="tasks-list__header">
     <div class="tasks-list__title">
       Tasks
-      <CreateTaskButton
+      <BaseButton
         :disabled="isCreateTask"
+        size="medium"
+        class="task-list__create"
         @click="enableCreateTask"
-      />
+      >
+        <template #icon>
+          <PlusIcon />
+        </template>
+        Create new
+      </BaseButton>
     </div>
     <div class="tasks-list__views" />
   </div>
-  <div
-    class="tasks-list"
-    :class="{ 'tasks-list--list': view === 'list', 'tasks-list--grid': view === 'grid' }"
-  >
+  <div class="tasks-list">
     <div
       v-for="[status, tasks] in tasksGroupsByStatus"
       :key="status"
@@ -45,40 +50,48 @@
       <div class="tasks-list__group-name">
         <b>{{ status }}</b> {{ tasks.length }}
       </div>
-      <TaskItem
-        v-for="task in tasks"
-        :key="task.id"
-        :task="task"
-      />
+      <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
+        <TaskItem
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+        />
+      </div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .tasks-list {
-    display: grid;
-    columns: 2;
+    // display: grid;
+    padding: 0 24px;
   }
 
   .tasks-list__header {
     padding: 12px 24px;
     border-bottom: 1px solid var(--border-3);
 
-    @include flex(row, space-between, stretch);
+    @include flex(row, flex-start, stretch);
   }
 
   .tasks-list__title {
     flex: 1;
 
-    @include flex(row, space-between, center);
+    @include flex(row, flex-start, center, 24px);
     @include font-inter-700(16px, 22px, var(--text-primary));
   }
 
   .tasks-list__group {
+    &--grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
     @include flex(column);
   }
 
   .tasks-list__group-name {
-    padding: 16px 24px;
+    padding: 16px 0;
 
     @include font-inter-400(14px, 20px, var(--text-tertiary));
   }

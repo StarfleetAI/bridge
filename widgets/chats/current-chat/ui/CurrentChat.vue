@@ -8,6 +8,7 @@
   import { useAgentsStore } from '~/features/agents/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
   import { Role, Status } from '~/entities/chat'
+  import { BRIDGE_AGENT_ID } from '~/shared/lib'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
 
@@ -90,10 +91,10 @@
     return {
       id: 0,
       chat_id: 0,
-      agent_id: agents.value[0].id,
+      agent_id: BRIDGE_AGENT_ID,
       status: Status.COMPLETED,
       role: Role.SYSTEM,
-      content: agents.value[0].system_message,
+      content: agents.value[0]?.system_message || '',
       prompt_tokens: null,
       completion_tokens: null,
       tool_call_id: null,

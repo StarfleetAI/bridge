@@ -33,21 +33,21 @@
   font-display: swap;
 }
 
-@mixin font-inter-400($size, $line-height, $color: var(--text-primary)) {
+@mixin font-inter-400($size, $line-height, $color: null) {
   color: $color;
   font-weight: 400;
   font-size: $size;
   line-height: $line-height;
 }
 
-@mixin font-inter-500($size, $line-height, $color: var(--text-primary)) {
+@mixin font-inter-500($size, $line-height, $color: null) {
   color: $color;
   font-weight: 500;
   font-size: $size;
   line-height: $line-height;
 }
 
-@mixin font-inter-700($size, $line-height, $color: var(--text-primary)) {
+@mixin font-inter-700($size, $line-height, $color: null) {
   color: $color;
   font-weight: 700;
   font-size: $size;

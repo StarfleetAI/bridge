@@ -56,6 +56,7 @@ pub struct CreateTask {
     pub title: String,
     pub summary: String,
     pub ancestry: Option<String>,
+    pub status: Status,
 }
 
 /// Create new task.
@@ -77,7 +78,7 @@ pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result
             origin_chat_id: None,
             title: &request.title,
             summary: &request.summary,
-            status: Status::New,
+            status: request.status,
             ancestry: request.ancestry.as_deref(),
         },
     )

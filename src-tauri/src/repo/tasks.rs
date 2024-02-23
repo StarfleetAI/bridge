@@ -29,6 +29,8 @@ pub enum Status {
     Failed,
     /// Task canceled by the user.
     Canceled,
+    /// Task is a draft
+    Draft,
 }
 
 impl From<String> for Status {
@@ -41,6 +43,7 @@ impl From<String> for Status {
             "Done" => Status::Done,
             "Failed" => Status::Failed,
             "Canceled" => Status::Canceled,
+            "Draft" => Status::Draft,
             _ => Status::New,
         }
     }
