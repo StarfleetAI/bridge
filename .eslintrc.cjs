@@ -8,5 +8,7 @@ module.exports = {
     'no-restricted-syntax': 'off',
     '@typescript-eslint/naming-convention': 'off',
     'generator-star-spacing': 'off',
+    'tsdoc/syntax': 'off',
+    'no-console': 'off',
   },
 }
