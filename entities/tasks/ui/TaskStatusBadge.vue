@@ -10,7 +10,6 @@
     TaskStatusPaused,
     TaskStatusDone,
     TaskStatusFailed,
-    TaskStatusNew,
     TaskStatusDraft,
   } from '~/shared/ui/icons'
   import { TaskStatus } from '../model'
@@ -36,12 +35,9 @@
         return TaskStatusFailed
       case TaskStatus.CANCELED:
         return TaskStatusFailed
-      case TaskStatus.NEW:
-        return TaskStatusNew
       case TaskStatus.DRAFT:
-        return TaskStatusDraft
       default:
-        return null
+        return TaskStatusDraft
     }
   })
 
