@@ -4,13 +4,18 @@
 <script setup lang="ts">
   import { AvatarsList } from '~/shared/ui/avatars'
   import { InlineFiles } from '~/shared/ui/files'
-  import TaskStatus from './TaskStatus.vue'
+  import type { Task } from '../model'
+  import TaskStatusBadge from './TaskStatusBadge.vue'
+
+  defineProps<{
+    task: Task
+  }>()
 </script>
 <template>
   <div class="task-list-item">
     <div class="task-list-item__head">
-      <TaskStatus
-        status="Todo"
+      <TaskStatusBadge
+        :status="task.status"
         :complete="1"
         :total="2"
       />
@@ -22,7 +27,7 @@
       />
     </div>
     <div class="task-list-item__body">
-      Develop a project schedule considering the stages of neural network development and service implementation.
+      {{ task.summary }}
     </div>
     <div class="task-list-item__footer">
       <InlineFiles

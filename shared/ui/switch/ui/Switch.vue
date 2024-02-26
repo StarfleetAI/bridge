@@ -2,8 +2,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { defineProps, defineEmits } from 'vue'
-
   const props = defineProps<{
     modelValue: boolean
   }>()
