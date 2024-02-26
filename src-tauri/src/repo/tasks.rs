@@ -12,9 +12,9 @@ use super::Pagination;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::Type, PartialEq, Default, Clone, Copy)]
 pub enum Status {
-    /// Task has not been selected for execution yet.
+    /// Task is in draft and has not been selected for execution yet.
     #[default]
-    New,
+    Draft,
     /// Task is selected for execution.
     Todo,
     /// Task is currently being executed.
@@ -41,7 +41,7 @@ impl From<String> for Status {
             "Done" => Status::Done,
             "Failed" => Status::Failed,
             "Canceled" => Status::Canceled,
-            _ => Status::New,
+            _ => Status::Draft,
         }
     }
 }

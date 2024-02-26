@@ -1,7 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-export type Status = 'Todo' | 'InProgress' | 'WaitingForUser' | 'Paused' | 'Done' | 'Failed' | 'Canceled' | 'New'
+import { type TaskStatus } from './TaskStatus'
 
 export interface Task {
   id: number
@@ -11,7 +11,7 @@ export interface Task {
   execution_chat_id?: number
   title: string
   summary: string
-  status: Status
+  status: TaskStatus
   ancestry?: string
   ancestry_level: number
   created_at: Date

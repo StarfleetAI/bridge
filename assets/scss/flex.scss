@@ -3,8 +3,16 @@
 
 @mixin flex($flex-direction: null, $justify-content: null, $align-items: null, $gap: null) {
   display: flex;
-  flex-direction: $flex-direction;
+  flex-direction: if(
+    $flex-direction == 'start' or $flex-direction == 'end',
+    'flex-#{$flex-direction}',
+    $flex-direction
+  );
   gap: $gap;
-  justify-content: $justify-content;
-  align-items: $align-items;
+  justify-content: if(
+    $justify-content == 'start' or $justify-content == 'end',
+    'flex-#{$justify-content}',
+    $justify-content
+  );
+  align-items: if($align-items == 'start' or $align-items == 'end', 'flex-#{$align-items}', $align-items);
 }

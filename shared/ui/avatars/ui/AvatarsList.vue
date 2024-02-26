@@ -14,7 +14,7 @@
   <div class="avatar-list">
     <template v-if="persons.length === 1">
       <div class="avatar-list__single">
-        <span class="avatar-list__name">{{ persons[0].name }}</span>
+        <div class="avatar-list__name">{{ persons[0].name }}</div>
         <template v-if="persons[0].avatar">
           <img
             :src="persons[0].avatar"
@@ -60,18 +60,19 @@
       @include flex(row, space-between, center);
     }
 
+    &__single {
+      gap: 8px;
+    }
+
     &__avatar {
       object-fit: cover;
       width: 24px;
       height: 24px;
-      margin-left: -6px;
       border-radius: 50%;
     }
 
     &__name {
-      margin-right: 8px;
-
-      @include font-inter-500(14px, 22px, var(--text-secondary));
+      @include font-inter-500(14px, 20px, var(--text-secondary));
     }
   }
 </style>

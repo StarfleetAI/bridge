@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { TaskStatus } from '~/entities/tasks'
+  import { TaskStatus, TaskStatusBadge } from '~/entities/tasks'
   import { AvatarsList } from '~/shared/ui/avatars'
   import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
   import { TaskHeaderIcon, DocumentIcon, ResultIcon, ArrowLeftIcon } from '~/shared/ui/icons'
@@ -21,8 +21,8 @@
       </div>
       <div class="task-full-item__top">
         <div class="task-full-item__status">
-          <TaskStatus
-            status="Todo"
+          <TaskStatusBadge
+            :status="TaskStatus.TODO"
             :complete="1"
             :total="2"
           />
@@ -46,34 +46,7 @@
           <div><DocumentIcon /> Linked Documents</div>
           <div>+ Add</div>
         </div>
-        <FilesList
-          :files="[
-            {
-              type: 'TXT',
-              url: 'file.txt',
-              name: 'file.txt',
-              created: '14.07.2024, 18:32',
-              rows: 10,
-              size: '1.2 MB',
-            },
-            {
-              type: 'TXT',
-              url: 'file.txt',
-              name: 'file.txt',
-              created: '14.07.2024, 18:32',
-              rows: 10,
-              size: '1.2 MB',
-            },
-            {
-              type: 'TXT',
-              url: 'file.txt',
-              name: 'file.txt',
-              created: '14.07.2024, 18:32',
-              rows: 10,
-              size: '1.2 MB',
-            },
-          ]"
-        />
+        <FilesList :files="[]" />
       </div>
     </div>
     <div class="task-full-item__result">

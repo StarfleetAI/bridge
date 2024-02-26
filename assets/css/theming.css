@@ -13,12 +13,16 @@
   --surface-3: #2a2f3d;
   --surface-4: #313747;
   --surface-5: #3a4154;
+  --status-new: #c07ee8;
+  --status-todo: #32aaed;
   --status-progress: #62ac55;
+  --status-waiting: #da893e;
   --status-paused: #9e83ea;
-  --status-done: #00a140;
-  --status-failed: #dc493e;
+  --status-done: #24864b;
+  --status-failed: #b74e47;
   --border-standart: #d0d5dd;
   --border-3: #383e52;
+  --border-2: #4b546e;
   --side-panel: #232732;
   --pill: #333743;
   --text-on-button: #fcfcfd;

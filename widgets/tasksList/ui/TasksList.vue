@@ -2,41 +2,97 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { TaskItem } from '~/entities/tasks'
+  import { type Pagination } from '~/shared/model'
+  import { BaseButton } from '~/shared/ui/base'
+  import { PlusIcon } from '~/shared/ui/icons'
+  import type { TasksListView } from '../model'
 
-  const view = ref('list')
+  const view = ref<TasksListView>('grid')
+  const { listRootTasks } = useTasksStore()
+  const pagination = ref<Pagination>({
+    page: 1,
+    per_page: 14,
+  })
+  await listRootTasks({ pagination: pagination.value })
+  const { tasksGroupsByStatus } = storeToRefs(useTasksStore())
+  // const toggleView = (value: TasksListView) => {
+  //   view.value = value
+  // }
+  const { enableCreateTask, isCreateTask } = useTasksNavigation()
 </script>
 
 <template>
   <div class="tasks-list__header">
-    <div class="tasks-list__title">Active tasks</div>
+    <div class="tasks-list__title">
+      Tasks
+      <BaseButton
+        :disabled="isCreateTask"
+        size="medium"
+        class="task-list__create"
+        @click="enableCreateTask"
+      >
+        <template #icon>
+          <PlusIcon />
+        </template>
+        Create new
+      </BaseButton>
+    </div>
     <div class="tasks-list__views" />
   </div>
-  <div
-    class="tasks-list"
-    :class="{ 'tasks-list--list': view === 'list', 'tasks-list--grid': view === 'grid' }"
-  >
-    <TaskItem />
-    <TaskItem />
-    <TaskItem />
-    <TaskItem />
+  <div class="tasks-list">
+    <div
+      v-for="[status, tasks] in tasksGroupsByStatus"
+      :key="status"
+      class="tasks-list__group"
+    >
+      <div class="tasks-list__group-name">
+        <b>{{ status }}</b> {{ tasks.length }}
+      </div>
+      <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
+        <TaskItem
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+        />
+      </div>
+    </div>
   </div>
 </template>
 <style scoped lang="scss">
   .tasks-list {
-    &__header {
-      margin-bottom: 24px;
+    // display: grid;
+    padding: 0 24px;
+  }
 
-      @include flex(row, space-between, center);
-    }
+  .tasks-list__header {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-3);
 
-    &__title {
-      @include font-inter-700(16px, 22px, var(--text-secondary));
-    }
+    @include flex(row, flex-start, stretch);
+  }
 
+  .tasks-list__title {
+    flex: 1;
+
+    @include flex(row, flex-start, center, 24px);
+    @include font-inter-700(16px, 22px, var(--text-primary));
+  }
+
+  .tasks-list__group {
     &--grid {
       display: grid;
-      columns: 2;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
+
+    @include flex(column);
+  }
+
+  .tasks-list__group-name {
+    padding: 16px 0;
+
+    @include font-inter-400(14px, 20px, var(--text-tertiary));
   }
 </style>
