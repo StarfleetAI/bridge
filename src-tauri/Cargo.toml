@@ -15,7 +15,7 @@ rust-version = "1.75"
 tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 askama = "0.12.1"
 chrono = { version = "0.4.34", features = ["serde"] }
 dotenvy = "0.15.7"
