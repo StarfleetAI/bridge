@@ -329,7 +329,7 @@ pub async fn approve_tool_call(
         .path_resolver()
         .app_local_data_dir()
         .with_context(|| "Failed to get app local data dir")?;
-    let workdir_name = format!("workdir-{}", message.chat_id);
+    let workdir_name = format!("wd-{}", message.chat_id);
 
     // Build workdir path
     let mut workdir = PathBuf::new();
