@@ -3,6 +3,7 @@
 
 pub mod clients;
 pub mod commands;
+pub mod database;
 pub mod errors;
 pub mod repo;
 pub mod settings;

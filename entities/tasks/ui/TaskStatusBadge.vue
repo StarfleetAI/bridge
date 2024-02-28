@@ -4,7 +4,7 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase'
   import {
-    TaskStatusTodo,
+    TaskStatusToDo,
     TaskStatusInProgress,
     TaskStatusWaiting,
     TaskStatusPaused,
@@ -22,7 +22,7 @@
   const statusComponent = computed(() => {
     switch (props.status) {
       case TaskStatus.TODO:
-        return TaskStatusTodo
+        return TaskStatusToDo
       case TaskStatus.IN_PROGRESS:
         return TaskStatusInProgress
       case TaskStatus.WAITING_FOR_USER:
