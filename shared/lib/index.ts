@@ -16,5 +16,6 @@ export * from './bridgeAgentId'
 export * from './getMarkdown'
 export * from './copyToClipboard'
 export * from './formatBytes'
+export * from './utcToLocalTime'
 
 export * from './useDevTools'

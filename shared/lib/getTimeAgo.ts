@@ -8,38 +8,58 @@ dayjs.extend(relativeTime)
 
 export const getTimeAgo = ({
   date,
-  shortDate,
-  shortYear,
+  dateFormat = 'DD.MM.YYYY',
+  fullUnit,
 }: {
   date?: Date | string
-  shortDate?: boolean
-  shortYear?: boolean
+  dateFormat?: string
+  fullUnit?: boolean
 }) => {
   const timeAgo = ref<string>('')
 
   const dateObj = dayjs(date)
+  const units = {
+    second: {
+      short: 's',
+      full: [' second', ' seconds'],
+    },
+    minute: {
+      short: 'm',
+      full: [' minute', ' minutes'],
+    },
+    hour: {
+      short: 'h',
+      full: [' hour', ' hours'],
+    },
+    day: {
+      short: 'd',
+      full: [' day', ' days'],
+    },
+  }
 
+  const getUnit = (unit: keyof typeof units, amount: number = 1) => {
+    if (fullUnit) {
+      const enOrdinalRules = new Intl.PluralRules('en-US', { type: 'ordinal' })
+      const rule = enOrdinalRules.select(amount)
+      const word = units[unit].full[rule === 'one' ? 0 : 1]
+      return `${amount} ${word} ago`
+    }
+    return `${amount}${units[unit].short} ago`
+  }
   const update = () => {
     const now = dayjs()
     const diffInSeconds = now.diff(dateObj, 'second')
-    let dateFormat = 'DD.MM.YYYY'
-    if (shortYear) {
-      dateFormat = 'DD.MM.YY'
-    } else if (shortDate) {
-      dateFormat = 'MMM DD'
-    }
+
     if (!date) {
       timeAgo.value = ''
     } else if (diffInSeconds < 60) {
-      timeAgo.value = `${Math.max(1, Math.floor(diffInSeconds))}s ago`
+      timeAgo.value = getUnit('second', Math.max(1, Math.floor(diffInSeconds)))
     } else if (diffInSeconds < 3600) {
-      timeAgo.value = `${Math.floor(diffInSeconds / 60)}m ago`
+      timeAgo.value = getUnit('minute', Math.floor(diffInSeconds / 60))
     } else if (diffInSeconds < 86400) {
-      timeAgo.value = `${Math.floor(diffInSeconds / 3600)}h ago`
+      timeAgo.value = getUnit('hour', Math.floor(diffInSeconds / 3600))
     } else if (diffInSeconds < 604800) {
-      timeAgo.value = `${Math.floor(diffInSeconds / 86400)}d ago`
-    } else if (dateObj.isSame(now, 'year')) {
-      timeAgo.value = dateObj.format(dateFormat)
+      timeAgo.value = getUnit('day', Math.floor(diffInSeconds / 86400))
     } else {
       timeAgo.value = dateObj.format(dateFormat)
     }

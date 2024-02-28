@@ -14,6 +14,6 @@ export interface Task {
   status: TaskStatus
   ancestry?: string
   ancestry_level: number
-  created_at: Date
-  updated_at: Date
+  created_at: string
+  updated_at: string
 }

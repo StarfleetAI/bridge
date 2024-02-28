@@ -3,3 +3,4 @@
 
 export * from './groupTasks'
 export * from './useTasksNavigation'
+export * from './useTaskActions'

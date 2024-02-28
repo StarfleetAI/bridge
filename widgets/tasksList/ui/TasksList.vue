@@ -3,13 +3,13 @@
 
 <script lang="ts" setup>
   import { useTasksNavigation, useTasksStore } from '~/features/task'
-  import { TaskItem } from '~/entities/tasks'
+  import { TaskItemLine } from '~/entities/tasks'
   import { type Pagination } from '~/shared/model'
   import { BaseButton } from '~/shared/ui/base'
   import { PlusIcon } from '~/shared/ui/icons'
   import type { TasksListView } from '../model'
 
-  const view = ref<TasksListView>('grid')
+  const view = ref<TasksListView>('list')
   const { listRootTasks } = useTasksStore()
   const pagination = ref<Pagination>({
     page: 1,
@@ -20,50 +20,55 @@
   // const toggleView = (value: TasksListView) => {
   //   view.value = value
   // }
-  const { enableCreateTask, isCreateTask } = useTasksNavigation()
+  const { enableCreateTask, isCreateTask, setSelectedTask } = useTasksNavigation()
 </script>
 
 <template>
-  <div class="tasks-list__header">
-    <div class="tasks-list__title">
-      Tasks
-      <BaseButton
-        :disabled="isCreateTask"
-        size="medium"
-        class="task-list__create"
-        @click="enableCreateTask"
-      >
-        <template #icon>
-          <PlusIcon />
-        </template>
-        Create new
-      </BaseButton>
-    </div>
-    <div class="tasks-list__views" />
-  </div>
   <div class="tasks-list">
-    <div
-      v-for="[status, tasks] in tasksGroupsByStatus"
-      :key="status"
-      class="tasks-list__group"
-    >
-      <div class="tasks-list__group-name">
-        <b>{{ status }}</b> {{ tasks.length }}
+    <div class="tasks-list__header">
+      <div class="tasks-list__title">
+        Tasks
+        <BaseButton
+          :disabled="isCreateTask"
+          size="medium"
+          class="task-list__create"
+          @click="enableCreateTask"
+        >
+          <template #icon>
+            <PlusIcon />
+          </template>
+          Create new
+        </BaseButton>
       </div>
-      <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
-        <TaskItem
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-        />
+      <div class="tasks-list__views" />
+    </div>
+    <div class="tasks-list__groups">
+      <div
+        v-for="[status, tasks] in tasksGroupsByStatus"
+        :key="status"
+        class="tasks-list__group"
+      >
+        <div class="tasks-list__group-name">
+          <b>{{ status }}</b> {{ tasks.length }}
+        </div>
+        <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
+          <TaskItemLine
+            v-for="task in tasks"
+            :key="task.id"
+            :task="task"
+            @click="setSelectedTask(task.id)"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .tasks-list {
-    // display: grid;
-    padding: 0 24px;
+    flex: 1;
+    width: 100%;
+
+    @include flex(column, flex-start, stretch);
   }
 
   .tasks-list__header {
@@ -80,11 +85,22 @@
     @include font-inter-700(16px, 22px, var(--text-primary));
   }
 
+  .tasks-list__groups {
+    overflow-x: hidden;
+    padding: 12px 24px;
+
+    @include flex(column);
+  }
+
   .tasks-list__group {
     &--grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+    }
+
+    &--list {
+      @include flex(column);
     }
 
     @include flex(column);

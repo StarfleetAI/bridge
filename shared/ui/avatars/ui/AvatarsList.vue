@@ -5,9 +5,13 @@
   import { NoAvatarIcon } from '~/shared/ui/icons'
   import { type Person } from '../model'
 
-  defineProps<{
+  const props = defineProps<{
     persons: Person[]
   }>()
+
+  const containerWidth = computed(() => {
+    return `${(props.persons.length - 1) * 16 + 24}px`
+  })
 </script>
 
 <template>
@@ -28,7 +32,10 @@
       </div>
     </template>
     <template v-else>
-      <div class="avatar-list__multiple">
+      <div
+        class="avatar-list__multiple"
+        :style="{ width: containerWidth }"
+      >
         <template v-for="(person, index) in persons">
           <template v-if="person.avatar">
             <img
@@ -62,6 +69,22 @@
 
     &__single {
       gap: 8px;
+    }
+
+    &__multiple {
+      position: relative;
+
+      & .avatar-list__avatar {
+        position: absolute;
+        right: 0;
+
+        @for $i from 1 through 10 {
+          &:nth-child(#{$i}) {
+            right: 16px * ($i - 1);
+            z-index: calc(10 - $i);
+          }
+        }
+      }
     }
 
     &__avatar {
