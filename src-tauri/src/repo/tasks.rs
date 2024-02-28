@@ -16,7 +16,7 @@ pub enum Status {
     #[default]
     Draft,
     /// Task is selected for execution.
-    Todo,
+    ToDo,
     /// Task is currently being executed.
     InProgress,
     /// Task is waiting for a user input.
@@ -34,7 +34,7 @@ pub enum Status {
 impl From<String> for Status {
     fn from(status: String) -> Self {
         match status.as_str() {
-            "Todo" => Status::Todo,
+            "ToDo" => Status::ToDo,
             "InProgress" => Status::InProgress,
             "WaitingForUser" => Status::WaitingForUser,
             "Paused" => Status::Paused,
