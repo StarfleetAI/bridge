@@ -1,4 +1,3 @@
-use crate::repo::messages;
 use anyhow::Context;
 use log::{debug, info};
 use sqlx::migrate::MigrateDatabase;
@@ -6,6 +5,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use std::path::PathBuf;
 
+use crate::repo::messages;
 use crate::types::Result;
 
 /// Create a new database pool.

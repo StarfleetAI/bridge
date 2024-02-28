@@ -40,6 +40,8 @@ fn main() -> Result<()> {
             commands::messages::create_message,
             commands::messages::delete_message,
             commands::messages::list_messages,
+            commands::settings::get_settings,
+            commands::settings::update_settings,
             commands::tasks::create_task,
             commands::tasks::list_root_tasks,
             commands::tasks::list_child_tasks,
@@ -56,7 +58,7 @@ fn main() -> Result<()> {
 // We need to resolve a local_data_dir in order to create a DB file. The easiest way to do this is
 // using the setup_handler, but it can't be async, so we need to spawn a task to do the actual
 // work.
-fn setup_handler(app: &mut tauri::App) -> std::result::Result<(), Box<dyn std::error::Error>> {
+fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app_handle = app.handle();
 
     tauri_plugin_deep_link::register("starfleetai-bridge", move |request| {
