@@ -1,70 +1,88 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use crate::types::Result;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+const SETTINGS_FILE: &str = "settings.json";
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub openai_api_key: Option<String>,
     pub python_path: Option<String>,
     pub agents: Value,
 }
 
-impl Settings {
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            openai_api_key: None,
-            python_path: None,
-            agents: json!({}),
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("failed to construct settings file path")]
+    PathError,
+    #[error("failed to read settings file: {0}")]
+    FileReadError(std::io::Error),
+    #[error("failed to write settings file: {0}")]
+    FileWriteError(std::io::Error),
+    #[error("failed to parse settings file: {0}")]
+    FileParseError(serde_json::Error),
+    #[error("failed to serialize settings: {0}")]
+    JsonSerializationError(serde_json::Error),
+}
 
+impl Settings {
     /// Load settings from disk. If the settings file doesn't exist, it will be created with default
     /// values.
     ///
     /// # Errors
     ///
-    /// Will return an error if the settings file can't be read or parsed.
-    ///
-    /// # Panics
-    ///
-    /// Will panic if the settings file path can't be converted to a string.
+    /// Will return an error if the settings file can't be read or if the settings can't be parsed.
     pub async fn load_from_disk(app_local_data_dir: &str) -> Result<Settings> {
-        let mut path = PathBuf::new();
-        path.push(app_local_data_dir);
-        path.push("settings.json");
+        let path = Self::file_path(app_local_data_dir)?;
 
-        let settings_path = path
-            .into_os_string()
-            .into_string()
-            .expect("Failed to convert settings.json path to string");
-
-        debug!("Settings path: {}", settings_path);
-
-        if !Path::new(&settings_path).exists() {
+        if !Path::new(&path).exists() {
             debug!("Settings file not found, creating one");
-            let settings = Settings::new();
 
-            fs::write(
-                &settings_path,
-                serde_json::to_string_pretty(&settings).unwrap(),
-            )
-            .await
-            .with_context(|| format!("Failed to write settings to {settings_path}"))?;
+            Self::default().save_to_disk(app_local_data_dir).await?;
         }
 
-        let settings = fs::read_to_string(&settings_path)
+        let content = fs::read_to_string(&path)
             .await
-            .with_context(|| format!("Failed to read settings from {settings_path}"))?;
+            .map_err(Error::FileReadError)?;
 
-        Ok(serde_json::from_str(&settings).with_context(|| "Failed to parse settings")?)
+        Ok(serde_json::from_str(&content).map_err(Error::FileParseError)?)
+    }
+
+    /// Save settings to disk.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the settings file can't be written.
+    pub async fn save_to_disk(&self, app_local_data_dir: &str) -> Result<()> {
+        fs::write(
+            &Self::file_path(app_local_data_dir)?,
+            serde_json::to_string_pretty(&self).map_err(Error::JsonSerializationError)?,
+        )
+        .await
+        .map_err(Error::FileWriteError)?;
+
+        Ok(())
+    }
+
+    /// Get the path to the settings file.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the path can't be converted to a string.
+    pub fn file_path(app_local_data_dir: &str) -> Result<String> {
+        let mut path = PathBuf::new();
+        path.push(app_local_data_dir);
+        path.push(SETTINGS_FILE);
+
+        path.into_os_string()
+            .into_string()
+            .map_err(|_| Error::PathError.into())
     }
 }

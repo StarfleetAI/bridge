@@ -5,4 +5,5 @@ pub mod abilities;
 pub mod agents;
 pub mod chats;
 pub mod messages;
+pub mod settings;
 pub mod tasks;
