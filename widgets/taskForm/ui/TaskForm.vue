@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsStore } from '~/features/agents'
+  import { useAgentsStore } from '~/features/agent'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { TaskInput, TaskStatus, TaskStatusBadge } from '~/entities/tasks'
   import { AvatarsList } from '~/shared/ui/avatars'

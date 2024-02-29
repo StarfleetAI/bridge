@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { useAgentsStore } from '~/features/agents'
+  import { useAgentsStore } from '~/features/agent'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
