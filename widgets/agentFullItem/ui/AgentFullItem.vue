@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import AgentAbilities from './AgentAbilities.vue'
+import AgentAbilities from './AgentAbilities.vue'
 </script>
 <template>
   <div class="agent-full-item">
@@ -18,55 +18,50 @@
     </div>
     <div class="agent-full-item__abilities">
       <div class="agent-full-item__abilities-title">Abilities</div>
-      <AgentAbilities
-        :abilities="[
-          { id: 1, name: 'Google Scholar', description: 'Access Google Scholar' },
-          { id: 2, name: 'Google Scholar', description: 'Access Google Scholar' },
-        ]"
-      />
+      <AgentAbilities :abilities="[]" />
     </div>
   </div>
 </template>
 <style scoped lang="scss">
-  .agent-full-item {
-    &__body {
-      padding: 24px;
+.agent-full-item {
+  &__body {
+    padding: 24px;
 
-      @include flex(column, start, center);
-    }
-
-    &__title {
-      width: 100%;
-      padding: 12px 24px;
-      border-bottom: 0.5px solid var(--border-3);
-
-      @include font-inter-700(14px, 20px, var(--text-secondary));
-      @include flex(row, start, center);
-    }
-
-    &__avatar {
-      flex-shrink: 0;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--text-secondary);
-      margin-bottom: 24px;
-    }
-
-    &__name {
-      margin-bottom: 8px;
-
-      @include font-inter-500(18px, 25px, var(--text-primary));
-    }
-
-    &__text {
-      margin-bottom: 8px;
-
-      @include font-inter-400(16px, 22px, var(--text-secondary));
-    }
-
-    &__info {
-      @include font-inter-400(14px, 20px, var(--text-tertiary));
-    }
+    @include flex(column, start, center);
   }
+
+  &__title {
+    width: 100%;
+    padding: 12px 24px;
+    border-bottom: 0.5px solid var(--border-3);
+
+    @include font-inter-700(14px, 20px, var(--text-secondary));
+    @include flex(row, start, center);
+  }
+
+  &__avatar {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    margin-bottom: 24px;
+  }
+
+  &__name {
+    margin-bottom: 8px;
+
+    @include font-inter-500(18px, 25px, var(--text-primary));
+  }
+
+  &__text {
+    margin-bottom: 8px;
+
+    @include font-inter-400(16px, 22px, var(--text-secondary));
+  }
+
+  &__info {
+    @include font-inter-400(14px, 20px, var(--text-tertiary));
+  }
+}
 </style>

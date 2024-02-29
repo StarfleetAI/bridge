@@ -2,6 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { InjectionKey, DeepReadonly } from 'vue'
-import { type Agent } from '~/entities/agent'
+import { type Agent } from '~/entities/agents'
 
 export const agentsInjectionKey = Symbol('agents list') as InjectionKey<DeepReadonly<Ref<Agent[]>>>
