@@ -5,7 +5,7 @@
   import utc from 'dayjs/plugin/utc'
   import hljs from 'highlight.js'
   import CopyButtonPlugin from 'highlightjs-copy'
-  import { useAgentsStore } from '~/features/agents/store'
+  import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
   import { Role, Status } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'

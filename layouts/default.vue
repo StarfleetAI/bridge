@@ -16,7 +16,7 @@
     height: 100vh; // fallback for old browsers
     height: 100svh;
 
-    @include flex(column, flex-start, stretch);
+    @include flex(row, flex-start, stretch);
   }
 
   .default-layout__page {

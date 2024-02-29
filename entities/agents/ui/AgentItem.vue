@@ -2,8 +2,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon } from '~/shared/ui/icons'
   import { Switch } from '~/shared/ui/switch'
+  import type { Agent } from '../model'
+
+  defineProps<{
+    agent: Agent
+  }>()
 
   const active = ref(true)
 </script>
@@ -15,12 +19,10 @@
     <div class="agents-list-item__avatar" />
     <div class="agents-list-item__body">
       <div class="agents-list-item__label">
-        Frontend Developer
-        <CloudIcon />
+        {{ agent.name }}
       </div>
       <div class="agents-list-item__text">
-        lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-        lorem ipsum
+        {{ agent.description }}
       </div>
       <Switch
         v-model="active"
@@ -43,8 +45,8 @@
 
     &__avatar {
       flex-shrink: 0;
-      width: 48px;
-      height: 48px;
+      width: 80px;
+      height: 80px;
       margin-right: 16px;
       border-radius: 50%;
       background: #d9d9d9;

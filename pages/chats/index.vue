@@ -4,7 +4,7 @@
 <script lang="ts" setup>
   import { ChatsHistory } from '~/widgets/chats/chats-history'
   import { CurrentChat } from '~/widgets/chats/current-chat'
-  import { useAgentsStore } from '~/features/agents'
+  import { useAgentsStore } from '~/features/agent'
   import { useChatsStore } from '~/features/chats'
   import { BaseContainer } from '~/shared/ui/base'
 
