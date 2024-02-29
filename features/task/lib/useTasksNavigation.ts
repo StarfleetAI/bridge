@@ -18,6 +18,7 @@ export const useTasksNavigation = () => {
   })
 
   const setSelectedTask = (id: Nullable<number>) => {
+    disableCreateTask()
     selectedTask.value = id
   }
 
