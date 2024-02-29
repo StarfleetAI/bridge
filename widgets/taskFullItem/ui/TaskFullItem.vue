@@ -4,7 +4,7 @@
 <script setup lang="ts">
   import { useAgentsStore } from '~/features/agents'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
-  import { TaskStatusBadge, type Task } from '~/entities/tasks'
+  import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { AvatarsList } from '~/shared/ui/avatars'
   import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
@@ -13,11 +13,15 @@
 
   const { selectedTask } = useTasksNavigation()
 
-  const { getById } = useTasksStore()
+  const { getById, updateTask } = useTasksStore()
   if (!getById(selectedTask.value!)) {
     navigateTo('/tasks')
   }
   const task = ref(getById(selectedTask.value!) as Task)
+
+  const setUpdatedTask = (updatedTask: Task) => {
+    task.value = updatedTask
+  }
 
   const createdAt = computed(() => {
     if (task.value) {
@@ -32,6 +36,69 @@
   const agent = computed(() => {
     return getAgentById(task.value.agent_id)
   })
+
+  const taskIsEditable = computed(() => {
+    return [
+      TaskStatus.DRAFT,
+      TaskStatus.PAUSED,
+      TaskStatus.CANCELED,
+      TaskStatus.FAILED,
+      TaskStatus.WAITING_FOR_USER,
+    ].includes(task.value.status)
+  })
+
+  const taskTitle = ref(task.value.title)
+  const taskTitlePlaceholder = computed(() => {
+    return task.value.title || `Task #${task.value.id}`
+  })
+  const titleIsEditing = ref(false)
+  const titleInput = ref<InstanceType<typeof TaskInput> | null>(null)
+  const enableTitleEditing = () => {
+    if (!taskIsEditable.value || titleIsEditing.value) {
+      return
+    }
+    titleIsEditing.value = true
+    nextTick(() => {
+      titleInput.value?.focus()
+    })
+  }
+  const updateTitle = async () => {
+    const { id } = await updateTask({ id: task.value.id, title: taskTitle.value })
+    setUpdatedTask(getById(id)!)
+    titleIsEditing.value = false
+  }
+  const titleComponent = computed(() => {
+    if (titleIsEditing.value) {
+      return TaskInput
+    }
+    return 'div'
+  })
+
+  const taskSummary = ref(task.value.summary)
+  const summaryIsEditing = ref(false)
+  const summaryInput = ref<InstanceType<typeof TaskInput> | null>(null)
+  const enableSummaryEditing = () => {
+    if (!taskIsEditable.value || summaryIsEditing.value) {
+      return
+    }
+    summaryIsEditing.value = true
+    nextTick(() => {
+      nextTick(() => {
+        summaryInput.value?.focus()
+      })
+    })
+  }
+  const updateSummary = async () => {
+    const { id } = await updateTask({ id: task.value.id, summary: taskSummary.value })
+    setUpdatedTask(getById(id)!)
+    summaryIsEditing.value = false
+  }
+  const summaryComponent = computed(() => {
+    if (summaryIsEditing.value) {
+      return TaskInput
+    }
+    return 'div'
+  })
 </script>
 <template>
   <div class="task-details">
@@ -39,7 +106,11 @@
       <div class="task-details__title">
         <b>Task #{{ task.id }}</b> {{ createdAt }}
       </div>
-      <TaskControls :task="task" />
+
+      <TaskControls
+        :task="task"
+        @update="setUpdatedTask"
+      />
     </div>
     <div class="task-details__body">
       <!-- TODO: back to parent task -->
@@ -48,11 +119,7 @@
       </div> -->
       <div class="task-details__top">
         <div class="task-details__status">
-          <TaskStatusBadge
-            :status="task.status"
-            :complete="1"
-            :total="2"
-          />
+          <TaskStatusBadge :status="task.status" />
         </div>
         <AvatarsList
           v-if="agent"
@@ -60,12 +127,40 @@
         />
       </div>
       <div class="task-details__middle">
-        <div class="task-details__text-title">
-          {{ task.title }}
-        </div>
-        <div class="task-details__text">
-          {{ task.summary }}
-        </div>
+        <component
+          :is="titleComponent"
+          ref="titleInput"
+          v-model="taskTitle"
+          :class="[
+            'task__title',
+            {
+              'task__title--editing': titleIsEditing,
+              'task__title--editable': taskIsEditable,
+            },
+          ]"
+          @click="enableTitleEditing"
+          @blur="updateTitle"
+        >
+          {{ taskTitlePlaceholder }}
+        </component>
+
+        <component
+          :is="summaryComponent"
+          ref="summaryInput"
+          v-model="taskSummary"
+          :class="[
+            'task__description',
+            {
+              'task__description--editing': summaryIsEditing,
+              'task__description--editable': taskIsEditable,
+            },
+          ]"
+          @blur="updateSummary"
+          @click="enableSummaryEditing"
+        >
+          {{ task.summary || 'No summary' }}
+        </component>
+
         <div class="task-details__attachments">
           <div class="task-details__attachments-title">
             <AttachmentIcon
@@ -135,16 +230,18 @@
     }
 
     &__body {
-      padding: 24px;
+      padding: 24px 0;
       border-bottom: 0.5px solid var(--pill);
     }
 
     &__top {
+      padding: 0 24px;
+
       @include flex(row, space-between, space-between);
     }
 
     &__middle {
-      margin-top: 18px;
+      margin-top: 8px;
     }
 
     &__text-title {
@@ -170,7 +267,8 @@
     }
 
     &__attachments {
-      padding: 8px 0;
+      margin-top: 16px;
+      padding: 0 24px;
 
       &-title {
         color: var(--text-secondary);
@@ -208,6 +306,30 @@
 
     &__result-text {
       @include font-inter-500(14px, 22px, var(--text-secondary));
+    }
+  }
+
+  .task__title {
+    @include font-inter-500(18px, 25px, var(--text-primary));
+  }
+
+  .task__description {
+    @include font-inter-400(14px, 20px, var(--text-secondary));
+  }
+
+  .task__title,
+  .task__description {
+    margin: 0 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+
+    &--editing {
+      width: calc(100% - 24px);
+      margin-bottom: -6px;
+    }
+
+    &--editable:hover {
+      background-color: var(--surface-3);
     }
   }
 </style>

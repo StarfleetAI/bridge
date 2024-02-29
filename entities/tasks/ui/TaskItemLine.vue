@@ -19,8 +19,8 @@
     return props.task.id === selectedTask.value
   })
 
-  const taskName = computed(() => {
-    return props.task.title || props.task.summary
+  const taskTitlePlaceholder = computed(() => {
+    return props.task.title || `Task #${props.task.id}`
   })
 </script>
 <template>
@@ -30,7 +30,7 @@
       :status="task.status"
     />
     <div class="task-item__content">
-      {{ taskName }}
+      {{ taskTitlePlaceholder }}
     </div>
     <AvatarsList
       class="task-item__avatars"

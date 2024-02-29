@@ -1,32 +1,25 @@
 import { type Task, TaskStatus } from '~/entities/tasks'
 import { CancelIcon, DeleteIcon, DuplicateIcon, PauseIcon, ReviseIcon } from '~/shared/ui/icons'
-import { duplicateTask, pauseTask, reviseTask, cancelTask } from '../api'
 import { useTasksStore } from '../store'
-import { useTasksNavigation } from './useTasksNavigation'
 
 export const useTaskActions = (task: Ref<Task>) => {
   const id = computed(() => task.value.id)
   const status = computed(() => task.value.status)
+  const { deleteTask: deleteTaskReq, reviseTask, cancelTask, pauseTask, duplicateTask } = useTasksStore()
 
   const duplicate = computed(() => {
     return {
       label: 'Duplicate',
       icon: DuplicateIcon,
-      action: () => duplicateTask(id.value),
+      action: () => duplicateTask(task.value),
     }
   })
-
-  const { setSelectedTask } = useTasksNavigation()
-  const { deleteTask: deleteTaskReq } = useTasksStore()
 
   const deleteTask = computed(() => {
     return {
       label: 'Delete Task',
       icon: DeleteIcon,
-      action: async () => {
-        await deleteTaskReq(id.value)
-        setSelectedTask(null)
-      },
+      action: () => deleteTaskReq(id.value),
     }
   })
 

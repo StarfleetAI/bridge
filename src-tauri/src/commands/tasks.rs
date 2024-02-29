@@ -4,7 +4,7 @@
 // TODO(ri-nat): I don't really know, why Clippy is mad about these here, but let make him quiet for now.
 #![allow(clippy::used_underscore_binding)]
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -83,6 +83,128 @@ pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result
         },
     )
     .await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(task)
+}
+
+/// Update task title or/and summary by id. Title and summary can be optional
+///
+/// #Errors
+///
+/// Returns error if task with given id does not exist or it status is not allowed to update task
+#[tauri::command]
+pub async fn update_task(
+    id: i64,
+    title: Option<String>,
+    summary: Option<String>,
+    pool: State<'_, DbPool>,
+) -> Result<Task> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    if title.is_none() && summary.is_none() {
+        return Err(anyhow!("Title and summary cannot be both empty").into());
+    }
+
+    let task = repo::tasks::get(&mut *tx, id).await?;
+    if task.status == Status::ToDo
+        || task.status == Status::InProgress
+        || task.status == Status::Done
+    {
+        return Err(anyhow!("Task status is not allowed to update task").into());
+    }
+
+    let task = repo::tasks::update(&mut *tx, id, &title, &summary).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(task)
+}
+
+/// Revise task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist.
+#[tauri::command]
+pub async fn revise_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let task = repo::tasks::revise(&mut *tx, id).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(task)
+}
+
+/// Cancel task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist.
+#[tauri::command]
+pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let task = repo::tasks::cancel(&mut *tx, id).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(task)
+}
+
+/// Pause task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist.
+#[tauri::command]
+pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let task = repo::tasks::pause(&mut *tx, id).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(task)
+}
+
+/// Execute task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist.
+#[tauri::command]
+pub async fn execute_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let task = repo::tasks::execute(&mut *tx, id).await?;
 
     tx.commit()
         .await

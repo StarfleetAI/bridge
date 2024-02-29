@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE tasks\n        SET\n            title = COALESCE($1, title),\n            summary = COALESCE($2, summary),\n            updated_at = $3\n        WHERE id = $4\n        RETURNING\n            id as \"id!\",\n            agent_id,\n            origin_chat_id,\n            control_chat_id,\n            execution_chat_id,\n            title,\n            summary,\n            status,\n            ancestry,\n            ancestry_level,\n            created_at,\n            updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "agent_id",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "origin_chat_id",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "control_chat_id",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "execution_chat_id",
+        "ordinal": 4,
+        "type_info": "Int64"
+      },
+      {
+        "name": "title",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "summary",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "ancestry",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "ancestry_level",
+        "ordinal": 9,
+        "type_info": "Int64"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 10,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 11,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "99def416fad7eed1f24a8fba5b5494c3c80a82a229ab94898cd2fa6d4d3c8b2e"
+}

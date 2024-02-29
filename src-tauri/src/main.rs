@@ -47,6 +47,11 @@ fn main() -> Result<()> {
             commands::tasks::list_child_tasks,
             commands::tasks::get_task,
             commands::tasks::delete_task,
+            commands::tasks::update_task,
+            commands::tasks::revise_task,
+            commands::tasks::cancel_task,
+            commands::tasks::pause_task,
+            commands::tasks::execute_task,
         ])
         .setup(setup_handler)
         .run(tauri::generate_context!())

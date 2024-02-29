@@ -7,7 +7,11 @@
 </script>
 
 <template>
-  <Dropdown placement="bottom-end">
+  <Dropdown
+    placement="bottom-end"
+    class="dropdown-wrapper"
+    auto-hide
+  >
     <slot />
     <template #popper>
       <slot name="content" />
@@ -24,5 +28,9 @@
     border: none !important;
     background-color: var(--surface-3) !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55) !important;
+  }
+
+  .dropdown-wrapper {
+    display: flex;
   }
 </style>

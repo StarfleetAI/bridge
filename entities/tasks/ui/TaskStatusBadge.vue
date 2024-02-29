@@ -42,7 +42,7 @@
     }
   })
 
-  const statusToKebab = useChangeCase(props.status, 'paramCase')
+  const statusToKebab = computed(() => useChangeCase(props.status, 'paramCase').value)
   const showComplete = computed(() => {
     return typeof props.complete === 'number' && typeof props.total === 'number'
   })

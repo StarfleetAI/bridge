@@ -277,6 +277,136 @@ pub async fn create<'a, E: Executor<'a, Database = Sqlite>>(
     Ok(task)
 }
 
+/// Update task title or/and summary by id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating task.
+pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+    title: &'a Option<String>,
+    summary: &'a Option<String>,
+) -> Result<Task> {
+    let now = Utc::now().naive_utc();
+
+    let task = query_as!(
+        Task,
+        r#"
+        UPDATE tasks
+        SET
+            title = COALESCE($1, title),
+            summary = COALESCE($2, summary),
+            updated_at = $3
+        WHERE id = $4
+        RETURNING
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        "#,
+        title,
+        summary,
+        now,
+        id,
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to update task")?;
+    Ok(task)
+}
+
+async fn update_task_status<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+    status: Status,
+) -> Result<Task> {
+    let now = Utc::now().naive_utc();
+    let task = query_as!(
+        Task,
+        r#"
+        UPDATE tasks
+        SET
+            status = $1,
+            updated_at = $2
+        WHERE id = $3
+        RETURNING
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        "#,
+        status,
+        now,
+        id,
+    )
+    .fetch_one(executor)
+    .await
+    .context(format!("Failed to update task status to {:?}", status))?;
+
+    Ok(task)
+}
+
+/// Revise task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while revising task.
+pub async fn revise<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
+    let task = update_task_status(executor, id, Status::Draft).await?;
+
+    Ok(task)
+}
+
+/// Cancel task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while canceling task.
+pub async fn cancel<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
+    let task = update_task_status(executor, id, Status::Canceled).await?;
+
+    Ok(task)
+}
+
+/// Pause task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while pausing task.
+pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
+    let task = update_task_status(executor, id, Status::Paused).await?;
+
+    Ok(task)
+}
+
+/// Execute task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while executing task.
+pub async fn execute<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
+    let task = update_task_status(executor, id, Status::ToDo).await?;
+
+    Ok(task)
+}
+
 /// Get task by id.
 ///
 /// # Errors
