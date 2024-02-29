@@ -43,18 +43,20 @@
   .toggle-switch {
     display: flex;
     border-radius: 6px;
-    background: var(--side-panel);
     cursor: pointer;
 
     & > div {
       gap: 8px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      transition: background-color 0.3s ease;
+      padding: 8px 8px 16px;
+      border-bottom: 1px solid transparent;
+
+      &:hover {
+        color: var(--text-secondary);
+      }
 
       &.active {
-        background: var(--surface-5);
         color: var(--text-primary);
+        border-bottom: 1px solid var(--text-primary);
 
         svg {
           stroke: var(--text-primary) !important;
@@ -62,7 +64,7 @@
       }
 
       @include flex(row, center, center);
-      @include font-inter-500(14px, 19px, var(--text-tertiary));
+      @include font-inter-700(14px, 19px, var(--text-tertiary));
     }
   }
 </style>

@@ -2,48 +2,48 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon } from '~/shared/ui/icons'
+  import { type Ability } from '~/entities/abilities'
+  import { AbilityIcon } from '~/shared/ui/icons'
+
+  defineProps<{
+    abilities: Ability[]
+  }>()
 </script>
 <template>
   <div class="agent-abilities">
-    <div class="agent-abilities__item">
+    <div
+      v-for="ability in abilities"
+      :key="ability.id"
+      class="agent-abilities__item"
+    >
+      <AbilityIcon />
       <div class="agent-abilities__title">
-        Test Planning
-        <CloudIcon />
+        {{ ability.name }}
       </div>
-      <div class="agent-abilities__text">Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem</div>
-    </div>
-    <div class="agent-abilities__item">
-      <div class="agent-abilities__title">
-        Test Planning
-        <CloudIcon />
+      <div class="agent-abilities__text">
+        {{ ability.description }}
       </div>
-      <div class="agent-abilities__text">Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem</div>
-    </div>
-    <div class="agent-abilities__item">
-      <div class="agent-abilities__title">
-        Test Planning
-        <CloudIcon />
-      </div>
-      <div class="agent-abilities__text">Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem Lirem</div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .agent-abilities {
+    padding: 24px;
+    width: 100%;
+
     &__item {
+      width: 100%;
+      padding: 8px 12px;
       margin-bottom: 6px;
-      padding: 12px;
-      border-radius: 6px;
+      border-radius: 4px;
       background: var(--surface-3);
+
+      @include flex(row, start, center, $gap: 12px);
     }
 
     &__title {
-      gap: 8px;
-      margin-bottom: 6px;
-
       @include flex(row, start, center);
-      @include font-inter-500(14px, 20px, var(--text-primary));
+      @include font-inter-500(14px, 20px, var(--text-secondary));
     }
 
     &__text {

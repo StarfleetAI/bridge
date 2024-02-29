@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <script lang="ts" setup>
   import { useAbilitiesStore } from '@/features/abilities'
-  import { useAgentsStore } from '@/features/agents'
+  import { useAgentsStore } from '@/features/agent'
   import { useDevTools } from '~/shared/lib'
 
   useDevTools()
@@ -24,5 +24,3 @@
     <NuxtPage />
   </NuxtLayout>
 </template>
-
-<style lang="scss"></style>

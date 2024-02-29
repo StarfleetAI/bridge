@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsStore, type UpdateAgent } from '@/features/agents'
+  import { useAgentsStore, type UpdateAgent } from '@/features/agent'
   import { useAbilitiesStore } from '~/features/abilities'
 
   definePageMeta({

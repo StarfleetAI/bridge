@@ -4,7 +4,7 @@
 <script lang="ts" setup>
   import 'highlight.js/styles/atom-one-dark.min.css'
   import hljs from 'highlight.js'
-  import { useAgentsStore } from '~/features/agents'
+  import { useAgentsStore } from '~/features/agent'
   import { type Message, Role, type ToolCall as ToolCallType } from '~/entities/chat'
   import { getMarkdown } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'

@@ -4,6 +4,7 @@
 export { default as AbilitiesIcon } from './AbilitiesIcon.vue'
 export { default as AgentsIcon } from './AgentsIcon.vue'
 export { default as AgentIcon } from './AgentIcon.vue'
+export { default as AbilityIcon } from './AbilityIcon.vue'
 export { default as ArrowLeftIcon } from './ArrowLeftIcon.vue'
 export { default as AttachmentIcon } from './AttachmentIcon.vue'
 export { default as ChatsIcon } from './ChatsIcon.vue'

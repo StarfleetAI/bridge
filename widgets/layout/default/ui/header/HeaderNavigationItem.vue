@@ -23,16 +23,16 @@
     @click="handleClick()"
   >
     <slot name="icon" />
-    <div class="header-item__name"><slot name="name" /></div>
   </div>
 </template>
 
 <style scoped lang="scss">
   .header-item {
     color: var(--text-tertiary);
+    cursor: pointer;
 
     &.active {
-      background: var(--surface-1);
+      color: var(--button-primary);
     }
 
     @include flex($align-items: center, $gap: 8px);
