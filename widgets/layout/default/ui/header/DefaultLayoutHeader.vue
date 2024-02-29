@@ -22,29 +22,38 @@
   <div class="default-layout__header">
     <div class="default-layout__header-tabs">
       <HeaderNavigationItem
-        name="chats"
-        :to="getTabRoute('chats')"
-      >
-        <template #icon>
-          <ChatsIcon />
-        </template>
-        <template #name> Chats </template>
-      </HeaderNavigationItem>
-      <HeaderNavigationItem
         name="tasks"
         :to="getTabRoute('tasks')"
       >
         <template #icon>
-          <TasksIcon />
+          <TasksIcon
+            width="24"
+            height="24"
+          />
         </template>
         <template #name> Tasks </template>
+      </HeaderNavigationItem>
+      <HeaderNavigationItem
+        name="chats"
+        :to="getTabRoute('chats')"
+      >
+        <template #icon>
+          <ChatsIcon
+            width="24"
+            height="24"
+          />
+        </template>
+        <template #name> Chats </template>
       </HeaderNavigationItem>
       <HeaderNavigationItem
         name="agents"
         :to="getTabRoute('agents')"
       >
         <template #icon>
-          <AgentsIcon />
+          <AgentsIcon
+            width="24"
+            height="24"
+          />
         </template>
         <template #name> Agents </template>
       </HeaderNavigationItem>
@@ -53,7 +62,10 @@
         :to="getTabRoute('documents')"
       >
         <template #icon>
-          <DocumentsIcon />
+          <DocumentsIcon
+            width="24"
+            height="24"
+          />
         </template>
         <template #name> Documents </template>
       </HeaderNavigationItem>
@@ -62,7 +74,10 @@
         :to="getTabRoute('settings')"
       >
         <template #icon>
-          <SettingsIcon />
+          <SettingsIcon
+            width="24"
+            height="24"
+          />
         </template>
         <template #name> Settings </template>
       </HeaderNavigationItem>
@@ -79,23 +94,24 @@
 
 <style scoped lang="scss">
   .default-layout__header {
-    width: 100%;
-    height: 44px;
+    width: 56px;
+    height: 100svh;
     background: var(--surface-0);
 
-    @include flex(row, space-between, center);
+    @include flex(column, space-between, center);
   }
 
   .default-layout__header-tabs {
-    height: 100%;
+    height: 100svh;
+    padding-top: 24px;
 
-    @include flex(row);
+    @include flex(column, $align-items: center, $gap: 24px);
   }
 
   .default-layout__header-control {
-    padding-right: 24px;
+    padding-bottom: 24px;
 
-    @include flex(row, $align-items: center, $gap: 24px);
+    @include flex(column, $align-items: center, $gap: 24px);
   }
 
   .default-layout__header-search {

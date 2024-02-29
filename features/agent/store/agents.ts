@@ -1,6 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
-import { type Agent } from '~/entities/agent'
+import { type Agent } from '~/entities/agents'
 import {
   listAgents as listAgentsReq,
   deleteAgent as deleteAgentReq,
@@ -21,7 +21,9 @@ export const useAgentsStore = defineStore('agents', () => {
     return agents.value.find((a) => a.id === id)
   }
   const listAgents = async () => {
-    agents.value = await listAgentsReq()
+    const agentsList = await listAgentsReq()
+    agents.value = agentsList?.agents
+    console.log(agents.value)
   }
 
   const createAgent = async (request: CreateAgent) => {
