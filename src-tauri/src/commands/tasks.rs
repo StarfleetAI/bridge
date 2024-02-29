@@ -93,7 +93,7 @@ pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result
 
 /// Update task title or/and summary by id. Title and summary can be optional
 ///
-/// #Errors
+/// # Errors
 ///
 /// Returns error if task with given id does not exist or it status is not allowed to update task
 #[tauri::command]

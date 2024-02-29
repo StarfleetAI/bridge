@@ -358,7 +358,7 @@ async fn update_task_status<'a, E: Executor<'a, Database = Sqlite>>(
     )
     .fetch_one(executor)
     .await
-    .context(format!("Failed to update task status to {:?}", status))?;
+    .context(format!("Failed to update task status"))?;
 
     Ok(task)
 }
