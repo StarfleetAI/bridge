@@ -1,7 +1,7 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <script lang="ts" setup>
-  import { useAbilitiesStore } from '@/features/abilities'
+  import { useAbilitiesStore } from '@/features/ability'
   import { useAgentsStore } from '@/features/agent'
   import { useDevTools } from '~/shared/lib'
 

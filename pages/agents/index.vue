@@ -4,9 +4,10 @@
 <script lang="ts" setup>
   import { AbilitiesList } from '~/widgets/abilitiesList'
   import { AgentsList } from '~/widgets/agentsList'
+  import { useAbilitiesNavigation, useAbilitiesStore } from '~/features/ability'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
   import { BaseContainer, BaseButton } from '~/shared/ui/base'
-  import { LibraryIcon, StoreIcon, PlusIcon } from '~/shared/ui/icons'
+  import { LibraryIcon, PlusIcon } from '~/shared/ui/icons'
   import { ToggleSwitch } from '~/shared/ui/toggle-switch'
 
   definePageMeta({
@@ -15,7 +16,7 @@
 
   const { agents } = storeToRefs(useAgentsStore())
 
-  const { isCreateAgent, enableCreateAgent, selectedAgent } = useAgentsNavigation()
+  const { isCreateAgent, enableCreateAgent, disableCreateAgent, selectedAgent } = useAgentsNavigation()
 
   const entity: Ref<string> = ref('agents')
 
@@ -29,6 +30,20 @@
     return module.AgentForm
   })
 
+  const { abilities } = storeToRefs(useAbilitiesStore())
+
+  const { isCreateAbility, enableCreateAbility, disableCreateAbility, selectedAbility } = useAbilitiesNavigation()
+
+  const AbilityFullItem = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/abilityFullItem')
+    return module.AbilityFullItem
+  })
+
+  const AbilityForm = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/abilityForm')
+    return module.AbilityForm
+  })
+
   const sideContentComponent = computed(() => {
     if (isCreateAgent.value) {
       return AgentForm
@@ -36,7 +51,33 @@
     if (selectedAgent.value) {
       return AgentFullItem
     }
+    if (isCreateAbility.value) {
+      return AbilityForm
+    }
+    if (selectedAbility.value) {
+      return AbilityFullItem
+    }
     return null
+  })
+
+  const createHandle = () => {
+    if (entity.value === 'agents') {
+      enableCreateAgent()
+      disableCreateAbility()
+    }
+    if (entity.value === 'abilities') {
+      enableCreateAbility()
+      disableCreateAgent()
+    }
+  }
+
+  watch(entity, (val: string) => {
+    if (val === 'agents') {
+      disableCreateAbility()
+    }
+    if (val === 'abilities') {
+      disableCreateAgent()
+    }
   })
 </script>
 
@@ -50,10 +91,10 @@
             <template #option-abilities> Abilities </template>
           </ToggleSwitch>
           <BaseButton
-            :disabled="isCreateAgent"
+            :disabled="entity === 'agents' ? isCreateAgent : isCreateAbility"
             size="medium"
             class="task-list__create"
-            @click="enableCreateAgent"
+            @click="createHandle"
           >
             <template #icon>
               <PlusIcon />
@@ -67,9 +108,7 @@
         </div>
         <div v-if="entity === 'abilities'">
           <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
-          <AbilitiesList />
-          <div class="list-title"><StoreIcon /> Store <span>4</span></div>
-          <AbilitiesList />
+          <AbilitiesList :abilities="abilities" />
         </div>
       </div>
     </template>
@@ -93,8 +132,8 @@
   .side-content {
     width: 100%;
     height: 100%;
-    background: var(--surface-1);
     border-left: 1px solid var(--border-3);
+    background: var(--surface-1);
   }
 
   .main-content__header {
