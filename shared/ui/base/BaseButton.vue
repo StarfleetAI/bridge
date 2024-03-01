@@ -39,6 +39,11 @@
       color: var(--text-secondary) !important;
     }
 
+    &.approve {
+      background-color: var(--status-done);
+      color: var(--text-on-button);
+    }
+
     &.outlined {
       border: 1px solid var(--border-2);
       background-color: transparent !important;
