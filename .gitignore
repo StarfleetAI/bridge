@@ -18,6 +18,7 @@ logs
 .fleet
 .idea
 .vscode
+.stylelintcache
 
 # Local env files
 .env

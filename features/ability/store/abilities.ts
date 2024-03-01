@@ -21,6 +21,7 @@ export const useAbilitiesStore = defineStore('abilities', () => {
 
   const listAbilities = async () => {
     const list = await listAbilitiesReq()
+    abilities.value = []
     list.forEach((a) => {
       abilities.value.push(a)
     })

@@ -28,13 +28,13 @@
 </template>
 <style scoped lang="scss">
   .agent-abilities {
-    padding: 24px;
     width: 100%;
+    padding: 24px;
 
     &__item {
       width: 100%;
-      padding: 8px 12px;
       margin-bottom: 6px;
+      padding: 8px 12px;
       border-radius: 4px;
       background: var(--surface-3);
 

@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import { useAgentsStore, type UpdateAgent } from '@/features/agent'
-  import { useAbilitiesStore } from '~/features/abilities'
+  import { useAbilitiesStore } from '~/features/ability'
 
   definePageMeta({
     title: 'Agents &raquo; Edit',

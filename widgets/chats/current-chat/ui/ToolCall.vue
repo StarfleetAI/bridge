@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAbilitiesStore } from '~/features/abilities'
+  import { useAbilitiesStore } from '~/features/ability'
   import { approveToolCall, denyToolCall } from '~/features/chats'
   import { type Ability } from '~/entities/abilities'
   import { Status, type ToolCall } from '~/entities/chat'
@@ -119,7 +119,8 @@
           :class="['tool__show-more', { visible: showMore }]"
           @click="toggleShowMore"
         >
-          {{ showMoreButtonText }} <ChevronDownIcon />
+          {{ showMoreButtonText }}
+          <ChevronDownIcon />
         </div>
       </div>
 

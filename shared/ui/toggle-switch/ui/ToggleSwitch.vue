@@ -55,8 +55,8 @@
       }
 
       &.active {
-        color: var(--text-primary);
         border-bottom: 1px solid var(--text-primary);
+        color: var(--text-primary);
 
         svg {
           stroke: var(--text-primary) !important;
