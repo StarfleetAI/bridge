@@ -43,9 +43,9 @@
       flex-shrink: 0;
       width: 80px;
       height: 80px;
+      margin-bottom: 24px;
       border-radius: 50%;
       background: var(--text-secondary);
-      margin-bottom: 24px;
     }
 
     &__name {

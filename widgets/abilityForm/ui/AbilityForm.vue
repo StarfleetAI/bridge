@@ -2,43 +2,48 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsStore, useAgentsNavigation, createAgent } from '~/features/agent'
+  import { useAbilitiesStore, useAbilitiesNavigation, createAbility } from '~/features/ability'
   import { BaseButton } from '~/shared/ui/base'
+  import { CodeInput } from '~/shared/ui/code-input'
   import { CrossIcon, SaveIcon } from '~/shared/ui/icons'
 
-  const { disableCreateAgent } = useAgentsNavigation()
+  const { disableCreateAbility } = useAbilitiesNavigation()
 
   const name = ref<string>('')
   const description = ref<string>('')
-  const systemMessage = ref<string>('')
+  const code = ref<string>(`def do_something(
+    arg1: Annotated[str, "String argument"],
+    arg2: Annotated[int, "Integer argument"]
+) -> str:
+    # Do the actual job here
+    return "Something was successful!"`)
 
   const saveIsEnabled = computed(() => name.value.length > 0)
-  const { listAgents } = useAgentsStore()
-  const handleSaveAgent = async () => {
-    await createAgent({
+  const { listAbilities } = useAbilitiesStore()
+  const handleSaveAbility = async () => {
+    await createAbility({
       name: name.value,
       description: description.value,
-      system_message: systemMessage.value,
-      ability_ids: [],
+      code: code.value,
     })
     finishCreation()
   }
 
   const finishCreation = () => {
-    listAgents()
-    disableCreateAgent()
+    listAbilities()
+    disableCreateAbility()
   }
 </script>
 
 <template>
-  <div class="agent-form">
-    <div class="agent-form__header">
-      <div class="agent-form__title">Create Agent</div>
-      <div class="agent-form__actions">
+  <div class="ability-form">
+    <div class="ability-form__header">
+      <div class="ability-form__title">Create Ability</div>
+      <div class="ability-form__actions">
         <BaseButton
           type="secondary"
           :disabled="!saveIsEnabled"
-          @click="handleSaveAgent"
+          @click="handleSaveAbility"
         >
           <template #icon>
             <SaveIcon />
@@ -49,35 +54,32 @@
           color="#677383"
           height="20px"
           width="20px"
-          @click="disableCreateAgent"
+          @click="disableCreateAbility"
         />
       </div>
     </div>
-    <div class="agent-form__body">
+    <div class="ability-form__body">
       <div class="form-item">
-        <label>Agent name</label>
+        <label>Ability name</label>
         <input
           v-model="name"
           type="text"
           class="input-field"
-          placeholder="Agent name"
+          placeholder="Ability name"
         />
       </div>
       <div class="form-item">
         <label>Short description</label>
-        <input
+        <textarea
           v-model="description"
-          type="text"
           class="input-field"
           placeholder="Short description"
         />
       </div>
       <div class="form-item">
-        <label>Instructions</label>
-        <textarea
-          v-model="systemMessage"
-          class="input-field"
-          placeholder="Instructions"
+        <CodeInput
+          v-model="code"
+          label="Code"
         />
       </div>
     </div>
@@ -85,26 +87,26 @@
 </template>
 
 <style lang="scss" scoped>
-  .agent-form {
+  .ability-form {
     @include flex(column);
   }
 
-  .agent-form__header {
+  .ability-form__header {
     padding: 12px 24px;
     border-bottom: 1px solid var(--border-3);
 
     @include flex(row, space-between, center);
   }
 
-  .agent-form__title {
+  .ability-form__title {
     @include font-inter-700(14px, 20px, var(--text-secondary));
   }
 
-  .agent-form__actions {
+  .ability-form__actions {
     @include flex(row, flex-end, center, 16px);
   }
 
-  .agent-form__body {
+  .ability-form__body {
     padding: 26px 24px;
     border-bottom: 1px solid var(--border-3);
 
@@ -129,5 +131,9 @@
     }
 
     @include flex(column, start, start, $gap: 8px);
+  }
+
+  .prism-editor-wrapper {
+    background: var(--surface-3);
   }
 </style>

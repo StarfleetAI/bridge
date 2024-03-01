@@ -23,7 +23,6 @@ export const useAgentsStore = defineStore('agents', () => {
   const listAgents = async () => {
     const agentsList = await listAgentsReq()
     agents.value = agentsList?.agents
-    console.log(agents.value)
   }
 
   const createAgent = async (request: CreateAgent) => {

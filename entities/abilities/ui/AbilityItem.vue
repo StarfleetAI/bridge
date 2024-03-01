@@ -2,28 +2,29 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { CloudIcon, AbilitiesIcon } from '~/shared/ui/icons'
+  import type { Ability } from '../model'
+
+  defineProps<{
+    ability: Ability
+  }>()
 </script>
 <template>
   <div class="abilities-list-item">
-    <AbilitiesIcon />
     <div class="abilities-list-item__body">
       <div class="abilities-list-item__label">
-        Frontend Developer
-        <CloudIcon />
+        {{ ability.name }}
       </div>
       <div class="abilities-list-item__text">
-        lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-        lorem ipsum
+        {{ ability.description }}
       </div>
+      <div class="abilities-list-item__extra">by example.com</div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .abilities-list-item {
     gap: 8px;
-    margin-bottom: 12px;
-    padding: 12px 16px;
+    padding: 12px;
     border-radius: 6px;
     background: var(--side-panel);
 
@@ -32,11 +33,15 @@
       margin-bottom: 4px;
 
       @include flex(row, start, center);
-      @include font-inter-700(16px, 22px, var(--text-primary));
+      @include font-inter-500(14px, 10px, var(--text-primary));
     }
 
     &__text {
       @include font-inter-400(14px, 20px, var(--text-tertiary));
+    }
+
+    &__extra {
+      @include font-inter-400(12px, 17px, var(--text-blind));
     }
 
     @include flex(row, start, space-between);

@@ -9,7 +9,7 @@
 
   import 'vue-prism-editor/dist/prismeditor.min.css'
 
-  import { type CreateAbility, useAbilitiesStore } from '~/features/abilities'
+  import { type CreateAbility, useAbilitiesStore } from '~/features/ability'
 
   definePageMeta({
     title: 'Abilities &raquo; New',
