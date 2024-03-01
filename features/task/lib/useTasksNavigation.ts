@@ -16,9 +16,12 @@ export const useTasksNavigation = () => {
   const selectedTask = useRouteQuery('task', '', {
     transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
   })
+
   const setSelectedTask = (id: Nullable<number>) => {
+    disableCreateTask()
     selectedTask.value = id
   }
+
   return {
     isCreateTask: readonly(isCreateTask),
     enableCreateTask,

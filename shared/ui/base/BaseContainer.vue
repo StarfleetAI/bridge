@@ -26,10 +26,12 @@
   .base-container__main {
     display: flex;
     flex: 1;
+    width: 60%;
     height: 100%;
   }
 
   .base-container__additional {
+    flex-shrink: 0;
     width: 40%;
   }
 </style>

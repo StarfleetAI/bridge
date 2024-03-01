@@ -33,13 +33,20 @@
 <template>
   <BaseContainer>
     <template #main>
-      <div class="main-content">
-        <TasksList />
-      </div>
+      <TasksList />
     </template>
-    <template #additional>
-      <div class="side-content">
-        <component :is="sideContentComponent" />
+    <template
+      v-if="sideContentComponent"
+      #additional
+    >
+      <div
+        v-if="sideContentComponent"
+        class="side-content"
+      >
+        <component
+          :is="sideContentComponent"
+          :key="String(selectedTask)"
+        />
       </div>
     </template>
   </BaseContainer>
@@ -48,10 +55,6 @@
 <style lang="scss" scoped>
   div {
     color: var(--text-primary);
-  }
-
-  .main-content {
-    flex: 1;
   }
 
   .side-content {

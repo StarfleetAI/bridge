@@ -35,6 +35,9 @@ dependencies:
   change-case:
     specifier: ^4
     version: 4.1.2
+  cross-env:
+    specifier: ^7.0.3
+    version: 7.0.3
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
@@ -65,6 +68,9 @@ dependencies:
   vite:
     specifier: ^5.1.4
     version: 5.1.4(@types/node@20.11.19)(sass@1.71.1)
+  vue-devtools:
+    specifier: ^5.1.4
+    version: 5.1.4
   vue-prism-editor:
     specifier: alpha
     version: 2.0.0-alpha.2(vue@3.4.20)
@@ -140,7 +146,7 @@ devDependencies:
     specifier: ^3.4.20
     version: 3.4.20(typescript@5.3.3)
   vue-router:
-    specifier: ^4.2.5
+    specifier: ^4.3.0
     version: 4.3.0(vue@3.4.20)
   vue-tsc:
     specifier: 1.8.27
@@ -3751,6 +3757,14 @@ packages:
 
   /create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
+
+  /cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
+    dependencies:
+      cross-spawn: 7.0.3
+    dev: false
 
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -9776,6 +9790,11 @@ packages:
 
   /vue-devtools-stub@0.1.0:
     resolution: {integrity: sha512-RutnB7X8c5hjq39NceArgXg28WZtZpGc3+J16ljMiYnFhKvd8hITxSWQSQ5bvldxMDU6gG5mkxl1MTQLXckVSQ==}
+
+  /vue-devtools@5.1.4:
+    resolution: {integrity: sha512-EBAEXvAHUinsPzoSiElps0JgtLXUnJXKIJbP6nfdz/R63VdKBMfJ34/rFip+4iT7iMbVS5lA4W6N1jq4Hj4LCg==}
+    engines: {node: '>=6'}
+    dev: false
 
   /vue-eslint-parser@9.4.2(eslint@8.56.0):
     resolution: {integrity: sha512-Ry9oiGmCAK91HrKMtCrKFWmSFWvYkpGglCeFAIqDdr9zdXmMMpJOmUJS7WWsW7fX81h6mwHmUZCQQ1E0PkSwYQ==}

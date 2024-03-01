@@ -3,8 +3,8 @@
 
 <script lang="ts" setup>
   import { useAgentsStore } from '~/features/agent'
-  import { createTask, useTasksNavigation, useTasksStore } from '~/features/task'
-  import { TaskStatus, TaskStatusBadge } from '~/entities/tasks'
+  import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import { TaskInput, TaskStatus, TaskStatusBadge } from '~/entities/tasks'
   import { AvatarsList } from '~/shared/ui/avatars'
   import { BaseButton } from '~/shared/ui/base'
   import { FilesList } from '~/shared/ui/files'
@@ -12,15 +12,13 @@
 
   const { disableCreateTask } = useTasksNavigation()
   const { agents } = storeToRefs(useAgentsStore())
-  const { listRootTasks } = useTasksStore()
+  const { listRootTasks, createTask } = useTasksStore()
   const selectedAgent = ref(agents.value[0])
 
   const taskTitle = ref('')
-  const { textarea: titleTextarea, input: titleInput } = useTextareaAutosize({ input: taskTitle })
-  const saveIsEnabled = computed(() => taskTitle.value.length > 0)
 
   const taskSummary = ref('')
-  const { textarea: summaryTextarea, input: summaryInput } = useTextareaAutosize({ input: taskSummary })
+  const saveIsEnabled = computed(() => taskSummary.value.length > 0)
 
   const { open: openFileDialog, onChange: onFileChange } = useFileDialog()
   const selectedFiles = ref<File[]>([])
@@ -106,16 +104,12 @@
         <AvatarsList :persons="[selectedAgent]" />
       </div>
       <div class="task-form__input-container">
-        <textarea
-          ref="titleTextarea"
-          v-model="titleInput"
-          class="task-form__input"
+        <TaskInput
+          v-model="taskTitle"
           placeholder="Task Title"
         />
-        <textarea
-          ref="summaryTextarea"
-          v-model="summaryInput"
-          class="task-form__input summary"
+        <TaskInput
+          v-model="taskSummary"
           placeholder="Summary"
         />
       </div>

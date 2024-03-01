@@ -6,7 +6,7 @@
   import hljs from 'highlight.js'
   import { useAgentsStore } from '~/features/agent'
   import { type Message, Role, type ToolCall as ToolCallType } from '~/entities/chat'
-  import { getMarkdown } from '~/shared/lib'
+  import { getMarkdown, utcToLocalTime } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
   import { SystemIcon, NoAvatarIcon } from '~/shared/ui/icons'
   import ToolCall from './ToolCall.vue'
@@ -50,14 +50,8 @@
       avatar: getAuthorAvatar(props.message),
     }
   })
-  const dayjs = useDayjs()
   const createdAt = computed(() => {
-    let dateString = props.message.created_at
-
-    if (props.message.created_at.at(-1) !== 'Z') {
-      dateString += 'Z'
-    }
-    return dayjs(dateString).format('MMM D, YYYY, HH:mm')
+    return utcToLocalTime(props.message.created_at)
   })
 
   const toolCalls = computed<ToolCallType[]>(() => {

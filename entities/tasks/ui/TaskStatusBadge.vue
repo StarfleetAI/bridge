@@ -18,6 +18,7 @@
     status: TaskStatus
     complete?: number
     total?: number
+    iconOnly?: boolean
   }>()
   const statusComponent = computed(() => {
     switch (props.status) {
@@ -41,7 +42,7 @@
     }
   })
 
-  const statusToKebab = useChangeCase(props.status, 'paramCase')
+  const statusToKebab = computed(() => useChangeCase(props.status, 'paramCase').value)
   const showComplete = computed(() => {
     return typeof props.complete === 'number' && typeof props.total === 'number'
   })
@@ -49,7 +50,11 @@
 <template>
   <div :class="['task-status', statusToKebab]">
     <component :is="statusComponent" />
-    <span class="task-status__label">{{ props.status }}</span>
+    <span
+      v-if="!iconOnly"
+      class="task-status__label"
+      >{{ props.status }}</span
+    >
     <span
       v-if="showComplete"
       class="task-status__complete"
