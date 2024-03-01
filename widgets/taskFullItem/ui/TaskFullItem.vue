@@ -62,9 +62,15 @@
       titleInput.value?.focus()
     })
   }
-  const updateTitle = async () => {
-    const { id } = await updateTask({ id: task.value.id, title: taskTitle.value })
+
+  const handleUpdate = async () => {
+    const { id } = await updateTask({ id: task.value.id, title: taskTitle.value, summary: taskSummary.value })
     setUpdatedTask(getById(id)!)
+    return id
+  }
+
+  const updateTitle = async () => {
+    await handleUpdate()
     titleIsEditing.value = false
   }
   const titleComponent = computed(() => {
@@ -88,9 +94,9 @@
       })
     })
   }
+
   const updateSummary = async () => {
-    const { id } = await updateTask({ id: task.value.id, summary: taskSummary.value })
-    setUpdatedTask(getById(id)!)
+    await handleUpdate()
     summaryIsEditing.value = false
   }
   const summaryComponent = computed(() => {

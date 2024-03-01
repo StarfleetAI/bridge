@@ -5,5 +5,5 @@ import type { Task } from '~/entities/tasks'
 import { type UpdateTask } from '../model'
 
 export const updateTask = (request: UpdateTask): Promise<Task> => {
-  return invoke<Task>('update_task', { ...request })
+  return invoke<Task>('update_task', { request })
 }

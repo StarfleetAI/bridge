@@ -90,6 +90,12 @@ pub struct CreateParams<'a> {
     pub ancestry: Option<&'a str>,
 }
 
+pub struct UpdateParams<'a> {
+    pub id: i64,
+    pub title: &'a str,
+    pub summary: &'a str,
+}
+
 /// List all tasks.
 ///
 /// # Errors
@@ -284,9 +290,7 @@ pub async fn create<'a, E: Executor<'a, Database = Sqlite>>(
 /// Returns error if there was a problem while updating task.
 pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
-    id: i64,
-    title: &'a Option<String>,
-    summary: &'a Option<String>,
+    params: UpdateParams<'a>,
 ) -> Result<Task> {
     let now = Utc::now().naive_utc();
 
@@ -313,10 +317,10 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
             created_at,
             updated_at
         "#,
-        title,
-        summary,
+        params.title,
+        params.summary,
         now,
-        id,
+        params.id,
     )
     .fetch_one(executor)
     .await
@@ -324,7 +328,7 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
     Ok(task)
 }
 
-async fn update_task_status<'a, E: Executor<'a, Database = Sqlite>>(
+async fn update_status<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     id: i64,
     status: Status,
@@ -369,9 +373,7 @@ async fn update_task_status<'a, E: Executor<'a, Database = Sqlite>>(
 ///
 /// Returns error if there was a problem while revising task.
 pub async fn revise<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    let task = update_task_status(executor, id, Status::Draft).await?;
-
-    Ok(task)
+    update_status(executor, id, Status::Draft).await
 }
 
 /// Cancel task by id.
@@ -380,9 +382,7 @@ pub async fn revise<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64
 ///
 /// Returns error if there was a problem while canceling task.
 pub async fn cancel<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    let task = update_task_status(executor, id, Status::Canceled).await?;
-
-    Ok(task)
+    update_status(executor, id, Status::Canceled).await
 }
 
 /// Pause task by id.
@@ -391,9 +391,7 @@ pub async fn cancel<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64
 ///
 /// Returns error if there was a problem while pausing task.
 pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    let task = update_task_status(executor, id, Status::Paused).await?;
-
-    Ok(task)
+    update_status(executor, id, Status::Paused).await
 }
 
 /// Execute task by id.
@@ -402,9 +400,7 @@ pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64)
 ///
 /// Returns error if there was a problem while executing task.
 pub async fn execute<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    let task = update_task_status(executor, id, Status::ToDo).await?;
-
-    Ok(task)
+    update_status(executor, id, Status::ToDo).await
 }
 
 /// Get task by id.
