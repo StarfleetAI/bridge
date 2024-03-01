@@ -46,6 +46,7 @@ export const getTimeAgo = ({
     }
     return `${amount}${units[unit].short} ago`
   }
+  // Calculate the time difference in seconds and format the time ago string accordingly
   const update = () => {
     const now = dayjs()
     const diffInSeconds = now.diff(dateObj, 'second')
