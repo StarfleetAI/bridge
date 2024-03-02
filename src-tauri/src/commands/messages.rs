@@ -1,24 +1,21 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO(ri-nat): I don't really know, why Clippy is mad about these here, but let make him quiet for now.
 #![allow(clippy::used_underscore_binding)]
 
-use std::path::PathBuf;
-
 use anyhow::{anyhow, Context};
-use askama::Template;
-use log::debug;
+use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
-use tokio::{fs::create_dir_all, process::Command, sync::RwLock};
+use tokio::{spawn, sync::RwLock};
 
+use crate::abilities::execute;
 use crate::{
     clients::openai::{
         Client, CreateChatCompletionRequest, FunctionCall, Tool, ToolCall, ToolType,
     },
-    errors,
+    errors, messages,
     repo::{
         self,
         messages::{
@@ -48,14 +45,6 @@ pub struct MessagesList {
 pub struct CreateMessage {
     pub chat_id: i64,
     pub text: String,
-}
-
-#[derive(Template)]
-#[template(path = "python/call_tools.py", escape = "none")]
-struct CallToolsTemplate<'a> {
-    code: &'a str,
-    python_path: &'a str,
-    tool_calls: &'a str,
 }
 
 /// List all messages.
@@ -234,7 +223,7 @@ async fn generate_chat_title(
 
     let response = client
         .create_chat_completion(CreateChatCompletionRequest {
-            model: "gpt-4".to_string(),
+            model: "gpt-4-turbo-preview".to_string(),
             messages: req_messages,
             stream: false,
             tools: None,
@@ -284,12 +273,7 @@ pub async fn approve_tool_call(
     window: Window,
     app_handle: AppHandle,
 ) -> Result<()> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let mut message = repo::messages::get(&mut *tx, message_id).await?;
+    let mut message = repo::messages::get(&*pool, message_id).await?;
 
     // Check if message is waiting for tool call
     if message.status != Status::WaitingForToolCall {
@@ -297,11 +281,12 @@ pub async fn approve_tool_call(
     }
 
     // Check if message is a last message in chat
-    let last_message_id = repo::messages::get_last_message_id(&mut *tx, message.chat_id).await?;
+    let last_message_id = repo::messages::get_last_message_id(&*pool, message.chat_id).await?;
 
+    // If it's not, mark message as completed and return error
     if message.id != last_message_id {
         // Mark message as completed
-        repo::messages::update_status(&mut *tx, message.id, Status::Completed).await?;
+        repo::messages::update_status(&*pool, message.id, Status::Completed).await?;
 
         // Emit event.
         message.status = Status::Completed;
@@ -313,141 +298,73 @@ pub async fn approve_tool_call(
     }
 
     // Load agent abilities
-    let ablts = match message.agent_id {
-        Some(agent_id) => repo::abilities::list_for_agent(&mut *tx, agent_id).await?,
+    let abilities = match message.agent_id {
+        Some(agent_id) => repo::abilities::list_for_agent(&*pool, agent_id).await?,
         None => return Err(anyhow!("Agent is not set for the message").into()),
     };
-
-    // Join the abilities code into one string
-    let code = ablts
-        .iter()
-        .map(|ability| ability.code.as_str())
-        .collect::<Vec<&str>>()
-        .join("\n\n");
-
-    let app_local_data_dir = app_handle
-        .path_resolver()
-        .app_local_data_dir()
-        .with_context(|| "Failed to get app local data dir")?;
-    let workdir_name = format!("wd-{}", message.chat_id);
-
-    // Build workdir path
-    let mut workdir = PathBuf::new();
-    workdir.push(app_local_data_dir);
-    workdir.push(workdir_name);
-
-    debug!("Workdir: {:?}", workdir);
-
-    if !workdir.exists() {
-        create_dir_all(&workdir)
-            .await
-            .with_context(|| "Failed to create workdir")?;
-    }
-
-    let settings_guard = settings.read().await;
 
     let Some(tool_calls) = &message.tool_calls else {
         return Err(anyhow!("Tool calls are not set for the message").into());
     };
 
-    let script_name = format!("script-{}.py", message.id);
-    let call_tools_template = CallToolsTemplate {
-        code: &code,
-        tool_calls,
-        python_path: settings_guard
-            .python_path
-            .as_ref()
-            .with_context(|| "Failed to get python path")?,
-    };
-    let content = call_tools_template
-        .render()
-        .with_context(|| "Failed to render `call_tools` script")?;
+    let tool_calls: Vec<ToolCall> =
+        serde_json::from_str(tool_calls).with_context(|| "Failed to parse tool calls")?;
 
-    debug!("Script name: {}", script_name);
-    debug!("Script content: {}", content);
-
-    // Write script to workdir
-    let mut script_path = workdir.clone();
-    script_path.push(script_name);
-    debug!("Script path: {:?}", script_path);
-
-    tokio::fs::write(&script_path, content)
+    let python_path_string = settings
+        .read()
         .await
-        .with_context(|| "Failed to write script to workdir")?;
+        .python_path
+        .as_ref()
+        .with_context(|| "Failed to get python path")?
+        .to_string();
+    let app_local_data_dir = app_handle
+        .path_resolver()
+        .app_local_data_dir()
+        .with_context(|| "Failed to get app local data dir")?;
 
-    // Run script
-    let output = match &settings_guard.python_path {
-        Some(path) => Command::new(path)
-            .current_dir(&workdir)
-            .arg(&script_path)
-            .output()
-            .await
-            .with_context(|| "Failed to execute tool_calls script")?,
-        None => return Err(anyhow!("Python path is not set").into()),
-    };
+    let mut handles = Vec::with_capacity(tool_calls.len());
+    for tool_call in tool_calls {
+        let abilities = abilities.clone();
+        let app_local_data_dir = app_local_data_dir.clone();
+        let msg = message.clone();
+        let tc = tool_call.clone();
+        let python_path_str = python_path_string.clone();
 
-    debug!("Function call script output: {:?}", output);
+        let handle = spawn(async move {
+            let output = execute(abilities, app_local_data_dir, msg, tc, python_path_str).await?;
 
-    // Ensure that script was executed successfully
-    let results: Value = serde_json::from_slice(&output.stdout)
-        .with_context(|| "Failed to parse tool_calls script output")?;
-    debug!("Parsed results: {:?}", results);
+            Ok::<_, anyhow::Error>(CreateParams {
+                chat_id: message.chat_id,
+                status: Status::Completed,
+                role: Role::Tool,
+                content: Some(output),
+                tool_call_id: Some(tool_call.id),
 
-    // Delete script
-    tokio::fs::remove_file(&script_path)
-        .await
-        .with_context(|| "Failed to remove script from workdir")?;
+                ..Default::default()
+            })
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        let params = handle.await??;
+        let results_message = repo::messages::create(&*pool, params).await?;
+
+        // Emit event
+        window
+            .emit_all("messages:created", &results_message)
+            .with_context(|| "Failed to emit event")?;
+    }
 
     // Mark message as completed
-    repo::messages::update_status(&mut *tx, message.id, Status::Completed).await?;
+    repo::messages::update_status(&*pool, message.id, Status::Completed).await?;
 
     // Emit event
     message.status = Status::Completed;
     window
         .emit_all("messages:updated", &message)
         .with_context(|| "Failed to emit event")?;
-
-    let tool_call_id = results
-        .as_object()
-        .with_context(|| "Failed to get results object")?
-        .keys()
-        .next()
-        .with_context(|| "Failed to get first key from results object")?
-        .to_string();
-
-    let content = results
-        .get(&tool_call_id)
-        .with_context(|| format!("Failed to get value for key {tool_call_id} from results object"))?
-        .as_str()
-        .with_context(|| {
-            format!("Failed to get string value for key {tool_call_id} from results object")
-        })?;
-
-    // Save script output to a new message
-    let results_message = repo::messages::create(
-        &mut *tx,
-        CreateParams {
-            chat_id: message.chat_id,
-            status: Status::Completed,
-            role: Role::Tool,
-            content: Some(content.to_string()),
-            tool_call_id: Some(tool_call_id),
-
-            ..Default::default()
-        },
-    )
-    .await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    // Emit event
-    window
-        .emit_all("messages:created", &results_message)
-        .with_context(|| "Failed to emit event")?;
-
-    drop(settings_guard);
 
     get_chat_completion(
         message.chat_id,
@@ -555,6 +472,7 @@ async fn get_chat_completion(
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
+    debug!("Getting chat completion for chat with id {}", chat_id);
     let settings_guard = settings.read().await;
 
     let mut tx = pool
@@ -563,7 +481,7 @@ async fn get_chat_completion(
         .with_context(|| "Failed to begin transaction")?;
 
     let messages = repo::messages::list(&mut *tx, ListParams { chat_id }).await?;
-    debug!("Messages so far: {:?}", messages);
+    trace!("Messages so far: {:?}", messages);
 
     // Get current agent.
     let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
@@ -598,16 +516,24 @@ async fn get_chat_completion(
 
     // Send request to LLM
     let client = Client::new(
-        settings_guard
+        match settings_guard
             .openai_api_key
             .as_ref()
-            .with_context(|| "Failed to get openai api key")?,
+            .with_context(|| "Failed to get openai api key")
+        {
+            Ok(api_key) => api_key,
+            Err(err) => {
+                fail_message(&window, &pool, &mut message).await?;
+
+                return Err(err.into());
+            }
+        },
     );
 
     let mut tools = None;
     if !abilities.is_empty() {
         tools = Some(
-            abilities
+            match abilities
                 .into_iter()
                 .map(
                     |ability| match serde_json::from_str(&ability.parameters_json) {
@@ -618,30 +544,59 @@ async fn get_chat_completion(
                         Err(err) => Err(errors::Error::Internal(err.into())),
                     },
                 )
-                .collect::<Result<Vec<Tool>>>()?,
+                .collect::<Result<Vec<Tool>>>()
+            {
+                Ok(tools) => tools,
+                Err(err) => {
+                    fail_message(&window, &pool, &mut message).await?;
+
+                    return Err(err);
+                }
+            },
         );
 
         debug!("Tools: {:?}", tools);
     }
 
-    let mut response = client
+    let mut response = match client
         .create_chat_completion_stream(CreateChatCompletionRequest {
-            model: "gpt-4".to_string(),
+            model: "gpt-4-turbo-preview".to_string(),
             messages: req_messages,
             stream: true,
             tools,
         })
         .await
-        .with_context(|| "Failed to create chat completion")?;
+        .with_context(|| "Failed to create chat completion")
+    {
+        Ok(response) => response,
+        Err(err) => {
+            fail_message(&window, &pool, &mut message).await?;
 
-    while let Some(chunk) = response
+            return Err(err.into());
+        }
+    };
+
+    let mut chunk_remainder = String::new();
+
+    while let Some(chunk) = match response
         .chunk()
         .await
-        .with_context(|| "Failed to get chunk")?
+        .with_context(|| "Failed to get chunk")
     {
+        Ok(chunk) => chunk,
+        Err(err) => {
+            fail_message(&window, &pool, &mut message).await?;
+
+            return Err(err.into());
+        }
+    } {
         // TODO: come up with a more efficient way to split chunks.
-        let chunk_str = String::from_utf8_lossy(&chunk);
-        let chunks = chunk_str
+        chunk_remainder.push_str(&String::from_utf8_lossy(&chunk));
+        let chunk = chunk_remainder.clone();
+        chunk_remainder = String::new();
+        debug!("RAW chunk: {:?}", chunk);
+
+        let chunks = chunk
             .split(CHUNK_SEPARATOR)
             .map(str::trim)
             .filter(|chunk| !chunk.is_empty())
@@ -654,7 +609,7 @@ async fn get_chat_completion(
                     None => Status::Completed,
                 };
 
-                repo::messages::update_with_completion_result(
+                if let Err(err) = repo::messages::update_with_completion_result(
                     &*pool,
                     UpdateWithCompletionResultParams {
                         id: message.id,
@@ -666,29 +621,62 @@ async fn get_chat_completion(
                     },
                 )
                 .await
-                .with_context(|| "Failed to update assistant message")?;
+                .with_context(|| "Failed to update assistant message")
+                {
+                    fail_message(&window, &pool, &mut message).await?;
+
+                    return Err(err.into());
+                };
             } else {
-                apply_completion_chunk(&mut message, chunk)
-                    .with_context(|| "Failed to update message with completion chunk")?;
+                match apply_completion_chunk(&mut message, chunk) {
+                    Err(errors::Error::Messages(messages::Error::ChunkDeserialization(_))) => {
+                        debug!("Error parsing chunk, might be incomplete, pushing to remainder");
+                        chunk_remainder = chunk.to_string();
+                    }
+                    Err(err) => {
+                        fail_message(&window, &pool, &mut message).await?;
+
+                        return Err(err);
+                    }
+                    _ => {}
+                };
             }
 
-            window
+            if let Err(err) = window
                 .emit_all("messages:updated", &message)
-                .with_context(|| "Failed to emit event")?;
+                .with_context(|| "Failed to emit event")
+            {
+                fail_message(&window, &pool, &mut message).await?;
+
+                return Err(err.into());
+            };
         }
     }
 
     Ok(())
 }
 
+async fn fail_message(window: &Window, pool: &DbPool, message: &mut Message) -> Result<()> {
+    repo::messages::update_status(pool, message.id, Status::Failed).await?;
+    message.status = Status::Failed;
+    window
+        .emit_all("messages:updated", &message)
+        .with_context(|| "Failed to emit event")?;
+
+    Ok(())
+}
+
+#[allow(clippy::too_many_lines)]
 fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
-    let mut message_tool_call = None;
+    debug!("Chunk: {:?}", chunk);
+    let mut current_tool_call = None;
 
     if let Some(tool_calls_str) = &message.tool_calls {
         let tool_calls: Vec<ToolCall> =
             serde_json::from_str(tool_calls_str).with_context(|| "Failed to parse tool calls")?;
 
-        message_tool_call = tool_calls.into_iter().next();
+        current_tool_call = tool_calls.into_iter().last();
+        trace!("Last tool call: {:?}", current_tool_call);
     }
 
     let completion: Value = serde_json::from_str(
@@ -697,17 +685,17 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
             .strip_prefix("data: ")
             .with_context(|| format!("Failed to strip prefix for chunk: {chunk}"))?,
     )
-    .with_context(|| format!("Failed to parse OpenAI API response chunk: {chunk}"))?;
+    .map_err(messages::Error::ChunkDeserialization)?;
 
     if let Some(choices) = completion.get("choices") {
-        debug!("Choices: {:?}", choices);
+        trace!("Choices: {:?}", choices);
 
         if let Some(delta) = choices[0].get("delta") {
-            debug!("Delta: {:?}", delta);
+            trace!("Delta: {:?}", delta);
 
             match delta.get("content") {
                 Some(content) if content.is_string() => {
-                    debug!("Content: {:?}", content);
+                    trace!("Content: {:?}", content);
 
                     message.content = Some(match &message.content {
                         Some(existed) => {
@@ -727,10 +715,12 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
 
             match delta.get("tool_calls") {
                 Some(tool_calls) if tool_calls.is_array() => {
-                    debug!("Tool call: {:?}", tool_calls[0]);
+                    trace!("Tool call: {:?}", tool_calls[0]);
 
-                    if message_tool_call.is_none() {
-                        message_tool_call = Some(ToolCall {
+                    if current_tool_call.is_none() || tool_calls[0].get("id").is_some() {
+                        trace!("Current tool call: {:?}", current_tool_call);
+                        trace!("Get id: {:?}", tool_calls[0].get("id"));
+                        current_tool_call = Some(ToolCall {
                             id: String::new(),
                             type_: ToolType::Function,
                             function: FunctionCall {
@@ -741,9 +731,9 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
                     }
 
                     if let Some(id) = tool_calls[0].get("id") {
-                        debug!("ID: {:?}", id);
+                        trace!("ID: {:?}", id);
 
-                        message_tool_call
+                        current_tool_call
                             .as_mut()
                             .with_context(|| "Failed to get tool call")?
                             .id
@@ -751,12 +741,12 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
                     }
 
                     if let Some(function) = tool_calls[0].get("function") {
-                        debug!("Function: {:?}", function);
+                        trace!("Function: {:?}", function);
 
                         if let Some(name) = function.get("name") {
-                            debug!("Name: {:?}", name);
+                            trace!("Name: {:?}", name);
 
-                            message_tool_call
+                            current_tool_call
                                 .as_mut()
                                 .with_context(|| "Failed to get tool call")?
                                 .function
@@ -767,9 +757,9 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
                         }
 
                         if let Some(arguments) = function.get("arguments") {
-                            debug!("Arguments: {:?}", arguments);
+                            trace!("Arguments: {:?}", arguments);
 
-                            message_tool_call
+                            current_tool_call
                                 .as_mut()
                                 .with_context(|| "Failed to get tool call")?
                                 .function
@@ -787,10 +777,31 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
         }
     }
 
-    if let Some(tool_call) = &message_tool_call {
+    if let Some(tool_call) = current_tool_call {
+        let tool_calls = match &message.tool_calls {
+            Some(tool_calls_str) => {
+                let mut tc: Vec<ToolCall> = serde_json::from_str(tool_calls_str)
+                    .with_context(|| "Failed to parse tool calls")?;
+
+                if tool_call.id
+                    == tc
+                        .last()
+                        .with_context(|| "Last tool call is somehow None")?
+                        .id
+                {
+                    tc.pop();
+                }
+
+                tc.push(tool_call);
+                tc
+            }
+            None => vec![tool_call],
+        };
+
+        trace!("Resulting tool calls: {:?}", tool_calls);
+
         message.tool_calls = Some(
-            serde_json::to_string(&vec![tool_call])
-                .with_context(|| "Failed to serialize tool calls")?,
+            serde_json::to_string(&tool_calls).with_context(|| "Failed to serialize tool calls")?,
         );
     }
 

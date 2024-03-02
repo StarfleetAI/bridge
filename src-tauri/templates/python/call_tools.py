@@ -8,16 +8,10 @@ PYTHON_PATH = '{{ python_path }}'
 
 {{ code }}
 
-tool_calls = {{ tool_calls }}
-results = {}
-for tool_call in tool_calls:
-    name = tool_call['function']['name']
+tool_call = {{ tool_call }}
+name = tool_call['function']['name']
+try:
     arguments = json.loads(tool_call['function']['arguments'])
-
-    try:
-        results[tool_call['id']] = globals()[name](**arguments)
-    except Exception as e:
-        results[tool_call['id']] = str(e)
-        break
-
-print(json.dumps(results))
+    print(globals()[name](**arguments))
+except Exception as e:
+    print(str(e))

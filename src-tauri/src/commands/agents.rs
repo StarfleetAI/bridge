@@ -1,7 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO(ri-nat): I don't really know, why Clippy is mad about these here, but let make him quiet for now.
 #![allow(clippy::used_underscore_binding)]
 
 use std::collections::BTreeMap;

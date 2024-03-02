@@ -5,12 +5,12 @@ use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
+use sqlx::{Executor, query, query_as, query_scalar, Sqlite};
 
 use crate::errors::Error;
 use crate::types::Result;
 
-#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
 pub enum Role {
     #[default]
     System,
@@ -52,7 +52,7 @@ impl From<String> for Status {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub id: i64,
     pub chat_id: i64,

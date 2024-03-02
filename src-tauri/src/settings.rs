@@ -1,10 +1,11 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::{Path, PathBuf};
+
 use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use crate::types::Result;
@@ -21,15 +22,15 @@ pub struct Settings {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to construct settings file path")]
-    PathError,
+    Path,
     #[error("failed to read settings file: {0}")]
-    FileReadError(std::io::Error),
+    FileRead(std::io::Error),
     #[error("failed to write settings file: {0}")]
-    FileWriteError(std::io::Error),
+    FileWrite(std::io::Error),
     #[error("failed to parse settings file: {0}")]
-    FileParseError(serde_json::Error),
+    FileParse(serde_json::Error),
     #[error("failed to serialize settings: {0}")]
-    JsonSerializationError(serde_json::Error),
+    JsonSerialization(serde_json::Error),
 }
 
 impl Settings {
@@ -48,11 +49,9 @@ impl Settings {
             Self::default().save_to_disk(app_local_data_dir).await?;
         }
 
-        let content = fs::read_to_string(&path)
-            .await
-            .map_err(Error::FileReadError)?;
+        let content = fs::read_to_string(&path).await.map_err(Error::FileRead)?;
 
-        Ok(serde_json::from_str(&content).map_err(Error::FileParseError)?)
+        Ok(serde_json::from_str(&content).map_err(Error::FileParse)?)
     }
 
     /// Save settings to disk.
@@ -63,10 +62,10 @@ impl Settings {
     pub async fn save_to_disk(&self, app_local_data_dir: &str) -> Result<()> {
         fs::write(
             &Self::file_path(app_local_data_dir)?,
-            serde_json::to_string_pretty(&self).map_err(Error::JsonSerializationError)?,
+            serde_json::to_string_pretty(&self).map_err(Error::JsonSerialization)?,
         )
         .await
-        .map_err(Error::FileWriteError)?;
+        .map_err(Error::FileWrite)?;
 
         Ok(())
     }
@@ -83,6 +82,6 @@ impl Settings {
 
         path.into_os_string()
             .into_string()
-            .map_err(|_| Error::PathError.into())
+            .map_err(|_| Error::Path.into())
     }
 }

@@ -1,10 +1,13 @@
-#![allow(clippy::used_underscore_binding)]
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
 
-use crate::settings::Settings;
-use crate::types::Result;
+#![allow(clippy::used_underscore_binding)]
 
 use tauri::{AppHandle, State};
 use tokio::sync::RwLock;
+
+use crate::settings::Settings;
+use crate::types::Result;
 
 /// Get the current settings.
 ///
