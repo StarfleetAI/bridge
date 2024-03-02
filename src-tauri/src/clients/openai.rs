@@ -87,7 +87,7 @@ impl TryFrom<crate::repo::messages::Message> for Message {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ToolCall {
     pub id: String,
     #[serde(rename = "type")]
@@ -95,39 +95,39 @@ pub struct ToolCall {
     pub function: FunctionCall,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ToolType {
     #[serde(rename = "function")]
     Function,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FunctionCall {
     pub name: String,
     pub arguments: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tool {
     #[serde(rename = "type")]
     pub type_: String,
     pub function: Function,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub name: String,
     pub parameters: FunctionParameters,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FunctionParameters {
     #[serde(rename = "type")]
     pub type_: String,
     pub properties: HashMap<String, FunctionPropetryValue>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FunctionPropetryValue {
     #[serde(rename = "type")]
     pub type_: String,

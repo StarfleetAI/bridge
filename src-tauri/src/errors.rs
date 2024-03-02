@@ -1,6 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::messages::Error as MessagesError;
 use crate::settings::Error as SettingsError;
 
 #[derive(Debug, thiserror::Error)]
@@ -13,13 +14,17 @@ pub enum Error {
     Internal(#[from] anyhow::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error(transparent)]
+    TokioJoin(#[from] tokio::task::JoinError),
 
-    #[error("Settings error: {0}")]
-    SettingsError(#[from] SettingsError),
+    #[error(transparent)]
+    Messages(#[from] MessagesError),
+    #[error(transparent)]
+    Settings(#[from] SettingsError),
 
-    #[error("Ability is used by agents")]
+    #[error("ability is used by agents")]
     AbilityIsUsedByAgents,
-    #[error("No `tool_calls` found in message")]
+    #[error("no `tool_calls` found in message")]
     NoToolCallsFound,
 }
 
