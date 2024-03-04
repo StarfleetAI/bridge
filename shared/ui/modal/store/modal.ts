@@ -3,7 +3,7 @@
 
 import { defineStore } from 'pinia'
 
-type ModalProps = Record<string, never>
+type ModalProps = Record<string, unknown>
 
 type ModalComponent = Component | string
 
