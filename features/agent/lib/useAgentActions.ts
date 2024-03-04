@@ -13,7 +13,7 @@ export const useAgentActions = (agent: Ref<Agent>) => {
     return {
       label: 'Delete Agent',
       icon: DeleteIcon,
-      action: () => deleteAgentReq(id.value),
+      action: () => deleteAgentReq(id.value).catch((error) => console.error('Failed to delete agent:', error)),
     }
   })
 
