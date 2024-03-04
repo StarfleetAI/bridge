@@ -31,7 +31,7 @@
     "@types/prismjs": "^1.26.3",
     "clipboard-polyfill": "^4.0.2",
     "eslint": "^8.56.0",
-    "eslint-config-aurora-vue": "^1.0.4",
+    "eslint-config-aurora-vue": "^2.0.4",
     "highlightjs-copy": "^1.0.5",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.2",
