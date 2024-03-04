@@ -57,8 +57,8 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1(marked@12.0.0)
   nuxt-typed-router:
-    specifier: ^3.5.1
-    version: 3.6.0(prettier@3.2.5)
+    specifier: ^3.6.1
+    version: 3.6.1(prettier@3.2.5)
   pinia:
     specifier: ^2.1.7
     version: 2.1.7(typescript@5.3.3)(vue@3.4.20)
@@ -7018,12 +7018,12 @@ packages:
     optionalDependencies:
       fsevents: 2.3.3
 
-  /nuxt-typed-router@3.6.0(prettier@3.2.5):
-    resolution: {integrity: sha512-GLlg+CwHS0JLf9+mdkL75mgcwnUlGgv0MZyg7vvjIV5Zq0tq9Bwu/X7v0iPEZrM/0r9zAK4DmPzq21KnRlvPSg==}
+  /nuxt-typed-router@3.6.1(prettier@3.2.5):
+    resolution: {integrity: sha512-eQMwBF81krzNzbOr+dNlHi60CmDAvp/T3ViwT7KX1orbM1TC1WeDT0SV1IR+D5hLM5dYoJRXvCtOM0Aouq74xg==}
     peerDependencies:
       prettier: ^2.5.x || 3.x
     dependencies:
-      '@nuxt/kit': 3.10.2
+      '@nuxt/kit': 3.10.3
       chalk: 5.3.0
       defu: 6.1.4
       lodash-es: 4.17.21
