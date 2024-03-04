@@ -2,9 +2,11 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <script setup lang="ts">
   import { DefaultLayoutSidebar } from '~/widgets/layout/default'
+  import { Modal } from '~/shared/ui/modal'
 </script>
 <template>
   <div class="default-layout">
+    <Modal />
     <DefaultLayoutSidebar />
     <div class="default-layout__page">
       <slot name="default" />
