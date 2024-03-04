@@ -75,7 +75,10 @@
 
 <template>
   <div class="chats-history">
-    <NewChatButton />
+    <div class="history__control">
+      Chats
+      <NewChatButton />
+    </div>
     <div class="chats-list">
       <div
         v-for="[date, group] in chatsGroups"
@@ -108,7 +111,6 @@
   .chats-history {
     width: 200px;
     height: 100%;
-    padding: 12px 3px 12px 12px;
     border-right: 1px solid var(--border-3);
     font-size: 12px;
     line-height: 17px;
@@ -116,16 +118,26 @@
     @include flex(column, flex-start, stretch);
   }
 
-  .history-group {
-    @include flex(column);
+  .history__control {
+    height: 56px;
+    padding: 0 16px;
+    color: var(--text-tertiary);
+
+    @include font-inter-700(16px, 22px, var(--text-secondary));
+    @include flex(row, space-between, center, 8px);
   }
 
   .chats-list {
     gap: 32px;
     overflow: auto;
+    padding: 0 3px 12px 12px;
 
     @include add-scrollbar;
     @include flex(column, flex-start, stretch);
+  }
+
+  .history-group {
+    @include flex(column);
   }
 
   .history-group__title {
