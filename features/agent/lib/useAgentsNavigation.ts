@@ -17,6 +17,7 @@ export const useAgentsNavigation = () => {
     transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
   })
   const setSelectedAgent = (id: Nullable<number>) => {
+    disableCreateAgent()
     selectedAgent.value = id
   }
   return {

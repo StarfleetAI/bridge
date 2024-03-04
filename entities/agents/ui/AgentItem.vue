@@ -37,7 +37,12 @@
     margin-bottom: 12px;
     padding: 12px 16px;
     border-radius: 6px;
-    background: var(--side-panel);
+    background: var(--surface-2);
+
+    &.selected {
+      background: var(--surface-3);
+      outline: 2px solid var(--button-primary);
+    }
 
     &.inactive {
       opacity: 0.5;

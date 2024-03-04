@@ -2,12 +2,15 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useAgentsNavigation } from '~/features/agent'
   import { AgentItem } from '~/entities/agents'
   import type { Agent } from '~/entities/agents'
 
   defineProps<{
     agents: Agent[]
   }>()
+
+  const { setSelectedAgent, selectedAgent } = useAgentsNavigation()
 </script>
 
 <template>
@@ -16,6 +19,8 @@
       v-for="agent in agents"
       :key="agent.id"
       :agent="agent"
+      :class="{ selected: agent.id === selectedAgent }"
+      @click="setSelectedAgent(agent.id)"
     />
   </div>
 </template>

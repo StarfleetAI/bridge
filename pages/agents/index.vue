@@ -114,7 +114,10 @@
     </template>
     <template #additional>
       <div class="side-content">
-        <component :is="sideContentComponent" />
+        <component
+          :is="sideContentComponent"
+          :key="String(selectedAgent)"
+        />
       </div>
     </template>
   </BaseContainer>
