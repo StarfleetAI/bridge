@@ -4,6 +4,8 @@
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
+// disabled because of the wrong type definition in library
+// eslint-disable-next-line
 dayjs.extend(relativeTime)
 
 export const getTimeAgo = ({
