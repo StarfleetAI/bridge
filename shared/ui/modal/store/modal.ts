@@ -3,15 +3,17 @@
 
 import { defineStore } from 'pinia'
 
-type ModalProps = Record<string, any>
+type ModalProps = Record<string, never>
+
+type ModalComponent = Component | string
 
 export const useModalStore = defineStore('modal', () => {
   const isVisible = ref<boolean>(false)
-  const contentComponent = ref<any>(null)
+  const contentComponent = ref<ModalComponent | null>(null)
   const contentProps = ref<ModalProps>({})
   const onCloseCallback = ref<(() => void) | null>(null)
 
-  function showModal(component: any, props: ModalProps = {}, onClose?: () => void) {
+  function showModal(component: ModalComponent, props: ModalProps = {}, onClose?: () => void) {
     contentComponent.value = component
     contentProps.value = props
     onCloseCallback.value = onClose || null
