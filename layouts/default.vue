@@ -2,9 +2,11 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <script setup lang="ts">
   import { DefaultLayoutHeader } from '~/widgets/layout/default'
+  import { Modal } from '~/shared/ui/modal'
 </script>
 <template>
   <div class="default-layout">
+    <Modal />
     <DefaultLayoutHeader />
     <div class="default-layout__page">
       <slot name="default" />
