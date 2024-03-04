@@ -1,11 +1,11 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <script setup lang="ts">
-  import { DefaultLayoutHeader } from '~/widgets/layout/default'
+  import { DefaultLayoutSidebar } from '~/widgets/layout/default'
 </script>
 <template>
   <div class="default-layout">
-    <DefaultLayoutHeader />
+    <DefaultLayoutSidebar />
     <div class="default-layout__page">
       <slot name="default" />
     </div>
