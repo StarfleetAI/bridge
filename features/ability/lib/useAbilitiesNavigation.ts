@@ -17,6 +17,7 @@ export const useAbilitiesNavigation = () => {
     transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
   })
   const setSelectedAbility = (id: Nullable<number>) => {
+    disableCreateAbility()
     selectedAbility.value = id
   }
   return {

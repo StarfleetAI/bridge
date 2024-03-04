@@ -38,7 +38,7 @@ export const useAgentsStore = defineStore('agents', () => {
     }
   }
 
-  const deleteAgent = async (id: number) => {
+  const deleteAgent = async (id: number): Promise<void> => {
     await deleteAgentReq(id)
     const index = agents.value.findIndex((a) => a.id === id)
     if (index !== undefined && index !== -1) {
