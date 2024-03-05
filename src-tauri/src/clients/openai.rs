@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use log::debug;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use crate::types::Result;
 
