@@ -2,23 +2,29 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import AgentAbilities from './AgentAbilities.vue'
+  import { useAgentsStore, useAgentsNavigation } from '~/features/agent'
+  import { type Agent } from '~/entities/agents'
+  import AgentControls from './AgentControls.vue'
+
+  const { selectedAgent } = useAgentsNavigation()
+
+  const { getById } = useAgentsStore()
+
+  const agent = ref(getById(selectedAgent.value!) as Agent)
 </script>
 <template>
   <div class="agent-full-item">
-    <div class="agent-full-item__title">Agent 0393</div>
+    <div class="agent-full-item__head">
+      <div class="agent-full-item__title">Agent {{ agent.id }}</div>
+      <AgentControls :agent="agent" />
+    </div>
     <div class="agent-full-item__body">
       <div class="agent-full-item__avatar" />
-      <div class="agent-full-item__name">Cooking</div>
+      <div class="agent-full-item__name">{{ agent.name }}</div>
       <div class="agent-full-item__text">
-        Enhance research with 200M+ resources and built-in critical reading skills. Access Google Scholar, PubMed,
-        JSTOR, Arxiv, and more, effortlessly.
+        {{ agent.description }}
       </div>
       <div class="agent-full-item__info">by Alex Johnson • installed 4,322 times</div>
-    </div>
-    <div class="agent-full-item__abilities">
-      <div class="agent-full-item__abilities-title">Abilities</div>
-      <AgentAbilities :abilities="[]" />
     </div>
   </div>
 </template>
@@ -30,13 +36,16 @@
       @include flex(column, start, center);
     }
 
-    &__title {
-      width: 100%;
+    &__head {
+      height: 57px;
       padding: 12px 24px;
-      border-bottom: 0.5px solid var(--border-3);
+      border-bottom: 1px solid var(--border-3);
 
+      @include flex(row, space-between, center);
+    }
+
+    &__title {
       @include font-inter-700(14px, 20px, var(--text-secondary));
-      @include flex(row, start, center);
     }
 
     &__avatar {

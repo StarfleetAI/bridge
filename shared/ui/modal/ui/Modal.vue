@@ -1,0 +1,77 @@
+<!-- Copyright 2024 StarfleetAI -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+<script setup lang="ts">
+  import { CrossIcon } from '~/shared/ui/icons'
+  import { useModalStore } from '~/shared/ui/modal'
+
+  const modalStore = useModalStore()
+</script>
+
+<template>
+  <div
+    v-if="modalStore.isVisible"
+    class="modal-overlay"
+    @click="modalStore.closeModal"
+  >
+    <div
+      class="modal-content"
+      @click.stop
+    >
+      <CrossIcon
+        class="close-button"
+        :color="'var(--text-tertiary)'"
+        width="20"
+        height="20"
+        @click="modalStore.closeModal"
+      />
+      <component
+        :is="modalStore.contentComponent"
+        v-bind="modalStore.contentProps"
+      />
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+
+    &:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 101;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+    }
+
+    @include flex(row, center, center);
+  }
+
+  .modal-content {
+    position: relative;
+    z-index: 102;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: var(--surface-1);
+  }
+
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+</style>
