@@ -30,6 +30,18 @@
       emit('update:modelValue', selectedAbilities.value)
     }
   }
+
+  const toggleAbility = (ability: Ability) => {
+    if (selectedAbilities.value.some((a) => a.id === ability.id)) {
+      removeAbility(ability)
+    } else {
+      addAbility(ability)
+    }
+  }
+
+  const isAbilitySelected = (ability: Ability) => {
+    return selectedAbilities.value.some((a) => a.id === ability.id)
+  }
 </script>
 
 <template>
@@ -39,10 +51,10 @@
       v-for="ability in abilities"
       :key="ability.id"
       class="abilities-select-list__item"
-      @click="selectedAbilities?.some((a) => a.id === ability.id) ? removeAbility(ability) : addAbility(ability)"
+      @click="toggleAbility(ability)"
     >
       <div class="abilities-select-list__item-control">
-        <template v-if="selectedAbilities?.some((a) => a.id === ability.id)">
+        <template v-if="isAbilitySelected(ability)">
           <DeleteIcon />
         </template>
         <template v-else>

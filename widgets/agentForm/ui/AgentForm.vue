@@ -22,7 +22,7 @@
       name: name.value,
       description: description.value,
       system_message: systemMessage.value,
-      ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map(($) => $.id) : [],
+      ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
     })
     finishCreation()
   }
