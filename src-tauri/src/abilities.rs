@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use askama::Template;
-use log::{debug, trace};
 use tokio::fs;
 use tokio::fs::create_dir_all;
 use tokio::process::Command;
+use tracing::{debug, trace};
 
 use crate::clients::openai::ToolCall;
 use crate::repo::abilities::Ability;

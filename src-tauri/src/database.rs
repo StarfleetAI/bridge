@@ -1,9 +1,9 @@
 use anyhow::Context;
-use log::{debug, info};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use std::path::PathBuf;
+use tracing::{debug, info};
 
 use crate::repo::messages;
 use crate::types::Result;
@@ -69,5 +69,18 @@ pub async fn prepare(pool: &Pool<Sqlite>) -> Result<()> {
     debug!("Cleaning up after possible previous termination");
     messages::transition_all(pool, messages::Status::Writing, messages::Status::Failed).await?;
 
+    debug!("Seeding the database");
+    for query in seed_queries() {
+        sqlx::query(query).execute(pool).await?;
+    }
+
     Ok(())
+}
+
+fn seed_queries() -> Vec<&'static str> {
+    include_str!("../db/seeds.sql")
+        .split(';')
+        .map(str::trim)
+        .filter(|q| !q.is_empty())
+        .collect()
 }

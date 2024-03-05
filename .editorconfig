@@ -21,6 +21,11 @@ indent_size = 2
 indent_style = space
 indent_size = 4
 
+# SQL files
+[*.sql]
+indent_size = 4
+indent_style = space
+
 # Cargo.toml and other TOML files
 [*.toml]
 indent_style = space

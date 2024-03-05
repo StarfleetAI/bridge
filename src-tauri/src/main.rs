@@ -6,16 +6,21 @@
 
 use anyhow::Context;
 use dotenvy::dotenv;
-use env_logger::{Builder, Env};
-use log::{debug, info};
 use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
 use tokio::sync::RwLock;
+use tracing::{debug, info};
 
 use bridge::{commands, database, settings::Settings, types::Result};
+use tracing_subscriber::{fmt, EnvFilter};
 
 fn main() -> Result<()> {
     dotenv().ok();
-    Builder::from_env(Env::default().default_filter_or("info")).init();
+
+    let format = fmt::format();
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .event_format(format)
+        .init();
 
     tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
 

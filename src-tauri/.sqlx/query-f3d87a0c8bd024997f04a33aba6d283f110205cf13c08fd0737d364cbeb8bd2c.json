@@ -1,0 +1,104 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM models WHERE provider = $1 AND name = $2",
+  "describe": {
+    "columns": [
+      {
+        "name": "provider",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "context_length",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "max_tokens",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "text_in",
+        "ordinal": 4,
+        "type_info": "Bool"
+      },
+      {
+        "name": "text_out",
+        "ordinal": 5,
+        "type_info": "Bool"
+      },
+      {
+        "name": "image_in",
+        "ordinal": 6,
+        "type_info": "Bool"
+      },
+      {
+        "name": "image_out",
+        "ordinal": 7,
+        "type_info": "Bool"
+      },
+      {
+        "name": "audio_in",
+        "ordinal": 8,
+        "type_info": "Bool"
+      },
+      {
+        "name": "audio_out",
+        "ordinal": 9,
+        "type_info": "Bool"
+      },
+      {
+        "name": "api_url",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "api_key",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_system",
+        "ordinal": 12,
+        "type_info": "Bool"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 13,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 14,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f3d87a0c8bd024997f04a33aba6d283f110205cf13c08fd0737d364cbeb8bd2c"
+}

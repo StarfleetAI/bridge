@@ -5,7 +5,7 @@ use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sqlx::{Executor, query, query_as, query_scalar, Sqlite};
+use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 
 use crate::errors::Error;
 use crate::types::Result;

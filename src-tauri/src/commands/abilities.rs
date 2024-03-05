@@ -5,10 +5,10 @@
 
 use anyhow::Context;
 use askama::Template;
-use log::debug;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use tokio::{process::Command, sync::RwLock};
+use tracing::debug;
 
 use crate::{
     clients::openai::{Function, Tool},
