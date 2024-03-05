@@ -7,22 +7,24 @@ type ModalProps = Record<string, unknown>
 
 type ModalComponent = Component | string
 
+type OnCloseCallback = ((returnValue?: unknown) => void) | null
+
 export const useModalStore = defineStore('modal', () => {
   const isVisible = ref<boolean>(false)
   const contentComponent = ref<ModalComponent | null>(null)
   const contentProps = ref<ModalProps>({})
-  const onCloseCallback = ref<(() => void) | null>(null)
+  const onCloseCallback = ref<OnCloseCallback>(null)
 
-  function showModal(component: ModalComponent, props: ModalProps = {}, onClose?: () => void) {
+  function showModal(component: ModalComponent, props: ModalProps = {}, onClose?: OnCloseCallback) {
     contentComponent.value = component
     contentProps.value = props
     onCloseCallback.value = onClose || null
     isVisible.value = true
   }
 
-  function closeModal() {
+  function closeModal(returnValue?: unknown) {
     if (onCloseCallback.value) {
-      onCloseCallback.value()
+      onCloseCallback.value(returnValue)
     }
     isVisible.value = false
     contentComponent.value = null

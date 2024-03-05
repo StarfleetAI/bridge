@@ -3,8 +3,11 @@
 
 <script lang="ts" setup>
   import { useAgentsStore, useAgentsNavigation, createAgent } from '~/features/agent'
+  import { type Ability } from '~/entities/abilities'
   import { BaseButton } from '~/shared/ui/base'
-  import { CrossIcon, SaveIcon } from '~/shared/ui/icons'
+  import { CrossIcon, SaveIcon, PlusIcon } from '~/shared/ui/icons'
+  import { useModalStore } from '~/shared/ui/modal'
+  import AbilitiesAddList from './AbilitiesAddList.vue'
 
   const { disableCreateAgent } = useAgentsNavigation()
 
@@ -19,9 +22,16 @@
       name: name.value,
       description: description.value,
       system_message: systemMessage.value,
-      ability_ids: [],
+      ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map(($) => $.id) : [],
     })
     finishCreation()
+  }
+  const modalStore = useModalStore()
+  const addedAbilities = ref<Ability[]>([])
+  const openModal = () => {
+    modalStore.showModal(AbilitiesAddList, { modelValue: addedAbilities }, (val: unknown) => {
+      addedAbilities.value = val as Ability[]
+    })
   }
 
   const finishCreation = () => {
@@ -81,12 +91,76 @@
         />
       </div>
     </div>
+    <div class="agent-form__abilities">
+      <div class="agent-form__abilities-head">
+        <div class="agent-form__abilities-head-title">Abilities</div>
+        <div
+          class="agent-form__abilities-head-add"
+          @click="openModal"
+        >
+          <PlusIcon />Add
+        </div>
+      </div>
+      <div class="agent-form__abilities-list">
+        <div
+          v-for="ability in addedAbilities"
+          :key="ability.id"
+          class="agent-form__abilities-list-item"
+        >
+          <div class="agent-form__abilities-list-item-name">{{ ability.name }}</div>
+          <div class="agent-form__abilities-list-item-description">{{ ability.description }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
   .agent-form {
     @include flex(column);
+
+    &__abilities {
+      padding: 24px;
+
+      @include flex(column);
+    }
+
+    &__abilities-head {
+      margin-bottom: 24px;
+
+      @include flex(row, space-between, center);
+    }
+
+    &__abilities-head-title {
+      @include font-inter-500(14px, 20px, var(--text-secondary));
+    }
+
+    &__abilities-head-add {
+      @include flex(row, start, center, 4px);
+      @include font-inter-500(14px, 20px, var(--text-tertiary));
+    }
+
+    &__abilities-list-item {
+      border-bottom: 0.5px solid var(--border-3);
+      height: 32px;
+
+      @include flex(row, start, center);
+    }
+
+    &__abilities-list-item-name {
+      margin-right: 8px;
+
+      @include font-inter-500(14px, 20px, var(--text-secondary));
+    }
+
+    &__abilities-list-item-description {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      flex: 1;
+
+      @include font-inter-400(12px, 17px, var(--text-tertiary));
+    }
   }
 
   .agent-form__header {
@@ -125,7 +199,7 @@
       outline: none;
 
       @include hide-scrollbar;
-      @include font-inter-400(14px, 20px, var(--text-tertiary));
+      @include font-inter-400(14px, 20px, var(--text-secondary));
     }
 
     @include flex(column, start, start, $gap: 8px);
