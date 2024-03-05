@@ -3,17 +3,19 @@
 
 use std::path::{Path, PathBuf};
 
-use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::fs;
+use tracing::debug;
 
 use crate::types::Result;
 
+const DEFAULT_MODEL: &str = "OpenAI/gpt-3.5-turbo";
 const SETTINGS_FILE: &str = "settings.json";
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    pub default_model: Option<String>,
     pub openai_api_key: Option<String>,
     pub python_path: Option<String>,
     pub agents: Value,
@@ -83,5 +85,10 @@ impl Settings {
         path.into_os_string()
             .into_string()
             .map_err(|_| Error::Path.into())
+    }
+
+    /// Returns `default_model` if it's set, otherwise returns `DEFAULT_MODEL`.
+    #[must_use] pub fn default_model(&self) -> &str {
+        self.default_model.as_deref().unwrap_or(DEFAULT_MODEL)
     }
 }

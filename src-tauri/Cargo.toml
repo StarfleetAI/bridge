@@ -29,6 +29,8 @@ tauri = { version = "1.6.0", features = [] }
 tauri-plugin-deep-link = "0.1.2"
 thiserror = "1.0.57"
 tokio = { version = "1.36.0", features = ["full"] }
+tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

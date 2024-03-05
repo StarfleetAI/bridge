@@ -313,6 +313,8 @@ dependencies = [
  "tauri-plugin-deep-link",
  "thiserror",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
