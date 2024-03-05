@@ -93,7 +93,7 @@
           <BaseButton
             :disabled="entity === 'agents' ? isCreateAgent : isCreateAbility"
             size="medium"
-            class="task-list__create"
+            class="agents-list__create"
             @click="createHandle"
           >
             <template #icon>
@@ -112,7 +112,10 @@
         </div>
       </div>
     </template>
-    <template #additional>
+    <template
+      v-if="sideContentComponent"
+      #additional
+    >
       <div class="side-content">
         <component
           :is="sideContentComponent"
@@ -156,5 +159,9 @@
 
     @include font-inter-700(16px, 22px, var(--text-secondary));
     @include flex(row, start, center);
+  }
+
+  .agents-list__create {
+    margin-top: -10px;
   }
 </style>

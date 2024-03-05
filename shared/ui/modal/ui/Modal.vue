@@ -6,6 +6,8 @@
   import { useModalStore } from '~/shared/ui/modal'
 
   const modalStore = useModalStore()
+
+  const modalValue = ref(null)
 </script>
 
 <template>
@@ -23,11 +25,12 @@
         :color="'var(--text-tertiary)'"
         width="20"
         height="20"
-        @click="modalStore.closeModal"
+        @click="modalStore.closeModal(modalValue)"
       />
       <component
         :is="modalStore.contentComponent"
         v-bind="modalStore.contentProps"
+        v-model="modalValue"
       />
     </div>
   </div>
