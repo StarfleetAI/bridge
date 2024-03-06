@@ -65,6 +65,9 @@
       titleToEdit.value = ''
     }
   }
+  const handleCancelEdit = () => {
+    chatToEditTitle.value = null
+  }
   const getChatTitle = (chat: Chat) => {
     if (chat.title) {
       return chat.title
@@ -86,22 +89,24 @@
         class="history-group"
       >
         <div class="history-group__title">{{ date }}</div>
-        <component
-          :is="getItemComponent(chat.id)"
+        <div
+          :class="['history-item', { active: currentChatId === chat.id }]"
           v-for="chat in group"
           :key="chat.id"
-          :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
-          :class="[
-            'history-item',
-            { active: currentChatId === chat.id, 'is-input': getItemComponent(chat.id) === 'input' },
-          ]"
-          :value="titleToEdit"
           @click="handleClick(chat.id)"
-          @keydown.enter="handleSaveTitle"
-          @input="handleInput"
         >
-          {{ getChatTitle(chat) }}
-        </component>
+          <component
+            :is="getItemComponent(chat.id)"
+            :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
+            :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
+            :value="titleToEdit"
+            @keydown.enter="handleSaveTitle"
+            @input="handleInput"
+            @keydown.esc="handleCancelEdit"
+          >
+            {{ getChatTitle(chat) }}
+          </component>
+        </div>
       </div>
     </div>
   </div>
@@ -111,7 +116,7 @@
   .chats-history {
     width: 200px;
     height: 100%;
-    border-right: 1px solid var(--border-3);
+    background-color: var(--surface-7);
     font-size: 12px;
     line-height: 17px;
 
@@ -128,42 +133,53 @@
   }
 
   .chats-list {
-    gap: 32px;
     overflow: auto;
-    padding: 0 3px 12px 12px;
 
     @include add-scrollbar;
     @include flex(column, flex-start, stretch);
   }
 
   .history-group {
+    padding: 32px 8px 0;
+
     @include flex(column);
   }
 
   .history-group__title {
-    padding-bottom: 8px;
-    padding-left: 8px;
-    color: var(--text-tertiary);
+    padding: 0 8px 8px;
+
+    @include font-inter-400(12px, 17px, var(--text-tertiary));
   }
 
   .history-item {
+    flex: 1;
     overflow: hidden;
-    width: 176px;
     padding: 6px 8px;
     border-radius: 4px;
-    color: var(--text-secondary);
-    font-weight: 500;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 
     &:hover,
     &.active {
       background-color: var(--surface-4);
+      color: var(--text-primary);
+
+      .history-item__name {
+        background-color: var(--surface-4);
+        color: var(--text-primary);
+      }
     }
+  }
+
+  .history-item__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &.is-input {
-      box-sizing: border-box;
+      display: flex;
+      width: 100%;
       outline: none;
     }
+
+    @include font-inter-400(12px, 17px, var(--text-secondary));
   }
 </style>

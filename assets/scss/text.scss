@@ -54,12 +54,27 @@
   line-height: $line-height;
 }
 
+@mixin font-mono {
+  font-family: IBMPlexMono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
 @mixin no-text-selection() {
   user-select: none; /* Safari */
   -webkit-touch-callout: none; /* iOS Safari */
 }
 
-@mixin font-mono {
-  font-family: IBMPlexMono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+@mixin line-clamp($linesCount: 1) {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  visibility: visible !important;
+  -webkit-line-clamp: $linesCount;
+  -webkit-box-orient: vertical;
+}
+
+@mixin text-ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

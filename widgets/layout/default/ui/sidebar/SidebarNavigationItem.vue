@@ -19,7 +19,7 @@
 <template>
   <div
     :to="to"
-    :class="['header-item py-3 px-4', { active: isActiveItem }]"
+    :class="['header-item', { active: isActiveItem }]"
     @click="handleClick()"
   >
     <div class="header-item__icon">
@@ -33,6 +33,8 @@
 
 <style scoped lang="scss">
   .header-item {
+    position: relative;
+    width: 100%;
     height: 56px;
     color: var(--text-tertiary);
     cursor: pointer;
@@ -55,10 +57,12 @@
       color: var(--button-primary);
     }
 
-    @include flex(column, center, center, 4px);
+    @include flex(column, center, center);
   }
 
   .header-item__name {
+    position: absolute;
+    bottom: 0;
     display: none;
 
     @include font-inter-400(10px, 14px, var(--text-tertiary));

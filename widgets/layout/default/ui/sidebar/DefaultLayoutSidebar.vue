@@ -67,7 +67,7 @@
             height="24"
           />
         </template>
-        <template #name> Documents </template>
+        <template #name> Docs </template>
       </SidebarNavigationItem>
       <SidebarNavigationItem
         name="settings"
@@ -102,6 +102,7 @@
   }
 
   .default-layout__header-tabs {
+    width: 100%;
     height: 100svh;
 
     @include flex(column, $align-items: center);

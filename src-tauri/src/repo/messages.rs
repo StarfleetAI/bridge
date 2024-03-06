@@ -1,14 +1,15 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
-use chrono::{NaiveDateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
-
 use crate::errors::Error;
 use crate::types::Result;
+use anyhow::Context;
+use chrono::{NaiveDateTime, Utc};
+use markdown::mdast::Node;
+use markdown::{to_mdast, ParseOptions};
+use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
+use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 
 #[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
 pub enum Role {
@@ -51,7 +52,87 @@ impl From<String> for Status {
         }
     }
 }
+fn replace_symbols(text: &mut String) {
+    *text = text.replace("<", "&lt;").replace(">", "&gt;");
+}
+fn serialize(node: &mut Node) {
 
+    match node {
+        Node::Root(root) => {
+            for child in &mut root.children {
+                serialize(child);
+            }
+        }
+        Node::BlockQuote(block_quote) => {
+            for inner_node in &mut block_quote.children {
+                serialize(inner_node);
+            }
+        }
+        Node::FootnoteDefinition(footnote_definition) => {
+            for inner_node in &mut footnote_definition.children {
+                serialize(inner_node);
+            }
+        }
+        Node::Html(inline_code) => {
+            replace_symbols(&mut inline_code.value);
+        }
+        Node::List(list) => {
+            for item in &mut list.children {
+                serialize(item);
+            }
+        }
+        Node::Heading(heading) => {
+            for child in &mut heading.children {
+                serialize(child);
+            }
+        }
+        Node::Emphasis(emphasis) => {
+            for child in &mut emphasis.children {
+                serialize(child);
+            }
+        }
+        Node::Strong(strong) => {
+            for child in &mut strong.children {
+                serialize(child);
+            }
+        }
+
+        Node::FootnoteReference(footnote_reference) => {
+            replace_symbols(&mut footnote_reference.identifier);
+
+            if let Some(label) = &mut footnote_reference.label {
+                replace_symbols(label);
+            }
+        }
+        Node::Text(text) => {
+            replace_symbols(&mut text.value);
+        }
+        Node::Table(table) => {
+            for child in &mut table.children {
+                serialize(child);
+            }
+        }
+        _ => (),
+    }
+}
+
+/// Serialize content to markdown AST and replace < > with &lt; &gt;
+fn serialize_content<S>(
+    content: &Option<String>,
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let default = String::new();
+    let content = content.as_ref().unwrap_or(&default);
+    let options = ParseOptions::default();
+    let mut ast = to_mdast(content, &options).unwrap();
+    serialize(&mut ast);
+
+    let content = ast.to_string();
+    serializer.serialize_str(&content)
+}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub id: i64,
@@ -59,6 +140,7 @@ pub struct Message {
     pub agent_id: Option<i64>,
     pub status: Status,
     pub role: Role,
+    #[serde(serialize_with = "serialize_content")]
     pub content: Option<String>,
     pub prompt_tokens: Option<i64>,
     pub completion_tokens: Option<i64>,

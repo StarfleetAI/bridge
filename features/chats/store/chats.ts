@@ -9,14 +9,14 @@ import { type CreateChat } from '../model'
 
 export const useChatsStore = defineStore('chats', () => {
   const chats = ref<Chat[]>([])
-  const getById = (id: number | string | undefined): Chat | undefined => {
+  const getById = (id: number | string | undefined): Chat | null => {
     if (id === undefined) {
-      return undefined
+      return null
     }
     if (typeof id === 'string') {
       id = parseInt(id, 10)
     }
-    return chats.value.find((a) => a.id === id)
+    return chats.value.find((a) => a.id === id) || null
   }
   const listChats = async () => {
     chats.value = await listChatsReq()

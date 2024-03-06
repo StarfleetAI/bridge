@@ -129,7 +129,7 @@
           </div>
           <div
             class="tool__content"
-            v-html="message.content"
+            v-html="markedContent"
           />
         </div>
         <div
@@ -226,6 +226,18 @@
     gap: 1.25em;
     cursor: auto;
     user-select: initial;
+
+    :deep(ul) {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25em;
+
+      & li {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25em;
+      }
+    }
 
     @include flex(column, flex-start, flex-start);
   }
