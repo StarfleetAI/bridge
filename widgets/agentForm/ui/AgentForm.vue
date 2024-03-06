@@ -159,8 +159,6 @@
 
       @include font-inter-400(12px, 17px, var(--text-tertiary));
     }
-
-    @include flex(column);
   }
 
   .agent-form__header {
