@@ -34,8 +34,8 @@ pub struct CreateChat {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_chats(pool: State<'_, DbPool>) -> Result<ChatsList> {
-    let chats = repo::chats::list(&*pool).await?;
+pub async fn list_chats(pool: State<'_, DbPool>, is_pinned: Option<bool>) -> Result<ChatsList> {
+    let chats = repo::chats::list(&*pool, is_pinned).await?;
 
     Ok(ChatsList { chats })
 }

@@ -1,7 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, query_as, Executor, Sqlite};
@@ -21,10 +20,20 @@ pub struct Chat {
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn list<'a, E>(executor: E) -> Result<Vec<Chat>>
+pub async fn list<'a, E>(executor: E, is_pinned: Option<bool>) -> Result<Vec<Chat>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
+    // if let Some(is_pinned) = is_pinned {
+    //     return Ok(query_as!(
+    //         Chat,
+    //         "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
+    //         is_pinned
+    //     )
+    //     .fetch_all(executor)
+    //     .await
+    //     .with_context(|| "Failed to fetch chats")?);
+    // }
     Ok(query_as!(
         Chat,
         "SELECT id, title, created_at, updated_at FROM chats ORDER BY id DESC"

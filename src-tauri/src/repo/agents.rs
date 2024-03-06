@@ -1,7 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use sqlx::{query, query_as, Executor, Sqlite};
 

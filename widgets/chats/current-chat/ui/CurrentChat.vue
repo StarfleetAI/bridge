@@ -7,7 +7,7 @@
   import CopyButtonPlugin from 'highlightjs-copy'
   import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
-  import { Role, Status } from '~/entities/chat'
+  import { Status } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
   import ChatGreeting from './ChatGreeting.vue'
   import ChatHeader from './ChatHeader.vue'
@@ -99,9 +99,16 @@
   })
   const dayjs = useDayjs()
   dayjs.extend(utc)
-  const currentAgent = computed(() => {
-    return agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!
-  })
+  const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
+  const currentAgent = ref(structuredClone(toRaw(bridgeAgent.value)))
+  const handleAgentChange = (agentId: number) => {
+    const newAgent = agents.value.find((agent) => agent.id === agentId)
+    if (newAgent) {
+      currentAgent.value = structuredClone(toRaw(newAgent))
+    } else {
+      currentAgent.value = structuredClone(toRaw(bridgeAgent.value))
+    }
+  }
 
   // const isScrollingTimer = ref<NodeJS.Timer>()
   // const handleShowScroll = (show: boolean) => {
@@ -142,6 +149,7 @@
           <ChatGreeting
             class="message"
             :agent="currentAgent"
+            @change-agent="handleAgentChange"
           />
           <ChatStartPresets @select="selectPreset" />
         </template>
@@ -169,6 +177,7 @@
     overflow: auto;
     width: 100%;
     height: 100%;
+    padding: 0 24px;
     transition: all 0.2s ease;
 
     @include add-scrollbar;

@@ -23,8 +23,8 @@
       <CrossIcon
         class="close-button"
         :color="'var(--text-tertiary)'"
-        width="20"
-        height="20"
+        width="24"
+        height="24"
         @click="modalStore.closeModal(modalValue)"
       />
       <component
@@ -64,15 +64,15 @@
   .modal-content {
     position: relative;
     z-index: 102;
-    padding: 20px;
+    padding: 18px 24px;
     border-radius: 5px;
     background-color: var(--surface-1);
   }
 
   .close-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 15px;
+    right: 20px;
     border: none;
     background: none;
     cursor: pointer;

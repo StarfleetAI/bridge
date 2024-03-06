@@ -5,6 +5,7 @@
   import { type ChatsGroups, chatsToGroupsByDate, useChatsStore } from '~/features/chats'
   import { updateChatTitle } from '~/features/chats'
   import type { Chat } from '~/entities/chat'
+  import { BridgeSmallIcon } from '~/shared/ui/icons'
   import NewChatButton from './NewChatButton.vue'
 
   const { chats } = storeToRefs(useChatsStore())
@@ -90,11 +91,12 @@
       >
         <div class="history-group__title">{{ date }}</div>
         <div
-          :class="['history-item', { active: currentChatId === chat.id }]"
           v-for="chat in group"
           :key="chat.id"
+          :class="['history-item', { active: currentChatId === chat.id }]"
           @click="handleClick(chat.id)"
         >
+          <BridgeSmallIcon />
           <component
             :is="getItemComponent(chat.id)"
             :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
@@ -167,6 +169,8 @@
         color: var(--text-primary);
       }
     }
+
+    @include flex(row, flex-start, center, 8px);
   }
 
   .history-item__name {

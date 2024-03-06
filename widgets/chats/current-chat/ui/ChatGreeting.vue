@@ -4,10 +4,24 @@
 <script lang="ts" setup>
   import type { Agent } from '~/entities/agents'
   import { BridgeLargeIcon } from '~/shared/ui/icons'
+  import { useModalStore } from '~/shared/ui/modal'
 
   defineProps<{
     agent: Agent
   }>()
+  const emits = defineEmits<{
+    'change-agent': [agentId: number]
+  }>()
+
+  const { showModal } = useModalStore()
+  const AgentsModal = defineAsyncComponent(() => import('./ChangeAgentModal.vue'))
+  const openModal = () => {
+    showModal(AgentsModal, {}, (val) => {
+      if (val) {
+        emits('change-agent', val as number)
+      }
+    })
+  }
 </script>
 
 <template>
@@ -16,11 +30,19 @@
     <div class="agent-name">
       {{ agent.name }}
     </div>
-    <div class="agent-description">
+    <div
+      v-if="agent.description"
+      class="agent-description"
+    >
       {{ agent.description }}
     </div>
     <div class="agent__author">by StarfleetAI</div>
-    <div class="agent__change">Change Agent</div>
+    <div
+      class="agent__change"
+      @click="openModal"
+    >
+      Change Agent
+    </div>
   </div>
 </template>
 
