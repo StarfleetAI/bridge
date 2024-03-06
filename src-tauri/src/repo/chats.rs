@@ -1,9 +1,10 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as, Executor, Sqlite};
+use sqlx::{Executor, query, query_as, Sqlite};
 
 use crate::types::Result;
 
@@ -11,6 +12,7 @@ use crate::types::Result;
 pub struct Chat {
     pub id: i64,
     pub title: String,
+    pub is_pinned: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -24,23 +26,21 @@ pub async fn list<'a, E>(executor: E, is_pinned: Option<bool>) -> Result<Vec<Cha
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    // if let Some(is_pinned) = is_pinned {
-    //     return Ok(query_as!(
-    //         Chat,
-    //         "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
-    //         is_pinned
-    //     )
-    //     .fetch_all(executor)
-    //     .await
-    //     .with_context(|| "Failed to fetch chats")?);
-    // }
-    Ok(query_as!(
-        Chat,
-        "SELECT id, title, created_at, updated_at FROM chats ORDER BY id DESC"
-    )
-    .fetch_all(executor)
-    .await
-    .with_context(|| "Failed to fetch chats")?)
+    if let Some(is_pinned) = is_pinned {
+        return Ok(query_as!(
+            Chat,
+            "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
+            is_pinned
+        )
+        .fetch_all(executor)
+        .await
+        .with_context(|| "Failed to fetch chats")?);
+    }
+
+    Ok(query_as!(Chat, "SELECT * FROM chats ORDER BY id DESC")
+        .fetch_all(executor)
+        .await
+        .with_context(|| "Failed to fetch chats")?)
 }
 
 /// Get chat by id.
@@ -52,14 +52,12 @@ pub async fn get<'a, E>(executor: E, id: i64) -> Result<Chat>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    Ok(query_as!(
-        Chat,
-        "SELECT id, title, created_at, updated_at FROM chats WHERE id = $1 LIMIT 1",
-        id
+    Ok(
+        query_as!(Chat, "SELECT * FROM chats WHERE id = $1 LIMIT 1", id)
+            .fetch_one(executor)
+            .await
+            .with_context(|| "Failed to fetch chat")?,
     )
-    .fetch_one(executor)
-    .await
-    .with_context(|| "Failed to fetch chat")?)
 }
 
 /// Delete chat by id.

@@ -1,7 +1,8 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use sqlx::{query, Executor, Sqlite};
+use anyhow::Context;
+use sqlx::{Executor, query, Sqlite};
 
 use crate::types::Result;
 

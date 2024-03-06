@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, title, created_at, updated_at FROM chats WHERE id = $1 LIMIT 1",
+  "query": "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,11 @@
         "name": "updated_at",
         "ordinal": 3,
         "type_info": "Datetime"
+      },
+      {
+        "name": "is_pinned",
+        "ordinal": 4,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -31,8 +36,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "c6c34bfcba3123c83148c4ead4481a2e13db79fb700a69e7e7324a1fe9301027"
+  "hash": "5c65282ca03211eb7dbc1f44e6ef220bbf18ea0744196f7f9cbc997ffc4d027b"
 }
