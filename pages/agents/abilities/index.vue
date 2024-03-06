@@ -12,7 +12,7 @@
     title: 'Abilities',
   })
 
-  const entity: Ref<string> = ref('abilities')
+  const entity = ref('abilities')
 
   const { abilities } = storeToRefs(useAbilitiesStore())
 

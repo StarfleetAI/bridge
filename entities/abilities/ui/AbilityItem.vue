@@ -46,12 +46,7 @@
     }
 
     &__text {
-      display: -webkit-box;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-
+      @include line-clamp(2);
       @include font-inter-400(14px, 20px, var(--text-tertiary));
     }
 

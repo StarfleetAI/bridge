@@ -12,7 +12,7 @@
     title: 'Agents',
   })
 
-  const entity: Ref<string> = ref('agents')
+  const entity = ref('agents')
 
   const { agents } = storeToRefs(useAgentsStore())
 
