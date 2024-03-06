@@ -2,51 +2,57 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { Code } from '~/shared/ui/code'
-  import { AbilitiesIcon, CloudIcon } from '~/shared/ui/icons'
+  import { useAbilitiesStore, useAbilitiesNavigation } from '~/features/ability'
+  import { type Ability } from '~/entities/abilities'
+  import { CodeInput } from '~/shared/ui/code-input'
+
+  const { selectedAbility } = useAbilitiesNavigation()
+  const { getById } = useAbilitiesStore()
+
+  const ability = ref(getById(selectedAbility.value!) as Ability)
 </script>
 <template>
   <div class="ability-full-item">
     <div class="ability-full-item__head">
       <div class="ability-full-item__title">
-        <AbilitiesIcon />
-        <span>Agent #0393</span>
+        <span>Ability</span>
       </div>
     </div>
     <div class="ability-full-item__body">
       <div class="ability-full-item__body-top">
         <div class="ability-full-item__name">
           <div>
-            DevOps Specialist
-            <CloudIcon />
+            {{ ability.name }}
           </div>
           <div class="ability-full-item__info">by John F.</div>
         </div>
         <div class="ability-full-item__avatar" />
       </div>
       <div class="ability-full-item__result-text">
-        This task involves identifying and implementing robust methods to guarantee the security of data at every stage
-        of Brand Analytics, from collection through storage to analysis. It is crucial to establish a comprehensive
-        approach
+        {{ ability.description }}
       </div>
     </div>
     <div class="ability-full-item__bottom">
-      <Code />
+      <CodeInput
+        v-model="ability.code"
+        label="Code"
+        readonly
+      />
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .ability-full-item {
     &__head {
+      height: 57px;
       padding: 12px 24px;
-      border-bottom: 0.5px solid var(--pill);
+      border-bottom: 1px solid var(--border-3);
+
+      @include flex(row, space-between, center);
     }
 
     &__title {
-      gap: 4px;
-
-      @include flex(row, start, center);
-      @include font-inter-500(14px, 22px, var(--text-tertiary));
+      @include font-inter-700(14px, 20px, var(--text-secondary));
     }
 
     &__name {

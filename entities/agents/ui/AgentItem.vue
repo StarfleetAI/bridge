@@ -57,6 +57,10 @@
       background: #d9d9d9;
     }
 
+    &__body {
+      width: 100%;
+    }
+
     &__label {
       gap: 8px;
       margin-bottom: 4px;
@@ -66,8 +70,7 @@
     }
 
     &__text {
-      padding-right: 40px;
-
+      @include line-clamp(2);
       @include font-inter-400(14px, 20px, var(--text-tertiary));
     }
 

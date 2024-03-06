@@ -100,8 +100,8 @@
     }
 
     &__abilities-title {
-      padding: 0 0 24px;
       width: 100%;
+      padding: 0 0 24px;
 
       @include font-inter-500(14px, 20px, var(--text-secondary));
       @include flex(row, start, center, 4px);
@@ -114,10 +114,10 @@
     }
 
     &__abilities-list-item {
+      margin-bottom: 6px;
       padding: 8px 16px;
       border-radius: 6px;
       background: var(--surface-3);
-      margin-bottom: 6px;
 
       @include flex(row, start, center);
     }
@@ -129,10 +129,10 @@
     }
 
     &__abilities-list-item-description {
+      flex: 1;
+      overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      overflow: hidden;
-      flex: 1;
 
       @include font-inter-400(12px, 17px, var(--text-tertiary));
     }

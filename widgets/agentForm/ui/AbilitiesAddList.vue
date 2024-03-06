@@ -81,20 +81,20 @@
 
     &__item {
       width: 100%;
+      height: 36px;
+      margin-bottom: 6px;
       border-radius: 6px;
       background: var(--surface-2);
-      margin-bottom: 6px;
-      height: 36px;
 
       @include flex(row, start, start);
     }
 
     &__item-control {
-      background: var(--surface-3);
       width: 36px;
       height: 36px;
       border-top-left-radius: 6px;
       border-bottom-left-radius: 6px;
+      background: var(--surface-3);
       cursor: pointer;
 
       @include flex(row, center, center);
@@ -113,10 +113,10 @@
     }
 
     &__item-description {
+      overflow: hidden;
+      max-width: 200px;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 200px;
-      overflow: hidden;
 
       @include font-inter-400(12px, 21px, var(--text-tertiary));
     }

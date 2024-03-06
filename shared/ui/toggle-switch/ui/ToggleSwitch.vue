@@ -2,17 +2,18 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  interface Props {
+  const { modelValue, readonly } = defineProps<{
     modelValue: string
-  }
-
-  const { modelValue } = defineProps<Props>()
+    readonly?: boolean
+  }>()
   const emit = defineEmits(['update:modelValue'])
   const slots = useSlots()
   const slotElements = computed(() => Object.keys(slots).filter((name) => name.startsWith('option-')))
 
   const setActive = (value: string) => {
-    emit('update:modelValue', value.replace('option-', ''))
+    if (!readonly) {
+      emit('update:modelValue', value.replace('option-', ''))
+    }
   }
 
   const clearTitle = (value: string) => value.replace('option-', '')
