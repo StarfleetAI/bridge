@@ -4,15 +4,18 @@
 <script lang="ts" setup>
   interface Props {
     modelValue: string
+    readonly: boolean
   }
 
-  const { modelValue } = defineProps<Props>()
+  const { modelValue, readonly } = defineProps<Props>()
   const emit = defineEmits(['update:modelValue'])
   const slots = useSlots()
   const slotElements = computed(() => Object.keys(slots).filter((name) => name.startsWith('option-')))
 
   const setActive = (value: string) => {
-    emit('update:modelValue', value.replace('option-', ''))
+    if (!readonly) {
+      emit('update:modelValue', value.replace('option-', ''))
+    }
   }
 
   const clearTitle = (value: string) => value.replace('option-', '')

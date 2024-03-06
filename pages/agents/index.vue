@@ -2,9 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { AbilitiesList } from '~/widgets/abilitiesList'
   import { AgentsList } from '~/widgets/agentsList'
-  import { useAbilitiesNavigation, useAbilitiesStore } from '~/features/ability'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
   import { BaseContainer, BaseButton } from '~/shared/ui/base'
   import { LibraryIcon, PlusIcon } from '~/shared/ui/icons'
@@ -14,11 +12,11 @@
     title: 'Agents',
   })
 
+  const entity: Ref<string> = ref('agents')
+
   const { agents } = storeToRefs(useAgentsStore())
 
-  const { isCreateAgent, enableCreateAgent, disableCreateAgent, selectedAgent } = useAgentsNavigation()
-
-  const entity: Ref<string> = ref('agents')
+  const { isCreateAgent, enableCreateAgent, selectedAgent } = useAgentsNavigation()
 
   const AgentFullItem = defineAsyncComponent(async () => {
     const module = await import('~/widgets/agentFullItem')
@@ -30,20 +28,6 @@
     return module.AgentForm
   })
 
-  const { abilities } = storeToRefs(useAbilitiesStore())
-
-  const { isCreateAbility, enableCreateAbility, disableCreateAbility, selectedAbility } = useAbilitiesNavigation()
-
-  const AbilityFullItem = defineAsyncComponent(async () => {
-    const module = await import('~/widgets/abilityFullItem')
-    return module.AbilityFullItem
-  })
-
-  const AbilityForm = defineAsyncComponent(async () => {
-    const module = await import('~/widgets/abilityForm')
-    return module.AbilityForm
-  })
-
   const sideContentComponent = computed(() => {
     if (isCreateAgent.value) {
       return AgentForm
@@ -51,34 +35,12 @@
     if (selectedAgent.value) {
       return AgentFullItem
     }
-    if (isCreateAbility.value) {
-      return AbilityForm
-    }
-    if (selectedAbility.value) {
-      return AbilityFullItem
-    }
     return null
   })
 
   const createHandle = () => {
-    if (entity.value === 'agents') {
-      enableCreateAgent()
-      disableCreateAbility()
-    }
-    if (entity.value === 'abilities') {
-      enableCreateAbility()
-      disableCreateAgent()
-    }
+    enableCreateAgent()
   }
-
-  watch(entity, (val: string) => {
-    if (val === 'agents') {
-      disableCreateAbility()
-    }
-    if (val === 'abilities') {
-      disableCreateAgent()
-    }
-  })
 </script>
 
 <template>
@@ -86,12 +48,19 @@
     <template #main>
       <div class="main-content">
         <div class="main-content__header">
-          <ToggleSwitch v-model="entity">
-            <template #option-agents> Agents </template>
-            <template #option-abilities> Abilities </template>
+          <ToggleSwitch
+            v-model="entity"
+            readonly
+          >
+            <template #option-agents>
+              <div @click="() => navigateTo('/agents')">Agents</div>
+            </template>
+            <template #option-abilities>
+              <div @click="() => navigateTo('/agents/abilities')">Abilities</div>
+            </template>
           </ToggleSwitch>
           <BaseButton
-            :disabled="entity === 'agents' ? isCreateAgent : isCreateAbility"
+            :disabled="isCreateAgent"
             size="medium"
             class="agents-list__create"
             @click="createHandle"
@@ -102,14 +71,8 @@
             Create new
           </BaseButton>
         </div>
-        <div v-if="entity === 'agents'">
-          <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
-          <AgentsList :agents="agents" />
-        </div>
-        <div v-if="entity === 'abilities'">
-          <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
-          <AbilitiesList :abilities="abilities" />
-        </div>
+        <div class="list-title"><LibraryIcon /> Library <span>4</span></div>
+        <AgentsList :agents="agents" />
       </div>
     </template>
     <template

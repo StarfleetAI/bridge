@@ -2,11 +2,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useAbilitiesNavigation } from '~/features/ability'
   import { AbilityItem, type Ability } from '~/entities/abilities'
 
   defineProps<{
     abilities: Ability[]
   }>()
+  const { setSelectedAbility, selectedAbility } = useAbilitiesNavigation()
 </script>
 
 <template>
@@ -15,6 +17,8 @@
       v-for="ability in abilities"
       :key="ability.id"
       :ability="ability"
+      :class="{ selected: ability.id === selectedAbility }"
+      @click="setSelectedAbility(ability.id)"
     />
   </div>
 </template>

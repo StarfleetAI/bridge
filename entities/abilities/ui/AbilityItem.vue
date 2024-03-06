@@ -28,6 +28,15 @@
     border-radius: 6px;
     background: var(--side-panel);
 
+    &.selected {
+      background: var(--surface-3);
+      outline: 2px solid var(--button-primary);
+    }
+
+    &__body {
+      width: 100%;
+    }
+
     &__label {
       gap: 8px;
       margin-bottom: 4px;
@@ -37,6 +46,12 @@
     }
 
     &__text {
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+
       @include font-inter-400(14px, 20px, var(--text-tertiary));
     }
 

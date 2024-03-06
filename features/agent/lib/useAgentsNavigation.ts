@@ -11,6 +11,7 @@ export const useAgentsNavigation = () => {
   }
   const disableCreateAgent = () => {
     isCreateAgent.value = false
+    selectedAgent.value = null
   }
 
   const selectedAgent = useRouteQuery('agent', '', {

@@ -11,6 +11,7 @@
   const props = defineProps<{
     modelValue: string
     label: string
+    readonly: boolean
   }>()
 
   const emits = defineEmits<{
@@ -20,7 +21,9 @@
   const code = ref(props.modelValue)
 
   watch(code, (val) => {
-    emits('update:modelValue', val)
+    if (!props.readonly) {
+      emits('update:modelValue', val)
+    }
   })
 
   const highlighter = (codeInput: string) => {
@@ -39,6 +42,7 @@
     <prism-editor
       v-model="code"
       :highlight="highlighter"
+      :readonly="props.readonly"
       line-numbers
       :tab-size="4"
       class="font-mono text-sm code-input--editor"

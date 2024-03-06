@@ -19,6 +19,7 @@ logs
 .idea
 .vscode
 .stylelintcache
+.vscode
 
 # Local env files
 .env
