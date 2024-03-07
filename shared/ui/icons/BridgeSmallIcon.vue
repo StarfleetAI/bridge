@@ -4,8 +4,8 @@
 <script lang="ts" setup>
   withDefaults(
     defineProps<{
-      width: string
-      height: string
+      width?: string
+      height?: string
     }>(),
     {
       width: '24px',

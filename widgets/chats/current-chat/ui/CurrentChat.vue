@@ -36,7 +36,7 @@
     const scrollHeight = messagesListRef.value!.scrollHeight
     const scrollTop = messagesListRef.value!.scrollTop
     const clientHeight = messagesListRef.value!.clientHeight
-    isAutoScrollEnabled.value = scrollHeight - scrollTop <= clientHeight + 120
+    isAutoScrollEnabled.value = scrollHeight - scrollTop <= clientHeight + 30
   }
   const scrollMessagesListToBottom = () => {
     if (messagesListRef.value) {
@@ -59,11 +59,11 @@
     if (!chatInput.value) {
       return
     }
-    createMessage(chatInput.value, chatId.value)
+    createMessage(chatInput.value, currentAgent.value.id, chatId.value)
     chatInput.value = ''
   }
   const selectPreset = (preset: string) => {
-    createMessage(preset, chatId.value)
+    createMessage(preset, currentAgent.value.id, chatId.value)
   }
 
   onMounted(async () => {

@@ -34,7 +34,29 @@
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  word-break: break-word;
   overscroll-behavior: none;
+}
+
+ul {
+  list-style: inside;
+}
+
+ol {
+  list-style: decimal inside;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: initial;
+  font-size: initial;
+  line-height: initial;
 }
 
 html {
@@ -49,8 +71,12 @@ body {
   padding: 0;
   background-color: var(--surface-1);
   color: var(--text-primary);
+  cursor: default;
+  user-select: none;
 }
 
 a {
+  color: inherit;
+  /* text-decoration: none; */
   cursor: default;
 }

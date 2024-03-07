@@ -88,6 +88,7 @@
     width: 100%;
     height: 28px;
     padding: 0 6px 0 36px;
+    border: none;
     background-color: transparent;
     outline: none;
 

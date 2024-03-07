@@ -6,7 +6,7 @@ use chrono::{NaiveDateTime, Utc};
 use markdown::to_html;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
-use sqlx::{Executor, query, query_as, query_scalar, Sqlite};
+use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 
 use crate::errors::Error;
 use crate::types::Result;

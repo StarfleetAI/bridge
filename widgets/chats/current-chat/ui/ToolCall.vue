@@ -3,11 +3,11 @@
 
 <script lang="ts" setup>
   import { useAbilitiesStore } from '~/features/ability'
-  import { approveToolCall, denyToolCall } from '~/features/chats'
+
   import { type Ability } from '~/entities/abilities'
   import { Status, type ToolCall } from '~/entities/chat'
   import { ChatLoader } from '~/shared/ui/base'
-  import { CheckIcon, ChevronDownIcon, CodeIcon, CrossIcon } from '~/shared/ui/icons'
+  import { ChevronDownIcon, CubeIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{
     toolCall: ToolCall
@@ -54,9 +54,7 @@
       },
     }
   })
-  const showActions = computed(() => {
-    return props.status === Status.WAITING_FOR_TOOL_CALL
-  })
+
   const isProcessing = computed(() => {
     return props.status === Status.WRITING
   })
@@ -80,7 +78,7 @@
 
 <template>
   <div :class="['tool', { done: status === Status.COMPLETED, denied: status === Status.TOOL_CALL_DENIED }]">
-    <CodeIcon class="tool__icon" />
+    <CubeIcon class="tool__icon" />
     <div class="tool__content">
       <div class="tool__name">{{ ability?.name }}</div>
       <div class="tool__description">{{ ability?.description }}</div>
@@ -123,26 +121,6 @@
           <ChevronDownIcon />
         </div>
       </div>
-
-      <div
-        v-if="showActions"
-        class="tool__actions"
-      >
-        <div
-          class="tool__btn approve"
-          @click="approveToolCall(Number(messageId))"
-        >
-          <CheckIcon />
-          Approve
-        </div>
-        <div
-          class="tool__btn deny"
-          @click="denyToolCall(Number(messageId))"
-        >
-          <CrossIcon />
-          Deny
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -168,25 +146,24 @@
 
   .tool__icon {
     flex-shrink: 0;
+    color: var(--text-secondary);
   }
 
   .tool__name {
     height: 22px;
     padding-top: 1px;
 
-    @include font-inter-700(14px, 20px);
+    @include font-inter-700(16px, 22px, var(--text-secondary));
   }
 
   .tool__description {
     margin-top: 8px;
 
-    @include font-inter-500(14px, 20px, var(--text-tertiary));
+    @include font-inter-400(16px, 22px, var(--text-tertiary));
   }
 
   .tool__content {
     flex: 1 0;
-
-    // gap: 16px;
   }
 
   .tool__loading {
@@ -276,32 +253,5 @@
 
     @include font-inter-400(12px, 17px, var(--text-tertiary));
     @include flex(row, flex-start, center);
-  }
-
-  .tool__actions {
-    gap: 16px;
-    margin-top: 16px;
-    cursor: default;
-    user-select: none;
-
-    @include flex(row);
-  }
-
-  .tool__btn {
-    gap: 8px;
-    width: 120px;
-    height: 36px;
-    border-radius: 4px;
-
-    &.approve {
-      background-color: var(--status-done);
-    }
-
-    &.deny {
-      background-color: var(--status-failed);
-    }
-
-    @include font-inter-500(14px, 20px, var(--text-on-button));
-    @include flex(row, center, center);
   }
 </style>

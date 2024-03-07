@@ -2,6 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useRouteQuery } from '@vueuse/router'
   import { type ChatsGroups, chatsToGroupsByDate, useChatsStore } from '~/features/chats'
   import { updateChatTitle } from '~/features/chats'
   import type { Chat } from '~/entities/chat'
@@ -36,13 +37,17 @@
     }
   }
 
-  const handleClick = (chatId: number) => {
-    if (currentChatId.value !== chatId) {
-      navigateTo({ name: 'chats', query: { id: chatId } })
+  const chatId = useRouteQuery('id', '', {
+    transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
+  })
+
+  const handleClick = (newId: number) => {
+    if (currentChatId.value !== newId) {
+      chatId.value = newId
       chatToEditTitle.value = null
     } else {
-      chatToEditTitle.value = chatId
-      setChatToEditTitle(chatId)
+      chatToEditTitle.value = newId
+      setChatToEditTitle(newId)
       nextTick(() => {
         handleFocus()
       })
@@ -52,8 +57,8 @@
     titleToEdit.value = (event.target as HTMLInputElement).value
   }
 
-  const getItemComponent = (chatId: number) => {
-    if (chatId === chatToEditTitle.value) {
+  const getItemComponent = (id: number) => {
+    if (id === chatToEditTitle.value) {
       return 'input'
     }
     return 'div'
@@ -127,6 +132,7 @@
 
   .history__control {
     height: 56px;
+    margin: 17px 0;
     padding: 0 16px;
     color: var(--text-tertiary);
 
@@ -136,6 +142,7 @@
 
   .chats-list {
     overflow: auto;
+    padding-bottom: 32px;
 
     @include add-scrollbar;
     @include flex(column, flex-start, stretch);

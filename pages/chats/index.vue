@@ -26,7 +26,7 @@
   <BaseContainer>
     <template #main>
       <div class="chats-base">
-        <ChatsHistory :key="currentChatId" />
+        <ChatsHistory />
         <CurrentChat :key="currentChatId" />
       </div>
     </template>

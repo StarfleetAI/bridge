@@ -5,12 +5,12 @@
   import 'highlight.js/styles/atom-one-dark.min.css'
   import hljs from 'highlight.js'
   import { useAgentsStore } from '~/features/agent'
-  import { type Message, Role, type ToolCall as ToolCallType } from '~/entities/chat'
-  import { getMarkdown, utcToLocalTime } from '~/shared/lib'
+  import { approveToolCall, denyToolCall } from '~/features/chats'
+  import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
+  import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
-  import { SystemIcon, NoAvatarIcon } from '~/shared/ui/icons'
+  import { SystemIcon, NoAvatarIcon, CheckIcon, CrossIcon } from '~/shared/ui/icons'
   import ToolCall from './ToolCall.vue'
-
   const props = defineProps<{
     message: Message
   }>()
@@ -51,7 +51,8 @@
     }
   })
   const createdAt = computed(() => {
-    return utcToLocalTime(props.message.created_at)
+    const localTime = utcToLocalTime(props.message.created_at)
+    return getTimeAgo({ date: localTime.toDate(), dateFormat: 'DD.MM.YYYY, HH:mm', fullUnit: true }).value
   })
 
   const toolCalls = computed<ToolCallType[]>(() => {
@@ -87,8 +88,9 @@
       immediate: true,
     },
   )
-  const markedContent = computed(() => {
-    return getMarkdown(props.message.content)
+
+  const showActions = computed(() => {
+    return props.message.status === Status.WAITING_FOR_TOOL_CALL
   })
 </script>
 
@@ -117,7 +119,7 @@
           v-if="message.content?.length > 0 && message.role !== Role.TOOL"
           ref="messageRef"
           class="message__content-markdown"
-          v-html="markedContent"
+          v-html="message.content"
         />
 
         <div
@@ -129,7 +131,7 @@
           </div>
           <div
             class="tool__content"
-            v-html="markedContent"
+            v-html="message.content"
           />
         </div>
         <div
@@ -143,6 +145,25 @@
             :status="message.status"
             :message-id="message.id"
           />
+          <div
+            v-if="showActions"
+            class="tool__actions"
+          >
+            <div
+              class="tool__btn approve"
+              @click="approveToolCall(Number(message.id))"
+            >
+              <CheckIcon />
+              Approve
+            </div>
+            <div
+              class="tool__btn deny"
+              @click="denyToolCall(Number(message.id))"
+            >
+              <CrossIcon />
+              Deny
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -176,7 +197,7 @@
   }
 
   .message__author {
-    @include font-inter-700(14px, 20px, var(--text-tertiary));
+    @include font-inter-500(14px, 20px, var(--text-tertiary));
   }
 
   .message__timestamp {
@@ -193,7 +214,8 @@
       box-shadow: -2px 0 0 0 var(--status-paused);
     }
 
-    @include font-inter-400(14px, 20px, var(--text-primary));
+    @include font-inter-400(16px, 22px, var(--text-primary));
+    @include flex(column, $gap: 16px);
   }
 
   .tool__content-wrapper {
@@ -214,6 +236,7 @@
 
   .tool__content {
     padding: 8px 12px;
+    font-size: 14px;
     white-space: pre-wrap;
     word-break: break-word;
     cursor: auto;
@@ -222,24 +245,43 @@
     @include font-mono;
   }
 
+  .tool__actions {
+    gap: 16px;
+    cursor: default;
+    user-select: none;
+
+    @include flex(row);
+  }
+
+  .tool__btn {
+    gap: 8px;
+    width: 50%;
+    height: 32px;
+    border-radius: 6px;
+
+    &.approve {
+      background-color: var(--status-done);
+    }
+
+    &.deny {
+      background-color: var(--status-failed);
+    }
+
+    @include font-inter-500(14px, 20px, var(--text-on-button));
+    @include flex(row, center, center);
+  }
+
+  .message__toolcalls {
+    width: 100%;
+
+    @include flex(column, flex-start, stretch, 16px);
+  }
+
   .message__content-markdown {
-    gap: 1.25em;
     cursor: auto;
     user-select: initial;
 
-    :deep(ul) {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25em;
-
-      & li {
-        display: flex;
-        flex-direction: column;
-        gap: 1.25em;
-      }
-    }
-
-    @include flex(column, flex-start, flex-start);
+    @include flex(column, flex-start, flex-start, 16px);
   }
 
   :deep(.hljs-copy-wrapper) {

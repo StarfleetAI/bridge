@@ -41,7 +41,7 @@
       :highlight="highlighter"
       line-numbers
       :tab-size="4"
-      class="font-mono text-sm code-input--editor"
+      class="code-input--editor"
     />
   </div>
 </template>
@@ -63,6 +63,10 @@
     &--editor {
       padding: 8px 12px;
       background: var(--surface-2);
+      font-size: 14px;
+      line-height: 20px;
+
+      @include font-mono;
     }
   }
 </style>
