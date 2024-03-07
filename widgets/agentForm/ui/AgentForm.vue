@@ -117,8 +117,6 @@
 
 <style lang="scss" scoped>
   .agent-form {
-    @include flex(column);
-
     &__abilities {
       padding: 24px;
 
@@ -141,8 +139,8 @@
     }
 
     &__abilities-list-item {
-      border-bottom: 0.5px solid var(--border-3);
       height: 32px;
+      border-bottom: 0.5px solid var(--border-3);
 
       @include flex(row, start, center);
     }
@@ -154,10 +152,10 @@
     }
 
     &__abilities-list-item-description {
+      flex: 1;
+      overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      overflow: hidden;
-      flex: 1;
 
       @include font-inter-400(12px, 17px, var(--text-tertiary));
     }

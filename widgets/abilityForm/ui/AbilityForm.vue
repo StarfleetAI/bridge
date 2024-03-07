@@ -80,6 +80,7 @@
         <CodeInput
           v-model="code"
           label="Code"
+          :readonly="false"
         />
       </div>
     </div>
