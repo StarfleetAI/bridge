@@ -143,6 +143,7 @@
             :key="message.id"
             class="message"
             :message="message"
+            :current-agent="currentAgent"
           />
         </template>
         <template v-else>

@@ -6,6 +6,7 @@
   import hljs from 'highlight.js'
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall } from '~/features/chats'
+  import type { Agent } from '~/entities/agents'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
   import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
@@ -13,6 +14,7 @@
   import ToolCall from './ToolCall.vue'
   const props = defineProps<{
     message: Message
+    currentAgent: Agent
   }>()
 
   const { agents } = storeToRefs(useAgentsStore())
@@ -144,6 +146,7 @@
             :tool-call="toolCall"
             :status="message.status"
             :message-id="message.id"
+            :current-agent="currentAgent"
           />
           <div
             v-if="showActions"
@@ -324,6 +327,8 @@
     width: auto;
     min-width: 52px;
     padding-left: 16px;
+    border: none;
+    background-color: transparent;
     font-family: Inter, sans-serif;
     text-align: end;
     cursor: default;
@@ -332,7 +337,7 @@
       content: '';
       width: 16px;
       height: 16px;
-      background: url('~/assets/svg/copy-icon.svg') no-repeat left;
+      background: transparent url('~/assets/svg/copy-icon.svg') no-repeat left;
     }
 
     @include font-inter-500(14px, 20px, var(--text-secondary));

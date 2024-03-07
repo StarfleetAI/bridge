@@ -5,6 +5,7 @@
   import { useAbilitiesStore } from '~/features/ability'
 
   import { type Ability } from '~/entities/abilities'
+  import type { Agent } from '~/entities/agents'
   import { Status, type ToolCall } from '~/entities/chat'
   import { ChatLoader } from '~/shared/ui/base'
   import { ChevronDownIcon, CubeIcon } from '~/shared/ui/icons'
@@ -13,10 +14,14 @@
     toolCall: ToolCall
     status: Status
     messageId: number
+    currentAgent: Agent
   }>()
   const { abilities } = storeToRefs(useAbilitiesStore())
+  const agentAbilities = computed(() => {
+    return abilities?.value?.filter((item) => props.currentAgent.ability_ids.includes(item.id))
+  })
   const ability = computed(() => {
-    return abilities?.value?.find((item) => {
+    return agentAbilities?.value?.find((item) => {
       let parsedParameters: Record<string, unknown> = {}
       try {
         parsedParameters = JSON.parse(item.parameters_json)
