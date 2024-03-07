@@ -347,7 +347,7 @@ pub async fn create_tool_call_denied(
 
             let mut messages = Vec::with_capacity(tool_calls.len());
 
-            for tool_call in tool_calls.iter() {
+            for tool_call in &tool_calls {
                 let tool_call = tool_call.as_object().ok_or(Error::NoToolCallsFound)?;
                 let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
 

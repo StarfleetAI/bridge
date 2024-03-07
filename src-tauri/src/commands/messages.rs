@@ -98,7 +98,7 @@ pub async fn create_message(
         repo::messages::update_status(&mut *tx, last_message_id, Status::ToolCallDenied).await?;
         // Create a new message indicating the tool call was denied
         let denied_messages =
-            repo::messages::create_tool_call_denied(&mut *tx, &last_message).await?;
+            repo::messages::create_tool_call_denied(&mut tx, &last_message).await?;
 
         last_message.status = Status::ToolCallDenied;
         window
@@ -342,7 +342,7 @@ pub async fn approve_tool_call(
             //
             // TODO: This is a temporary solution. It's better to wrap it on before markdown-2-html
             //       processing, but it requires writing custom Serializer for Message.
-            let output = format!("```\n{}\n```", output);
+            let output = format!("```\n{output}\n```");
             Ok::<_, anyhow::Error>(CreateParams {
                 chat_id: message.chat_id,
                 status: Status::Completed,
@@ -417,7 +417,7 @@ pub async fn deny_tool_call(
     repo::messages::update_status(&mut *tx, message.id, Status::ToolCallDenied).await?;
 
     // Create a new message indicating the tool call was denied
-    let denied_message = repo::messages::create_tool_call_denied(&mut *tx, &message).await?;
+    let denied_message = repo::messages::create_tool_call_denied(&mut tx, &message).await?;
 
     // Commit the transaction
     tx.commit().await.context("Failed to commit transaction")?;
