@@ -11,7 +11,7 @@ type OnCloseCallback<T = unknown> = ((returnValue?: T) => void) | null
 
 export const useModalStore = defineStore('modal', () => {
   const isVisible = ref<boolean>(false)
-  const contentComponent = ref<ModalComponent | null>(null)
+  const contentComponent = shallowRef<ModalComponent | null>(null)
   const contentProps = ref<ModalProps>({})
   const onCloseCallback = ref<OnCloseCallback>(null)
 
