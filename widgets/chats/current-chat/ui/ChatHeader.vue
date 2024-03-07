@@ -2,34 +2,34 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useChatsStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import type { Chat } from '~/entities/chat'
-  import { PinIcon, BridgeSmallIcon } from '~/shared/ui/icons'
+  import { PinIcon, UnpinIcon, BridgeSmallIcon } from '~/shared/ui/icons'
 
-  defineProps<{
+  const props = defineProps<{
     agent: Agent
     chat: Nullable<Chat>
   }>()
+  const chatsStore = useChatsStore()
 
-  //   const chatTitle = computed(() => {
-  //     if (!props.chat) {
-  //       return 'New Chat'
-  //     }
-  //     if (props.chat.title) {
-  //       return props.chat.title
-  //     }
-
-  //     return `Chat #${props.chat.id}`
-  //   })
+  const handleClick = () => {
+    if (props.chat) {
+      chatsStore.toggleIsPinned(props.chat.id, props.chat.is_pinned)
+    }
+  }
+  const CurrentIcon = computed(() => (props.chat?.is_pinned ? UnpinIcon : PinIcon))
 </script>
 
 <template>
   <div class="chat-header">
-    <PinIcon
+    <component
+      :is="CurrentIcon"
       v-if="chat"
       class="chat-header__pin"
       width="16"
       height="16"
+      @click="handleClick"
     />
     <div class="chat-header__agent">
       {{ agent.name }}

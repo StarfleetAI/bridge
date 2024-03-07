@@ -4,7 +4,7 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, query, query_as, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
@@ -116,6 +116,26 @@ where
     .execute(executor)
     .await
     .with_context(|| format!("Failed to update title for chat with id: {id}"))?;
+
+    Ok(())
+}
+
+/// Toggle chat is pinned status by id.
+///
+/// # Errors
+///
+/// Returns error if the chat with the given ID does not exist.
+pub async fn toggle_is_pinned<'a, E>(executor: E, id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!(
+        "UPDATE chats SET is_pinned = NOT is_pinned WHERE id = $1",
+        id
+    )
+    .execute(executor)
+    .await
+    .with_context(|| format!("Failed to toggle pin status for chat with id: {id}"))?;
 
     Ok(())
 }

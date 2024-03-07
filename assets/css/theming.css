@@ -77,6 +77,9 @@ body {
 
 a {
   color: inherit;
-  /* text-decoration: none; */
   cursor: default;
+}
+
+input {
+  border: none;
 }

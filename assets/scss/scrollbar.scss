@@ -35,3 +35,12 @@
     background: var(--surface-5);
   }
 }
+
+@mixin transparent-scrollbar() {
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    opacity: 0;
+  }
+
+  @include add-scrollbar;
+}

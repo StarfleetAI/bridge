@@ -9,8 +9,8 @@
   import { BridgeSmallIcon } from '~/shared/ui/icons'
   import NewChatButton from './NewChatButton.vue'
 
-  const { chats } = storeToRefs(useChatsStore())
-  const { listChats } = useChatsStore()
+  const { chats, pinnedChats } = storeToRefs(useChatsStore())
+  const { listChats, getById } = useChatsStore()
   const chatsGroups = computed<ChatsGroups>(() => {
     if (!chats.value) {
       return [] as ChatsGroups
@@ -26,7 +26,7 @@
   const chatToEditTitle = ref<Nullable<number>>(null)
 
   const setChatToEditTitle = (id: number) => {
-    titleToEdit.value = chats.value?.find((chat) => chat.id === id)?.title || `Chat #${id}`
+    titleToEdit.value = getById(id)?.title || `Chat #${id}`
   }
 
   const titleToEdit = ref('')
@@ -88,7 +88,36 @@
       Chats
       <NewChatButton />
     </div>
-    <div class="chats-list">
+
+    <div
+      ref="chatsListRef"
+      class="chats-list"
+    >
+      <div
+        v-if="pinnedChats.length"
+        class="history-group"
+      >
+        <div class="history-group__title">Pinned</div>
+        <div
+          v-for="chat in pinnedChats"
+          :key="chat.id"
+          :class="['history-item', { active: currentChatId === chat.id }]"
+          @click="handleClick(chat.id)"
+        >
+          <BridgeSmallIcon />
+          <component
+            :is="getItemComponent(chat.id)"
+            :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
+            :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
+            :value="titleToEdit"
+            @keydown.enter="handleSaveTitle"
+            @input="handleInput"
+            @keydown.esc="handleCancelEdit"
+          >
+            {{ getChatTitle(chat) }}
+          </component>
+        </div>
+      </div>
       <div
         v-for="[date, group] in chatsGroups"
         :key="date"
@@ -131,8 +160,8 @@
   }
 
   .history__control {
+    flex-shrink: 0;
     height: 56px;
-    margin: 17px 0;
     padding: 0 16px;
     color: var(--text-tertiary);
 
