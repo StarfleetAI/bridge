@@ -133,39 +133,48 @@
         />
       </div>
       <div class="task-details__middle">
-        <component
-          :is="titleComponent"
-          ref="titleInput"
-          v-model="taskTitle"
-          :class="[
-            'task__title',
-            {
-              'task__title--editing': titleIsEditing,
-              'task__title--editable': taskIsEditable,
-            },
-          ]"
-          @click="enableTitleEditing"
-          @blur="updateTitle"
-        >
-          {{ taskTitlePlaceholder }}
-        </component>
+        <div class="task__title-wrapper">
+          <component
+            :is="titleComponent"
+            ref="titleInput"
+            v-model="taskTitle"
+            :class="[
+              'task__title',
+              {
+                'task__title--editing': titleIsEditing,
+                'task__title--editable': taskIsEditable,
+              },
+            ]"
+            @click="enableTitleEditing"
+            @blur="updateTitle"
+          >
+            <template v-if="!titleIsEditing">
+              {{ taskTitlePlaceholder }}
+            </template>
+          </component>
+        </div>
 
-        <component
-          :is="summaryComponent"
-          ref="summaryInput"
-          v-model="taskSummary"
-          :class="[
-            'task__description',
-            {
-              'task__description--editing': summaryIsEditing,
-              'task__description--editable': taskIsEditable,
-            },
-          ]"
-          @blur="updateSummary"
-          @click="enableSummaryEditing"
-        >
-          {{ task.summary || 'No summary' }}
-        </component>
+        <div class="task__description-wrapper">
+          <component
+            :is="summaryComponent"
+            ref="summaryInput"
+            v-model="taskSummary"
+            is-summary
+            :class="[
+              'task__description',
+              {
+                'task__description--editing': summaryIsEditing,
+                'task__description--editable': taskIsEditable,
+              },
+            ]"
+            @blur="updateSummary"
+            @click="enableSummaryEditing"
+          >
+            <template v-if="!summaryIsEditing">
+              {{ task.summary || 'No summary' }}
+            </template>
+          </component>
+        </div>
 
         <div class="task-details__attachments">
           <div class="task-details__attachments-title">
@@ -248,6 +257,8 @@
 
     &__middle {
       margin-top: 8px;
+
+      @include flex(column, $gap: 8px);
     }
 
     &__text-title {
@@ -313,6 +324,20 @@
     &__result-text {
       @include font-inter-500(14px, 22px, var(--text-secondary));
     }
+  }
+
+  .task__title-wrapper {
+    min-height: 41px;
+    max-height: 62px;
+
+    @include line-clamp(2);
+  }
+
+  .task__description-wrapper {
+    min-height: 39px;
+    max-height: 124px;
+
+    @include line-clamp(6);
   }
 
   .task__title {
