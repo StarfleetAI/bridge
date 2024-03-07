@@ -22,7 +22,7 @@
     />
     <div class="agents-list">
       <div
-        v-for="agent in [...agents, ...agents]"
+        v-for="agent in agents"
         :key="agent.id"
         class="agents-item"
         @click="closeModal(agent.id)"
