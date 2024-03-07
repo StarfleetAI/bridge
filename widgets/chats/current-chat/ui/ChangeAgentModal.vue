@@ -22,7 +22,7 @@
     />
     <div class="agents-list">
       <div
-        v-for="agent in agents"
+        v-for="agent in [...agents, ...agents]"
         :key="agent.id"
         class="agents-item"
         @click="closeModal(agent.id)"
@@ -60,11 +60,15 @@
   }
 
   .agents-list {
+    overflow: auto;
+    height: 552px;
+
     @include flex(column, $gap: 6px);
+    @include add-scrollbar;
   }
 
   .agents-item {
-    flex: 1;
+    height: 46px;
     padding: 8px 16px;
     border-radius: 6px;
     background-color: var(--surface-2);
