@@ -6,9 +6,9 @@ use chrono::{NaiveDateTime, Utc};
 use markdown::to_html;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
-use sqlx::{query, query_as, query_scalar, Executor, Sqlite, SqliteConnection};
+use sqlx::{Executor, query, query_as, query_scalar, Sqlite, SqliteConnection};
 
-use crate::errors::Error;
+use crate::messages::Error;
 use crate::types::Result;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
@@ -348,8 +348,12 @@ pub async fn create_tool_call_denied(
             let mut messages = Vec::with_capacity(tool_calls.len());
 
             for tool_call in &tool_calls {
-                let tool_call = tool_call.as_object().ok_or(Error::NoToolCallsFound)?;
-                let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
+                let tool_call = tool_call
+                    .as_object()
+                    .ok_or_else(|| Error::NoToolCallsFound(message.id))?;
+                let tool_call_id = tool_call["id"]
+                    .as_str()
+                    .ok_or_else(|| Error::NoToolCallId(message.id))?;
 
                 messages.push(
                     create(
@@ -370,6 +374,6 @@ pub async fn create_tool_call_denied(
 
             Ok(messages)
         }
-        None => Err(Error::NoToolCallsFound),
+        None => Err(Error::NoToolCallsFound(message.id).into()),
     }
 }
