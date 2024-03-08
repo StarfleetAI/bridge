@@ -3,11 +3,12 @@
 
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
-use serde::{Deserialize, Serialize};
+use markdown::to_html;
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
-use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
+use sqlx::{query, query_as, query_scalar, Executor, Sqlite, SqliteConnection};
 
-use crate::errors::Error;
+use crate::messages::Error;
 use crate::types::Result;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
@@ -52,6 +53,16 @@ impl From<String> for Status {
     }
 }
 
+/// Safely render markdown in a message as an untrusted user input.
+fn serialize_content<S>(
+    content: &Option<String>,
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&to_html(content.as_ref().unwrap_or(&String::new())))
+}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub id: i64,
@@ -59,6 +70,7 @@ pub struct Message {
     pub agent_id: Option<i64>,
     pub status: Status,
     pub role: Role,
+    #[serde(serialize_with = "serialize_content")]
     pub content: Option<String>,
     pub prompt_tokens: Option<i64>,
     pub completion_tokens: Option<i64>,
@@ -324,10 +336,10 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while creating message.
-pub async fn create_tool_call_denied<'a, E>(executor: E, message: &Message) -> Result<Vec<Message>>
-where
-    E: Executor<'a, Database = Sqlite>,
-{
+pub async fn create_tool_call_denied(
+    conn: &mut SqliteConnection,
+    message: &Message,
+) -> Result<Vec<Message>> {
     match &message.tool_calls {
         Some(tool_calls) => {
             let tool_calls: Vec<Value> =
@@ -335,29 +347,29 @@ where
 
             let mut messages = Vec::with_capacity(tool_calls.len());
 
-            // TODO: This is a temporary solution. We need to handle multiple tool calls.
-            let tool_call = tool_calls[0].as_object().ok_or(Error::NoToolCallsFound)?;
+            for tool_call in &tool_calls {
+                let tool_call = tool_call.as_object().ok_or(Error::NoToolCallsFound)?;
+                let tool_call_id = tool_call["id"].as_str().ok_or(Error::NoToolCallId)?;
 
-            let tool_call_id = tool_call["id"].as_str().unwrap_or_default();
+                messages.push(
+                    create(
+                        &mut *conn,
+                        CreateParams {
+                            chat_id: message.chat_id,
+                            status: Status::ToolCallDenied,
+                            role: Role::Tool,
+                            content: Some("Tool call denied".to_string()),
+                            tool_call_id: Some(tool_call_id.to_string()),
 
-            messages.push(
-                create(
-                    executor,
-                    CreateParams {
-                        chat_id: message.chat_id,
-                        status: Status::Completed,
-                        role: Role::Tool,
-                        content: Some("Tool call denied".to_string()),
-                        tool_call_id: Some(tool_call_id.to_string()),
-
-                        ..Default::default()
-                    },
-                )
-                .await?,
-            );
+                            ..Default::default()
+                        },
+                    )
+                    .await?,
+                );
+            }
 
             Ok(messages)
         }
-        None => Err(Error::NoToolCallsFound),
+        None => Err(Error::NoToolCallsFound.into()),
     }
 }

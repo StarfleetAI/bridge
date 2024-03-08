@@ -50,44 +50,53 @@
 </script>
 
 <template>
-  <div class="current-chat__input">
-    <textarea
-      ref="textarea"
-      v-model="input"
-      class="current-chat__input-text"
-      placeholder="Message"
-      @keydown="handleKeyDown"
-    />
-    <SendIcon
-      v-if="!isProcessing"
-      class="current-chat__input-send"
-      @click="$emit('submit')"
-    />
+  <div class="current-chat__input-container">
+    <div class="current-chat__input">
+      <textarea
+        ref="textarea"
+        v-model="input"
+        class="current-chat__input-text"
+        placeholder="Message"
+        @keydown="handleKeyDown"
+      />
+      <SendIcon
+        v-if="!isProcessing"
+        class="current-chat__input-send"
+        @click="$emit('submit')"
+      />
 
-    <label
-      for="currrent-chat__input-file"
-      class="current-chat__input-file-icon"
-    >
-      <AttachmentIcon />
-    </label>
-    <input
-      id="currrent-chat__input-file"
-      type="file"
-      class="current-chat__input-file"
-      @input="handleFileInput"
-    />
+      <label
+        for="currrent-chat__input-file"
+        class="current-chat__input-file-icon"
+      >
+        <AttachmentIcon />
+      </label>
+      <input
+        id="currrent-chat__input-file"
+        type="file"
+        class="current-chat__input-file"
+        @input="handleFileInput"
+      />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+  .current-chat__input-container {
+    align-self: center;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 32px;
+    padding: 0 24px;
+
+    @include flex($justify-content: center);
+  }
+
   .current-chat__input {
     position: relative;
     gap: 7px;
-    align-self: center;
-    width: calc(100% - 96px);
+    width: 100%;
     max-width: 680px;
-    margin-top: auto;
-    margin-bottom: 32px;
 
     @include flex(column);
   }
@@ -122,13 +131,21 @@
     position: absolute;
     top: 16px;
     left: 16px;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
+
+    &:hover {
+      color: var(--text-secondary);
+    }
   }
 
   .current-chat__input-send {
     position: absolute;
     top: 16px;
     right: 16px;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
+
+    &:hover {
+      color: var(--text-secondary);
+    }
   }
 </style>

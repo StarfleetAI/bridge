@@ -7,10 +7,13 @@
   import CopyButtonPlugin from 'highlightjs-copy'
   import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
-  import { Role, Status } from '~/entities/chat'
+  import { Status } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
+  import ChatGreeting from './ChatGreeting.vue'
+  import ChatHeader from './ChatHeader.vue'
   import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
+  import ChatStartPresets from './ChatStartPresets.vue'
 
   const copyButtonPlugin = new CopyButtonPlugin()
   hljs.addPlugin(copyButtonPlugin)
@@ -27,12 +30,28 @@
   const { agents } = storeToRefs(useAgentsStore())
 
   const messagesListRef = ref<HTMLDivElement>()
+
+  const isAutoScrollEnabled = ref(true)
+  const handleScroll = () => {
+    const scrollHeight = messagesListRef.value!.scrollHeight
+    const scrollTop = messagesListRef.value!.scrollTop
+    const clientHeight = messagesListRef.value!.clientHeight
+    isAutoScrollEnabled.value = scrollHeight - scrollTop <= clientHeight + 30
+  }
   const scrollMessagesListToBottom = () => {
     if (messagesListRef.value) {
       messagesListRef.value.scrollTo(0, messagesListRef.value.scrollHeight)
     }
   }
-  watch(() => messages.value, scrollMessagesListToBottom, { immediate: true, deep: true })
+  watch(
+    () => messages.value,
+    () => {
+      if (messagesListRef.value && isAutoScrollEnabled.value) {
+        scrollMessagesListToBottom()
+      }
+    },
+    { immediate: true, deep: true },
+  )
 
   const chatInput = ref('')
 
@@ -40,8 +59,11 @@
     if (!chatInput.value) {
       return
     }
-    createMessage(chatInput.value, chatId.value)
+    createMessage(chatInput.value, currentAgent.value.id, chatId.value)
     chatInput.value = ''
+  }
+  const selectPreset = (preset: string) => {
+    createMessage(preset, currentAgent.value.id, chatId.value)
   }
 
   onMounted(async () => {
@@ -69,15 +91,6 @@
   onBeforeRouteLeave(async () => {
     await resetMessagesStore()
   })
-  const chatTitle = computed(() => {
-    if (!currentChat.value) {
-      return 'New chat'
-    }
-    if (currentChat.value.title) {
-      return currentChat.value.title
-    }
-    return `Chat #${currentChat.value?.id}`
-  })
   const isProcessing = computed(() => {
     if (chatId.value && messages.value[chatId.value]) {
       return messages.value[chatId.value].at(-1)?.status === Status.WRITING
@@ -86,22 +99,16 @@
   })
   const dayjs = useDayjs()
   dayjs.extend(utc)
-
-  const greeting = computed(() => {
-    return {
-      id: 0,
-      chat_id: 0,
-      agent_id: BRIDGE_AGENT_ID,
-      status: Status.COMPLETED,
-      role: Role.SYSTEM,
-      content: agents.value[0]?.system_message || '',
-      prompt_tokens: null,
-      completion_tokens: null,
-      tool_call_id: null,
-      tool_calls: null,
-      created_at: dayjs().utc().format('YYYY-MM-DD HH:mm:ss'),
+  const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
+  const currentAgent = ref(structuredClone(toRaw(bridgeAgent.value)))
+  const handleAgentChange = (agentId: number) => {
+    const newAgent = agents.value.find((agent) => agent.id === agentId)
+    if (newAgent) {
+      currentAgent.value = structuredClone(toRaw(newAgent))
+    } else {
+      currentAgent.value = structuredClone(toRaw(bridgeAgent.value))
     }
-  })
+  }
 
   // const isScrollingTimer = ref<NodeJS.Timer>()
   // const handleShowScroll = (show: boolean) => {
@@ -120,27 +127,32 @@
 
 <template>
   <div class="current-chat">
-    <div class="current-chat__title">
-      {{ chatTitle }}
-    </div>
+    <ChatHeader
+      :chat="currentChat"
+      :agent="currentAgent"
+    />
     <div
       ref="messagesListRef"
       class="current-chat__messages-wrapper"
+      @scroll="handleScroll"
     >
-      <div class="current-chat__messages">
+      <div :class="['current-chat__messages', { 'is-greeting': currentChatMessages?.length === 0 }]">
         <template v-if="currentChatMessages?.length">
           <ChatMessage
             v-for="message in currentChatMessages"
             :key="message.id"
             class="message"
             :message="message"
+            :current-agent="currentAgent"
           />
         </template>
         <template v-else>
-          <ChatMessage
+          <ChatGreeting
             class="message"
-            :message="greeting"
+            :agent="currentAgent"
+            @change-agent="handleAgentChange"
           />
+          <ChatStartPresets @select="selectPreset" />
         </template>
       </div>
     </div>
@@ -160,31 +172,13 @@
     @include flex(column, flex-start, stretch);
   }
 
-  .current-chat__title {
-    position: absolute;
-    top: 0;
-    z-index: 2;
-    width: 100%;
-    height: 56px;
-    padding: 18px 48px;
-    background-color: var(--surface-1);
-
-    @include font-inter-700(14px, 20px, var(--text-secondary));
-
-    // background-color: rgba(var(--surface-1), 0.2);
-
-    // backdrop-filter: blur(1px);
-  }
-
   .current-chat__messages-wrapper {
     flex: 1;
     overflow: hidden;
     overflow: auto;
     width: 100%;
-    height: calc(100vh - 242px);
-    height: calc(100svh - 242px);
-    padding: 0 48px;
-    padding-bottom: 48px;
+    height: 100%;
+    padding: 0 24px;
     transition: all 0.2s ease;
 
     @include add-scrollbar;
@@ -192,15 +186,15 @@
 
   .current-chat__messages {
     flex: 1;
-    gap: 32px;
     width: 100%;
     max-width: 680px;
     margin: 0 auto;
+    padding: 16px 0 48px;
 
-    @include flex(column, flex-start, stretch);
-  }
+    &.is-greeting {
+      height: 100%;
+    }
 
-  .message:first-child {
-    margin-top: 56px;
+    @include flex(column, flex-start, stretch, 32px);
   }
 </style>

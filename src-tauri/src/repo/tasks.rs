@@ -4,7 +4,7 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as, Executor, Sqlite};
+use sqlx::{Executor, query, query_as, Sqlite};
 
 use crate::types::Result;
 

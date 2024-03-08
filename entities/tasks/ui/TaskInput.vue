@@ -29,13 +29,25 @@
 
 <style lang="scss" scoped>
   .task-form__input {
-    min-height: 35px;
+    min-height: 41px;
     max-height: 66px;
     padding: 8px 12px;
+    border: none;
     border-radius: 6px;
     background-color: transparent;
     outline: none;
+    font-family: inherit;
     resize: none;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+
+    &:before,
+    &:after {
+      box-sizing: border-box;
+      border-width: 0;
+      border-style: solid;
+      border-color: transparent;
+    }
 
     &.summary {
       min-height: 20px;

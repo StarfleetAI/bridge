@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
-use sqlx::{query, Executor, Sqlite};
+use sqlx::{Executor, query, Sqlite};
 
 use crate::types::Result;
 

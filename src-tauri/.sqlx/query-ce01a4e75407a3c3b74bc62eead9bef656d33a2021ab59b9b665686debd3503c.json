@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO chats (created_at, updated_at) VALUES ($1, $1) RETURNING *",
+  "query": "SELECT * FROM chats ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -30,7 +30,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -40,5 +40,5 @@
       false
     ]
   },
-  "hash": "002c6b7e2192981832f5bdc4b224e921cfe4d331c2832043562b642b6ae04137"
+  "hash": "ce01a4e75407a3c3b74bc62eead9bef656d33a2021ab59b9b665686debd3503c"
 }

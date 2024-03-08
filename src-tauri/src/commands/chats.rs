@@ -34,8 +34,8 @@ pub struct CreateChat {
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_chats(pool: State<'_, DbPool>) -> Result<ChatsList> {
-    let chats = repo::chats::list(&*pool).await?;
+pub async fn list_chats(pool: State<'_, DbPool>, is_pinned: Option<bool>) -> Result<ChatsList> {
+    let chats = repo::chats::list(&*pool, is_pinned).await?;
 
     Ok(ChatsList { chats })
 }
@@ -125,6 +125,27 @@ pub async fn update_chat_title(id: i64, title: String, pool: State<'_, DbPool>) 
         .with_context(|| "Failed to begin transaction")?;
 
     repo::chats::update_title(&mut *tx, id, &title).await?;
+
+    tx.commit()
+        .await
+        .with_context(|| "Failed to commit transaction")?;
+
+    Ok(())
+}
+
+/// Toggle chat is pinned status by id.
+///
+/// # Errors
+///
+/// Returns error if the chat with the given ID does not exist.
+#[tauri::command]
+pub async fn toggle_chat_is_pinned(id: i64, pool: State<'_, DbPool>) -> Result<()> {
+    let mut tx = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    repo::chats::toggle_is_pinned(&mut *tx, id).await?;
 
     tx.commit()
         .await

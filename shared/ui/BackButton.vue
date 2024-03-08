@@ -40,7 +40,7 @@
     cursor: pointer;
 
     @include flex(row, flex-start, center);
-    @include font-inter-600(14px, 20px, var(--interactive-primary));
+    @include font-inter-500(14px, 20px, var(--interactive-primary));
   }
 </style>
 ~/shared/lib

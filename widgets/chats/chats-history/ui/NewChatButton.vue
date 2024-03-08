@@ -20,17 +20,9 @@
 
 <style lang="scss" scoped>
   .new-chat__btn {
-    gap: 8px;
-    align-self: center;
-    width: 148px;
-    height: 32px;
-    margin-right: 7px;
-    margin-bottom: 40px;
-    padding: 6px 10px;
-    border: 1px solid var(--text-tertiary);
-    border-radius: 4px;
+    gap: 6px;
 
-    @include font-inter-500(14px, 20px, var(--text-tertiary));
+    @include font-inter-400(12px, 17px, var(--button-secondary));
     @include flex(row, center, center);
   }
 </style>

@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::{spawn, sync::RwLock};
+use tracing::instrument;
 use tracing::{debug, trace};
-use tracing::{instrument};
 
 use crate::abilities::execute;
 use crate::repo::models;
@@ -98,7 +98,7 @@ pub async fn create_message(
         repo::messages::update_status(&mut *tx, last_message_id, Status::ToolCallDenied).await?;
         // Create a new message indicating the tool call was denied
         let denied_messages =
-            repo::messages::create_tool_call_denied(&mut *tx, &last_message).await?;
+            repo::messages::create_tool_call_denied(&mut tx, &last_message).await?;
 
         last_message.status = Status::ToolCallDenied;
         window
@@ -338,7 +338,11 @@ pub async fn approve_tool_call(
 
         let handle = spawn(async move {
             let output = execute(abilities, app_local_data_dir, msg, tc, python_path_str).await?;
-
+            // Wrap output in a code block
+            //
+            // TODO: This is a temporary solution. It's better to wrap it on before markdown-2-html
+            //       processing, but it requires writing custom Serializer for Message.
+            let output = format!("```\n{output}\n```");
             Ok::<_, anyhow::Error>(CreateParams {
                 chat_id: message.chat_id,
                 status: Status::Completed,
@@ -413,7 +417,7 @@ pub async fn deny_tool_call(
     repo::messages::update_status(&mut *tx, message.id, Status::ToolCallDenied).await?;
 
     // Create a new message indicating the tool call was denied
-    let denied_message = repo::messages::create_tool_call_denied(&mut *tx, &message).await?;
+    let denied_message = repo::messages::create_tool_call_denied(&mut tx, &message).await?;
 
     // Commit the transaction
     tx.commit().await.context("Failed to commit transaction")?;

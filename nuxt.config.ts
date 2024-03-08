@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', 'nuxt-typed-router', '@vueuse/nuxt', 'dayjs-nuxt'],
+  modules: ['@pinia/nuxt', 'nuxt-typed-router', '@vueuse/nuxt', 'dayjs-nuxt'],
 
   routeRules: {
     '/': { redirect: '/agents' },
@@ -49,15 +49,6 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/theming.css'],
 
-  imports: {
-    presets: [
-      {
-        from: '@tauri-apps/api/tauri',
-        imports: ['invoke'],
-      },
-    ],
-  },
-
   vite: {
     css: {
       preprocessorOptions: {
@@ -67,6 +58,9 @@ export default defineNuxtConfig({
           `,
         },
       },
+    },
+    optimizeDeps: {
+      include: ['@tauri-apps/api/event', 'highlight.js', 'highlightjs-copy'],
     },
   },
 })

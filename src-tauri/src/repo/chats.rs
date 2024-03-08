@@ -12,6 +12,7 @@ use crate::types::Result;
 pub struct Chat {
     pub id: i64,
     pub title: String,
+    pub is_pinned: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -21,17 +22,25 @@ pub struct Chat {
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn list<'a, E>(executor: E) -> Result<Vec<Chat>>
+pub async fn list<'a, E>(executor: E, is_pinned: Option<bool>) -> Result<Vec<Chat>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    Ok(query_as!(
-        Chat,
-        "SELECT id, title, created_at, updated_at FROM chats ORDER BY id DESC"
-    )
-    .fetch_all(executor)
-    .await
-    .with_context(|| "Failed to fetch chats")?)
+    if let Some(is_pinned) = is_pinned {
+        return Ok(query_as!(
+            Chat,
+            "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
+            is_pinned
+        )
+        .fetch_all(executor)
+        .await
+        .with_context(|| "Failed to fetch chats")?);
+    }
+
+    Ok(query_as!(Chat, "SELECT * FROM chats ORDER BY id DESC")
+        .fetch_all(executor)
+        .await
+        .with_context(|| "Failed to fetch chats")?)
 }
 
 /// Get chat by id.
@@ -43,14 +52,12 @@ pub async fn get<'a, E>(executor: E, id: i64) -> Result<Chat>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    Ok(query_as!(
-        Chat,
-        "SELECT id, title, created_at, updated_at FROM chats WHERE id = $1 LIMIT 1",
-        id
+    Ok(
+        query_as!(Chat, "SELECT * FROM chats WHERE id = $1 LIMIT 1", id)
+            .fetch_one(executor)
+            .await
+            .with_context(|| "Failed to fetch chat")?,
     )
-    .fetch_one(executor)
-    .await
-    .with_context(|| "Failed to fetch chat")?)
 }
 
 /// Delete chat by id.
@@ -109,6 +116,26 @@ where
     .execute(executor)
     .await
     .with_context(|| format!("Failed to update title for chat with id: {id}"))?;
+
+    Ok(())
+}
+
+/// Toggle chat is pinned status by id.
+///
+/// # Errors
+///
+/// Returns error if the chat with the given ID does not exist.
+pub async fn toggle_is_pinned<'a, E>(executor: E, id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!(
+        "UPDATE chats SET is_pinned = NOT is_pinned WHERE id = $1",
+        id
+    )
+    .execute(executor)
+    .await
+    .with_context(|| format!("Failed to toggle pin status for chat with id: {id}"))?;
 
     Ok(())
 }

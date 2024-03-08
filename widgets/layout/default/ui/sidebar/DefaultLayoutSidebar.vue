@@ -4,8 +4,8 @@
 <script setup lang="ts">
   import { UserAvatar } from '~/entities/profile'
   import { useLastTabRoute, type TabRoute } from '~/shared/lib'
-  import { AgentsIcon, ChatsIcon, DocumentsIcon, SearchIcon, SettingsIcon, TasksIcon } from '~/shared/ui/icons'
-  import HeaderNavigationItem from './HeaderNavigationItem.vue'
+  import { AgentsIcon, ChatsIcon, ClipboardIcon, DocumentsIcon, SearchIcon, SettingsIcon } from '~/shared/ui/icons'
+  import SidebarNavigationItem from './SidebarNavigationItem.vue'
 
   const { getTabLastRoute } = useLastTabRoute()
 
@@ -21,19 +21,19 @@
 <template>
   <div class="default-layout__header">
     <div class="default-layout__header-tabs">
-      <HeaderNavigationItem
+      <SidebarNavigationItem
         name="tasks"
         :to="getTabRoute('tasks')"
       >
         <template #icon>
-          <TasksIcon
+          <ClipboardIcon
             width="24"
             height="24"
           />
         </template>
         <template #name> Tasks </template>
-      </HeaderNavigationItem>
-      <HeaderNavigationItem
+      </SidebarNavigationItem>
+      <SidebarNavigationItem
         name="chats"
         :to="getTabRoute('chats')"
       >
@@ -44,8 +44,8 @@
           />
         </template>
         <template #name> Chats </template>
-      </HeaderNavigationItem>
-      <HeaderNavigationItem
+      </SidebarNavigationItem>
+      <SidebarNavigationItem
         name="agents"
         :to="getTabRoute('agents')"
       >
@@ -56,8 +56,8 @@
           />
         </template>
         <template #name> Agents </template>
-      </HeaderNavigationItem>
-      <HeaderNavigationItem
+      </SidebarNavigationItem>
+      <SidebarNavigationItem
         name="documents"
         :to="getTabRoute('documents')"
       >
@@ -67,9 +67,9 @@
             height="24"
           />
         </template>
-        <template #name> Documents </template>
-      </HeaderNavigationItem>
-      <HeaderNavigationItem
+        <template #name> Docs </template>
+      </SidebarNavigationItem>
+      <SidebarNavigationItem
         name="settings"
         :to="getTabRoute('settings')"
       >
@@ -80,7 +80,7 @@
           />
         </template>
         <template #name> Settings </template>
-      </HeaderNavigationItem>
+      </SidebarNavigationItem>
     </div>
     <div class="default-layout__header-control">
       <SearchIcon class="default-layout__header-search" />
@@ -94,7 +94,7 @@
 
 <style scoped lang="scss">
   .default-layout__header {
-    width: 56px;
+    width: 64px;
     height: 100svh;
     background: var(--surface-0);
 
@@ -102,10 +102,10 @@
   }
 
   .default-layout__header-tabs {
+    width: 100%;
     height: 100svh;
-    padding-top: 24px;
 
-    @include flex(column, $align-items: center, $gap: 24px);
+    @include flex(column, $align-items: center);
   }
 
   .default-layout__header-control {

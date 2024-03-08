@@ -4,7 +4,6 @@ import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
 import { useChatsStore } from '~/features/chats'
 import { type Message } from '~/entities/chat'
-import { BRIDGE_AGENT_ID } from '~/shared/lib'
 import { listChatMessages, createMessage as createMessageReq, deleteMessage as deleteMessageReq } from '../api'
 
 type ChatId = number
@@ -19,10 +18,10 @@ export const useMessagesStore = defineStore('messages', () => {
     messages.value[chatId] = await listChatMessages(chatId)
   }
 
-  const createMessage = async (text: string, chat_id?: number) => {
+  const createMessage = async (text: string, agent_id: number, chat_id?: number) => {
     if (!chat_id) {
       const { createChat } = useChatsStore()
-      const newChat = await createChat({ agent_id: BRIDGE_AGENT_ID })
+      const newChat = await createChat({ agent_id })
       chat_id = newChat.id
       await navigateTo({ name: 'chats', query: { id: newChat.id } })
     }
