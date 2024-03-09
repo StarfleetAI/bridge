@@ -32,7 +32,7 @@ where
     for row in rows {
         chat_agents
             .entry(row.chat_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(row.agent_id);
     }
 

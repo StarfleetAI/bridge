@@ -14,6 +14,7 @@ use crate::{repo, types::DbPool, types::Result};
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
+#[allow(clippy::module_name_repetitions)]
 #[tauri::command]
 pub async fn list_agents_chats(pool: State<'_, DbPool>) -> Result<HashMap<i64, Vec<i64>>> {
     repo::agents_chats::list(&*pool).await
