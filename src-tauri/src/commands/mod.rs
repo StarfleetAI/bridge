@@ -3,6 +3,7 @@
 
 pub mod abilities;
 pub mod agents;
+pub mod agents_chats;
 pub mod chats;
 pub mod messages;
 pub mod settings;

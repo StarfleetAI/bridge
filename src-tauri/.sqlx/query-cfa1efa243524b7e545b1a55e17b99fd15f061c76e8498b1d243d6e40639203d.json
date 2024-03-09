@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM agents_chats",
+  "describe": {
+    "columns": [
+      {
+        "name": "agent_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "chat_id",
+        "ordinal": 1,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "cfa1efa243524b7e545b1a55e17b99fd15f061c76e8498b1d243d6e40639203d"
+}

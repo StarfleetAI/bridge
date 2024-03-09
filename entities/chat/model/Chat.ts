@@ -7,4 +7,5 @@ export interface Chat {
   created_at: Date
   updated_at: Date
   is_pinned: boolean
+  agents_ids: number[]
 }

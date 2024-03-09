@@ -14,11 +14,11 @@
     toolCall: ToolCall
     status: Status
     messageId: number
-    currentAgent: Agent
+    currentAgent?: Agent
   }>()
   const { abilities } = storeToRefs(useAbilitiesStore())
   const agentAbilities = computed(() => {
-    return abilities?.value?.filter((item) => props.currentAgent.ability_ids.includes(item.id))
+    return abilities?.value?.filter((item) => props.currentAgent?.ability_ids.includes(item.id))
   })
   const ability = computed(() => {
     return agentAbilities?.value?.find((item) => {
