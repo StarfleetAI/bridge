@@ -11,8 +11,8 @@ import { type CreateAgent, type UpdateAgent } from '../model'
 
 export const useAgentsStore = defineStore('agents', () => {
   const agents = ref<Agent[]>([])
-  const getById = (id: number | string | undefined): Agent | undefined => {
-    if (id === undefined) {
+  const getById = (id: Nullable<number | string>): Agent | undefined => {
+    if (!id) {
       return undefined
     }
     if (typeof id === 'string') {

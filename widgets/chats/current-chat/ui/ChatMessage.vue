@@ -6,7 +6,6 @@
   import hljs from 'highlight.js'
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall } from '~/features/chats'
-  import type { Agent } from '~/entities/agents'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
   import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
@@ -14,14 +13,12 @@
   import ToolCall from './ToolCall.vue'
   const props = defineProps<{
     message: Message
-    currentAgent: Agent
   }>()
 
-  const { agents } = storeToRefs(useAgentsStore())
-
-  const getAgentById = (id: number) => {
-    return agents?.value.find((agent) => agent.id === id)
-  }
+  const { getById: getAgentById } = useAgentsStore()
+  const currentAgent = computed(() => {
+    return getAgentById(props.message.agent_id)
+  })
 
   const getAuthorName = (message: Message) => {
     switch (message.role) {
