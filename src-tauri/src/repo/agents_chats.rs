@@ -1,10 +1,43 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
+
 use anyhow::Context;
-use sqlx::{Executor, query, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
+
+pub struct AgentsChat {
+    pub agent_id: i64,
+    pub chat_id: i64,
+}
+
+/// List all agents for chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn list<'a, E>(executor: E) -> Result<HashMap<i64, Vec<i64>>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let rows: Vec<AgentsChat> = query_as!(AgentsChat, "SELECT * FROM agents_chats")
+        .fetch_all(executor)
+        .await
+        .with_context(|| "Failed to fetch agents for chat")?;
+
+    let mut chat_agents: HashMap<i64, Vec<i64>> = HashMap::new();
+
+    for row in rows {
+        chat_agents
+            .entry(row.chat_id)
+            .or_insert_with(Vec::new)
+            .push(row.agent_id);
+    }
+
+    Ok(chat_agents)
+}
 
 /// Add agent to chat.
 ///
