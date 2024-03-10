@@ -102,7 +102,7 @@
   dayjs.extend(utc)
   const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
   const currentAgent = ref<Agent>(structuredClone(toRaw(bridgeAgent.value)))
-  if (currentChat.value?.agents_ids.length === 1) {
+  if (currentChat.value?.agents_ids?.length === 1) {
     const agent = getAgentById(currentChat.value?.agents_ids[0])
     if (agent) {
       currentAgent.value = structuredClone(toRaw(agent))
