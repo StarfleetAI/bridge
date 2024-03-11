@@ -2,45 +2,34 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  // import { TaskItem } from '~/entities/tasks'
-  import { DocumentTitleIcon, TaskHeaderIcon, FileFrameIcon, FileCSVIcon } from '~/shared/ui/icons'
+  import { AvatarsList } from '~/shared/ui/avatars'
 </script>
 <template>
   <div class="document-full-item">
     <div class="document-full-item__head">
       <div class="document-full-item__title">
-        <DocumentTitleIcon />
-        <span>Document #0393</span>
+        <span>Document</span>
       </div>
     </div>
     <div class="document-full-item__body">
       <div class="document-full-item__body-top">
-        <div class="document-full-item__name">
-          <div>list012.csv</div>
-          <div class="document-full-item__info">by John F. • installed 54,322 times</div>
-          <div class="document-full-item__info">878kb</div>
-        </div>
-        <div class="document-full-item__icon">
-          <FileFrameIcon class="document-full-item__frame" />
-          <FileCSVIcon class="document-full-item__type" />
-          <div class="document-full-item__type-title">CSV</div>
-        </div>
+        <div class="document-full-item__info">878kb • 12.09.24, 19:43</div>
+        <AvatarsList :persons="[{ name: 'Alex', avatar: '', link: '' }]" />
       </div>
-      <div class="document-full-item__abilities-title">
-        <TaskHeaderIcon />
-        Associated Tasks
+      <div class="document-full-item__name">
+        <div>list012.csv</div>
       </div>
-      <!-- <TaskItem class="document-full-item__task" />
-      <TaskItem class="document-full-item__task" />
-      <TaskItem class="document-full-item__task" /> -->
     </div>
   </div>
 </template>
 <style scoped lang="scss">
   .document-full-item {
     &__head {
+      height: 57px;
       padding: 12px 24px;
-      border-bottom: 0.5px solid var(--pill);
+      border-bottom: 1px solid var(--border-3);
+
+      @include flex(row, space-between, center);
     }
 
     &__title {
@@ -55,7 +44,7 @@
       margin-bottom: 32px;
 
       @include flex(column, start, start);
-      @include font-inter-700(20px, 28px, var(--text-primary));
+      @include font-inter-500(18px, 25px, var(--text-primary));
     }
 
     &__info {
@@ -67,23 +56,9 @@
     }
 
     &__body-top {
+      margin-bottom: 10px;
+
       @include flex(row, space-between, center);
-    }
-
-    &__abilities {
-      padding: 24px;
-    }
-
-    &__abilities-title {
-      gap: 5px;
-      margin-bottom: 16px;
-
-      @include flex(row, start, center);
-      @include font-inter-500(14px, 20px, var(--text-tertiary));
-    }
-
-    &__task {
-      background: var(--surface-3);
     }
 
     &__icon {

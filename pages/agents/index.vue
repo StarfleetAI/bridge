@@ -90,10 +90,6 @@
 </template>
 
 <style lang="scss" scoped>
-  div {
-    color: var(--text-primary);
-  }
-
   .main-content {
     flex: 1;
   }

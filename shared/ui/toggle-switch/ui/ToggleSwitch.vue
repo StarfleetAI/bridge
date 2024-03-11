@@ -51,6 +51,10 @@
       padding: 8px 8px 16px;
       border-bottom: 1px solid transparent;
 
+      div {
+        color: var(--text-tertiary);
+      }
+
       &:hover {
         color: var(--text-secondary);
       }
