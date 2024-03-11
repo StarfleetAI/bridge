@@ -7,6 +7,7 @@
   import CopyButtonPlugin from 'highlightjs-copy'
   import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
+  import type { Agent } from '~/entities/agents'
   import { Status } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
   import ChatGreeting from './ChatGreeting.vue'
@@ -28,7 +29,7 @@
   const { messages } = storeToRefs(useMessagesStore())
   const { getById } = useChatsStore()
   const { agents } = storeToRefs(useAgentsStore())
-
+  const { getById: getAgentById } = useAgentsStore()
   const messagesListRef = ref<HTMLDivElement>()
 
   const isAutoScrollEnabled = ref(true)
@@ -100,7 +101,14 @@
   const dayjs = useDayjs()
   dayjs.extend(utc)
   const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
-  const currentAgent = ref(structuredClone(toRaw(bridgeAgent.value)))
+  const currentAgent = ref<Agent>(structuredClone(toRaw(bridgeAgent.value)))
+  if (currentChat.value?.agents_ids?.length === 1) {
+    const agent = getAgentById(currentChat.value?.agents_ids[0])
+    if (agent) {
+      currentAgent.value = structuredClone(toRaw(agent))
+    }
+  }
+
   const handleAgentChange = (agentId: number) => {
     const newAgent = agents.value.find((agent) => agent.id === agentId)
     if (newAgent) {
@@ -143,7 +151,6 @@
             :key="message.id"
             class="message"
             :message="message"
-            :current-agent="currentAgent"
           />
         </template>
         <template v-else>

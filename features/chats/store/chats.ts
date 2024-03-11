@@ -33,6 +33,7 @@ export const useChatsStore = defineStore('chats', () => {
 
   const createChat = async (request: CreateChat) => {
     const chat = await createChatReq(request)
+    chat.agents_ids = [request.agent_id]
     chats.value.unshift(chat)
     return chat
   }

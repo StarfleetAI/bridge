@@ -2,19 +2,19 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { DocumentCheck, DocumentPreview } from '~/shared/ui/icons'
+  import { DocumentCheck } from '~/shared/ui/icons'
+
+  import type { Document } from '../model'
+
+  defineProps<{
+    document: Document
+  }>()
 </script>
 <template>
   <div class="document-item">
     <div class="document-item__file">
-      <div class="document-item__preview">
-        <DocumentPreview
-          :color="'var(--text-tertiary)'"
-          width="24"
-          height="24"
-        />
-      </div>
-      <div class="document-item__title">list018.csv</div>
+      <div class="document-item__preview"></div>
+      <div class="document-item__title">{{ document?.title }}</div>
     </div>
     <div class="document-item__owner" />
     <div class="document-item__info">
@@ -32,6 +32,11 @@
     border-radius: 4px;
     background: var(--surface-3);
 
+    &.selected {
+      background: var(--surface-3);
+      outline: 2px solid var(--button-primary);
+    }
+
     &__file {
       width: 30%;
 
@@ -39,16 +44,15 @@
     }
 
     &__preview {
-      width: 56px;
-      height: 56px;
+      width: 40px;
+      height: 40px;
       margin-right: 8px;
-      background: var(--surface-4);
 
       @include flex(row, center, center);
     }
 
     &__title {
-      @include font-inter-500(14px, 19px, var(--text-secondary));
+      @include font-inter-500(14px, 19px, var(--text-primary));
     }
 
     &__owner {

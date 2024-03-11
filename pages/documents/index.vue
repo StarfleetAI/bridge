@@ -2,29 +2,78 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  // import { useTasksStore } from '@/store/tasks'
-  import { DocumentFullItem } from '~/widgets/documentFullItem'
   import { DocumentsList } from '~/widgets/documentsList'
-  import { DocumentTitleIcon } from '~/shared/ui/icons'
+  import { useDocumentsNavigation, useDocumentsStore } from '~/features/document'
+  import { BaseContainer, BaseButton } from '~/shared/ui/base'
+  import { PlusIcon } from '~/shared/ui/icons'
 
   definePageMeta({
-    title: 'Tasks',
+    title: 'Documents',
   })
 
-  // const tasksStore = useTasksStore()
+  const { documents } = storeToRefs(useDocumentsStore())
+
+  const { isCreateDocument, enableCreateDocument, selectedDocument } = useDocumentsNavigation()
+
+  const DocumentFullItem = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/documentFullItem')
+    return module.DocumentFullItem
+  })
+
+  const DocumentForm = defineAsyncComponent(async () => {
+    const module = await import('~/widgets/documentForm')
+    return module.DocumentForm
+  })
+
+  const sideContentComponent = computed(() => {
+    if (isCreateDocument.value) {
+      return DocumentForm
+    }
+    if (selectedDocument.value) {
+      return DocumentFullItem
+    }
+    return null
+  })
+
+  const createHandle = () => {
+    enableCreateDocument()
+  }
 </script>
 
 <template>
-  <div class="main-content">
-    <div class="documents-list__title">
-      <DocumentTitleIcon :color="'var(--text-primary)'" />
-      Documents <span>4</span>
-    </div>
-    <DocumentsList />
-  </div>
-  <div class="side-content">
-    <DocumentFullItem />
-  </div>
+  <BaseContainer>
+    <template #main>
+      <div class="main-content">
+        <div class="main-content__header">
+          <div class="main-content__title">
+            Documents
+            <BaseButton
+              :disabled="isCreateDocument"
+              size="medium"
+              @click="createHandle"
+            >
+              <template #icon>
+                <PlusIcon />
+              </template>
+              Create new
+            </BaseButton>
+          </div>
+        </div>
+        <DocumentsList :documents="documents" />
+      </div>
+    </template>
+    <template
+      v-if="sideContentComponent"
+      #additional
+    >
+      <div class="side-content">
+        <component
+          :is="sideContentComponent"
+          :key="String(selectedDocument)"
+        />
+      </div>
+    </template>
+  </BaseContainer>
 </template>
 
 <style lang="scss" scoped>
@@ -33,29 +82,27 @@
   }
 
   .main-content {
-    width: 60%;
-    min-height: calc(100vh - 44px);
-    padding: 20px;
+    flex: 1;
   }
 
   .side-content {
-    overflow-y: auto;
-    width: 40%;
-    min-height: calc(100vh - 44px);
-    background: var(--side-panel);
+    width: 100%;
+    height: 100%;
+    border-left: 1px solid var(--border-3);
+    background: var(--surface-1);
   }
 
-  .documents-list {
-    &__title {
-      gap: 8px;
-      margin-bottom: 24px;
+  .main-content__header {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-3);
 
-      span {
-        @include font-inter-400(16px, 22px, var(--text-tertiary));
-      }
+    @include flex(row, flex-start, stretch);
+  }
 
-      @include flex(row, start, center);
-      @include font-inter-700(16px, 22px, var(--text-secondary));
-    }
+  .main-content__title {
+    flex: 1;
+
+    @include flex(row, space-between, center, 24px);
+    @include font-inter-700(16px, 22px, var(--text-primary));
   }
 </style>
