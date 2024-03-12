@@ -293,6 +293,35 @@ where
     Ok(())
 }
 
+/// Edit message content.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while editing message.
+pub async fn edit<'a, E>(executor: E, id: i64, content: &str) -> Result<Message>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let message = query_as!(
+        Message,
+        r#"
+        UPDATE messages
+        SET content = $2
+        WHERE id = $1
+        RETURNING
+            id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
+            completion_tokens, tool_calls, tool_call_id, created_at
+        "#,
+        id,
+        content
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to edit message")?;
+
+    Ok(message)
+}
+
 /// Transitions messages from one status to another.
 ///
 /// # Errors

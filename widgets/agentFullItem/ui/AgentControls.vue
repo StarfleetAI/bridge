@@ -22,7 +22,7 @@
 
 <template>
   <div class="agent-controls">
-    <BaseDropdown>
+    <BaseDropdown v-if="$route.name === 'agents'">
       <KebabIcon
         height="20"
         width="20"

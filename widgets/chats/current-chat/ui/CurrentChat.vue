@@ -5,6 +5,7 @@
   import utc from 'dayjs/plugin/utc'
   import hljs from 'highlight.js'
   import CopyButtonPlugin from 'highlightjs-copy'
+  import { useAgentsNavigation } from '~/features/agent'
   import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
@@ -26,28 +27,28 @@
   if (chatId.value) {
     await listMessages(chatId.value)
   }
+
   const { messages } = storeToRefs(useMessagesStore())
   const { getById } = useChatsStore()
   const { agents } = storeToRefs(useAgentsStore())
   const { getById: getAgentById } = useAgentsStore()
   const messagesListRef = ref<HTMLDivElement>()
 
-  const isAutoScrollEnabled = ref(true)
-  const handleScroll = () => {
-    const scrollHeight = messagesListRef.value!.scrollHeight
-    const scrollTop = messagesListRef.value!.scrollTop
-    const clientHeight = messagesListRef.value!.clientHeight
-    isAutoScrollEnabled.value = scrollHeight - scrollTop <= clientHeight + 30
-  }
   const scrollMessagesListToBottom = () => {
     if (messagesListRef.value) {
       messagesListRef.value.scrollTo(0, messagesListRef.value.scrollHeight)
     }
   }
+  const { isScrolling, arrivedState } = useScroll(messagesListRef, {
+    offset: {
+      bottom: 140,
+    },
+  })
+
   watch(
     () => messages.value,
     () => {
-      if (messagesListRef.value && isAutoScrollEnabled.value) {
+      if (messagesListRef.value && !isScrolling.value && arrivedState.bottom) {
         scrollMessagesListToBottom()
       }
     },
@@ -62,12 +63,17 @@
     }
     createMessage(chatInput.value, currentAgent.value.id, chatId.value)
     chatInput.value = ''
+    nextTick(() => {
+      scrollMessagesListToBottom()
+    })
   }
   const selectPreset = (preset: string) => {
     createMessage(preset, currentAgent.value.id, chatId.value)
   }
 
   onMounted(async () => {
+    await nextTick()
+    await nextTick()
     await nextTick()
     scrollMessagesListToBottom()
   })
@@ -110,7 +116,7 @@
   }
 
   const handleAgentChange = (agentId: number) => {
-    const newAgent = agents.value.find((agent) => agent.id === agentId)
+    const newAgent = getAgentById(agentId)
     if (newAgent) {
       currentAgent.value = structuredClone(toRaw(newAgent))
     } else {
@@ -118,19 +124,11 @@
     }
   }
 
-  // const isScrollingTimer = ref<NodeJS.Timer>()
-  // const handleShowScroll = (show: boolean) => {
-  //   if (show) {
-  //     messagesListRef.value?.classList.add('is-scrolling')
-  //     if (isScrollingTimer.value) {
-  //       clearTimeout(isScrollingTimer.value)
-  //     }
-  //   } else {
-  //     isScrollingTimer.value = setTimeout(() => {
-  //       messagesListRef.value?.classList.remove('is-scrolling')
-  //     }, 500)
-  //   }
-  // }
+  // Handle navigation from agent card
+  const { selectedAgent } = useAgentsNavigation()
+  if (selectedAgent.value) {
+    handleAgentChange(selectedAgent.value)
+  }
 </script>
 
 <template>
@@ -142,7 +140,6 @@
     <div
       ref="messagesListRef"
       class="current-chat__messages-wrapper"
-      @scroll="handleScroll"
     >
       <div :class="['current-chat__messages', { 'is-greeting': currentChatMessages?.length === 0 }]">
         <template v-if="currentChatMessages?.length">
@@ -181,11 +178,11 @@
 
   .current-chat__messages-wrapper {
     flex: 1;
-    overflow: hidden;
     overflow: auto;
     width: 100%;
     height: 100%;
     padding: 0 24px;
+    padding-bottom: 48px;
     transition: all 0.2s ease;
 
     @include add-scrollbar;
@@ -196,12 +193,12 @@
     width: 100%;
     max-width: 680px;
     margin: 0 auto;
-    padding: 16px 0 48px;
+    padding: 16px 0 0;
 
     &.is-greeting {
       height: 100%;
     }
 
-    @include flex(column, flex-start, stretch, 32px);
+    @include flex(column, space-between, stretch, 64px);
   }
 </style>

@@ -5,7 +5,6 @@
   import { useAgentsNavigation } from '~/features/agent'
   import type { Agent } from '~/entities/agents'
   import { BridgeLargeIcon } from '~/shared/ui/icons'
-  import { useModalStore } from '~/shared/ui/modal'
 
   defineProps<{
     agent: Agent
@@ -14,23 +13,13 @@
     'change-agent': [agentId: number]
   }>()
 
-  const { showModal } = useModalStore()
-  const AgentsModal = defineAsyncComponent(() => import('./ChangeAgentModal.vue'))
-  const openModal = () => {
-    showModal(AgentsModal, {}, (val) => {
-      if (val) {
-        emits('change-agent', val as number)
-      }
-    })
-  }
-
   const { setSelectedAgent } = useAgentsNavigation()
 </script>
 
 <template>
-  <div class="greeting">
+  <div class="chat-settings">
     <div
-      class="greeting__agent-wrapper"
+      class="chat-settings__agent-wrapper"
       @click="setSelectedAgent(agent.id)"
     >
       <BridgeLargeIcon />
@@ -45,23 +34,17 @@
       </div>
       <div class="agent__author">by StarfleetAI</div>
     </div>
-    <div
-      class="agent__change"
-      @click="openModal"
-    >
-      Change Agent
-    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-  .greeting {
+  .chat-settings {
     margin: auto;
 
     @include flex(column, center, center, 16px);
   }
 
-  .greeting__agent-wrapper {
+  .chat-settings__agent-wrapper {
     display: contents;
   }
 

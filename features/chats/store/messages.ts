@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
-import { useChatsStore } from '~/features/chats'
+import { useChatsStore, type EditMessage } from '~/features/chats'
 import { type Message } from '~/entities/chat'
-import { listChatMessages, createMessage as createMessageReq, deleteMessage as deleteMessageReq } from '../api'
+import {
+  listChatMessages,
+  createMessage as createMessageReq,
+  deleteMessage as deleteMessageReq,
+  editMessage as editMessageReq,
+} from '../api'
 
 type ChatId = number
 
@@ -45,6 +50,16 @@ export const useMessagesStore = defineStore('messages', () => {
     messages.value[message.chat_id].push(message)
   }
 
+  const editMessage = async (params: EditMessage, chat_id: number) => {
+    const updatedMessage = await editMessageReq(params)
+    if (messages.value[chat_id]) {
+      const index = messages.value[chat_id].findIndex((a) => a.id === updatedMessage.id)
+      if (index !== undefined && index !== -1) {
+        messages.value[chat_id].splice(index, 1, updatedMessage)
+      }
+    }
+  }
+
   const updateMessage = (message: Message) => {
     const index = messages.value[message.chat_id].findIndex((a) => a.id === message.id)
     if (index !== undefined && index !== -1) {
@@ -76,6 +91,7 @@ export const useMessagesStore = defineStore('messages', () => {
     deleteMessage,
     addMessage,
     updateMessage,
+    editMessage,
     $reset,
   }
 })

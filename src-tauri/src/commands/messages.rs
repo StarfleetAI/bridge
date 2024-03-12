@@ -463,6 +463,29 @@ pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     Ok(())
 }
 
+/// Edit message by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while editing message.
+#[instrument(skip(pool))]
+#[tauri::command]
+pub async fn edit_message(id: i64, content: String, pool: State<'_, DbPool>) -> Result<Message> {
+    let mut tx = pool.begin().await.context("Failed to begin transaction")?;
+    // check if message role is system or user, if not return error
+    let message = repo::messages::get(&mut *tx, id).await?;
+
+    if message.role != Role::System && message.role != Role::User {
+        return Err(anyhow!("Message role is not system or user").into());
+    }
+
+    let updated_message = repo::messages::edit(&mut *tx, id, &content).await?;
+
+    tx.commit().await.context("Failed to commit transaction")?;
+
+    Ok(updated_message)
+}
+
 /// Does the whole chat completion routine.
 // TODO: refactor this function.
 #[instrument(skip(window, pool, settings))]
