@@ -212,10 +212,9 @@ async fn generate_chat_title(
         name: None,
     });
 
-    let model_full_name = if chat.model_full_name.is_none() {
-        settings_guard.default_model()
-    } else {
-        chat.model_full_name.as_ref().unwrap()
+    let model_full_name = match chat.model_full_name {
+        Some(ref name) => name,
+        None => settings_guard.default_model(),
     };
 
     let model = models::get(&*pool, model_full_name)

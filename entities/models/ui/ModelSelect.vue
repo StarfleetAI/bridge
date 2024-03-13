@@ -8,20 +8,33 @@
 
   defineProps<{ models: Model[] }>()
 
-  const modelValue = defineModel<string>()
+  const modelValue = defineModel<Nullable<string>>()
 
-  const setModel = (model: string) => (modelValue.value = model)
+  const setModel = (model: string) => {
+    if (model === 'default') {
+      modelValue.value = null
+    } else {
+      modelValue.value = model
+    }
+  }
 </script>
 
 <template>
   <BaseDropdown placement="bottom-start">
     <div class="model-selected">
       <span>
-        {{ modelValue || 'Select model' }}
+        {{ modelValue || 'Default' }}
       </span>
       <DropdownIcon />
     </div>
     <template #content>
+      <BaseDropdownItem
+        v-close-popper
+        class="model-dropdown__item"
+        @click="setModel('default')"
+      >
+        <template #label>Default </template>
+      </BaseDropdownItem>
       <BaseDropdownItem
         v-for="model in models"
         :key="model.name"
@@ -52,12 +65,11 @@
   }
 
   .model-dropdown__item {
-    color: var(--text-primary);
-
     &:hover {
       background-color: var(--surface-4);
     }
 
+    @include font-inter-500(16px, 22px, var(--text-primary));
     @include text-ellipsis;
   }
 </style>

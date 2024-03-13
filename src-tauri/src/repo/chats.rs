@@ -149,7 +149,7 @@ where
 pub async fn update_model_full_name<'a, E>(
     executor: E,
     id: i64,
-    model_full_name: &str,
+    model_full_name: Option<String>,
 ) -> Result<()>
 where
     E: Executor<'a, Database = Sqlite>,

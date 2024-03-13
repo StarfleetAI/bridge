@@ -9,9 +9,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<Nullable<Settings>>(null)
   const getSettings = async () => {
     settings.value = await getSettingsReq()
-    if (settings.value?.default_model === null) {
-      settings.value.default_model = 'OpenAI/gpt-3.5-turbo'
-    }
+    // if (settings.value?.default_model === null) {
+    //   settings.value.default_model = 'OpenAI/gpt-3.5-turbo'
+    // }
   }
   const updateSettings = async (request: UpdateSettings) => {
     await updateSettingsReq(request)

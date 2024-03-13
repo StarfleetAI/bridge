@@ -162,18 +162,10 @@ pub async fn toggle_chat_is_pinned(id: i64, pool: State<'_, DbPool>) -> Result<(
 #[tauri::command]
 pub async fn update_chat_model_full_name(
     id: i64,
-    model_full_name: String,
+    model_full_name: Option<String>,
     pool: State<'_, DbPool>,
 ) -> Result<()> {
-    // Acquire a connection from the pool
-    let mut conn = pool
-        .inner()
-        .acquire()
-        .await
-        .with_context(|| "Failed to acquire a connection from the pool")?;
-
-    // Execute the update operation directly without starting a transaction
-    repo::chats::update_model_full_name(&mut *conn, id, &model_full_name).await?;
+    repo::chats::update_model_full_name(&*pool, id, model_full_name).await?;
 
     Ok(())
 }

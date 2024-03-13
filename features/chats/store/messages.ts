@@ -17,12 +17,12 @@ interface CreateMessageParams {
   text: string
   agent_id: number
   chat_id?: number
-  model_full_name: string
+  model_full_name: Nullable<string>
 }
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<Record<ChatId, Message[]>>({})
   const getById = ({ id, chat_id }: Message) => {
-    return messages.value[chat_id]?.find((a) => a.id === id)
+    return messages.value[chat_id]?.find((message) => message.id === id)
   }
 
   const listMessages = async (chatId: number) => {

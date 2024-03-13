@@ -76,7 +76,7 @@ export const useChatsStore = defineStore('chats', () => {
     }
   }
 
-  const updateChatModelFullName = async (id: number, modelFullName: string) => {
+  const updateChatModelFullName = async (id: number, modelFullName: Nullable<string>) => {
     await updateChatModelFullNameReq(id, modelFullName)
     const index = chats.value.findIndex((a) => a.id === id)
     if (index !== undefined && index !== -1) {

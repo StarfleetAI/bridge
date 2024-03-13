@@ -3,12 +3,11 @@
 
 <script lang="ts" setup>
   import { AgentFullItem } from '~/widgets/agentFullItem'
-  import { ChatSettingsContainer } from '~/widgets/chats/chat-settings'
   import { ChatsHistory } from '~/widgets/chats/chats-history'
+  import { ChatSettings } from '~/widgets/chats/chats-settings'
   import { CurrentChat } from '~/widgets/chats/current-chat'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
   import { useChatsNavigation, useChatsStore } from '~/features/chats'
-  import { useSettingsStore } from '~/features/settings'
   import { type ChatSettings as ChatSettingsType } from '~/entities/chat'
   import { BaseContainer } from '~/shared/ui/base'
   definePageMeta({
@@ -31,14 +30,13 @@
       return AgentFullItem
     }
     if (chatSettings.value) {
-      return ChatSettingsContainer
+      return ChatSettings
     }
     return null
   })
 
-  const { settings } = storeToRefs(useSettingsStore())
   const chat = computed(() => getChatById(currentChatId.value))
-  const currentChatSettings = ref<ChatSettingsType>({ model_full_name: settings.value?.default_model || '' })
+  const currentChatSettings = ref<ChatSettingsType>({ model_full_name: null })
   const updateCurrentChatSettings = (newVal: ChatSettingsType) => {
     currentChatSettings.value = newVal
     if (chat.value) {
@@ -52,7 +50,7 @@
       if (newVal) {
         currentChatSettings.value.model_full_name = newVal.model_full_name
       } else {
-        currentChatSettings.value.model_full_name = settings.value?.default_model || ''
+        currentChatSettings.value.model_full_name = null
       }
     },
     {
