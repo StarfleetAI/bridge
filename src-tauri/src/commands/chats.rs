@@ -10,7 +10,7 @@ use tauri::State;
 use crate::{
     repo::{
         self,
-        chats::Chat,
+        chats::{Chat, Kind},
         messages::{Role, Status},
     },
     types::{DbPool, Result},
@@ -63,7 +63,7 @@ pub async fn create_chat(request: CreateChat, pool: State<'_, DbPool>) -> Result
         .with_context(|| "Failed to begin transaction")?;
 
     let agent = repo::agents::get(&mut *tx, request.agent_id).await?;
-    let chat = repo::chats::create(&mut *tx).await?;
+    let chat = repo::chats::create(&mut *tx, Kind::Direct).await?;
 
     // Add agent to chat
     repo::agents_chats::create(&mut *tx, request.agent_id, chat.id).await?;

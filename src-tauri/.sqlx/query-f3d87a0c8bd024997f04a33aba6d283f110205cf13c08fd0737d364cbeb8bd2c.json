@@ -77,6 +77,11 @@
         "name": "updated_at",
         "ordinal": 14,
         "type_info": "Datetime"
+      },
+      {
+        "name": "function_calling",
+        "ordinal": 15,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -95,6 +100,7 @@
       false,
       true,
       true,
+      false,
       false,
       false,
       false

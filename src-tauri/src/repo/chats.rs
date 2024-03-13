@@ -8,12 +8,31 @@ use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
+#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
+pub enum Kind {
+    #[default]
+    Direct,
+    Control,
+    Execution,
+}
+
+impl From<String> for Kind {
+    fn from(kind: String) -> Self {
+        match kind.as_str() {
+            "Control" => Kind::Control,
+            "Execution" => Kind::Execution,
+            _ => Kind::Direct,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Chat {
     pub id: i64,
     pub model_full_name: Option<String>,
     pub title: String,
     pub is_pinned: bool,
+    pub kind: Kind,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -30,8 +49,17 @@ where
     if let Some(is_pinned) = is_pinned {
         return Ok(query_as!(
             Chat,
-            "SELECT id, model_full_name, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
-            is_pinned
+            r#"
+            SELECT
+                id, model_full_name, title, created_at, updated_at, is_pinned, kind
+            FROM chats
+            WHERE
+                is_pinned = $1 AND
+                kind = $2
+            ORDER BY id DESC
+            "#,
+            is_pinned,
+            Kind::Direct,
         )
         .fetch_all(executor)
         .await
@@ -83,14 +111,15 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while creating chat.
-pub async fn create<'a, E>(executor: E) -> Result<Chat>
+pub async fn create<'a, E>(executor: E, kind: Kind) -> Result<Chat>
 where
     E: Executor<'a, Database = Sqlite>,
 {
     let now = Utc::now();
     Ok(query_as!(
         Chat,
-        "INSERT INTO chats (created_at, updated_at) VALUES ($1, $1) RETURNING *",
+        "INSERT INTO chats (kind, created_at, updated_at) VALUES ($1, $2, $2) RETURNING *",
+        kind,
         now
     )
     .fetch_one(executor)

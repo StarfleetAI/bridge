@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE tasks\n        SET\n            execution_chat_id = $1,\n            updated_at = $2\n        WHERE id = $3\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "af63f5845e44294b3978048ae14ff608164940db85e9dee1026fd3702e1eeb55"
+}

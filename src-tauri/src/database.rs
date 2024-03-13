@@ -1,3 +1,6 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
 use anyhow::Context;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -5,7 +8,7 @@ use sqlx::{Pool, Sqlite};
 use std::path::PathBuf;
 use tracing::{debug, info};
 
-use crate::repo::messages;
+use crate::repo::{messages, tasks};
 use crate::types::Result;
 
 /// Create a new database pool.
@@ -68,6 +71,7 @@ pub async fn prepare(pool: &Pool<Sqlite>) -> Result<()> {
 
     debug!("Cleaning up after possible previous termination");
     messages::transition_all(pool, messages::Status::Writing, messages::Status::Failed).await?;
+    tasks::transition_all(pool, tasks::Status::InProgress, tasks::Status::ToDo).await?;
 
     debug!("Seeding the database");
     for query in seed_queries() {

@@ -10,8 +10,8 @@ use tauri::State;
 use crate::{
     repo::{
         self,
-        Pagination,
         tasks::{CreateParams, Status, Task, UpdateParams},
+        Pagination,
     },
     types::{DbPool, Result},
 };
@@ -219,7 +219,7 @@ pub async fn revise_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 ///
 /// # Errors
 ///
-/// Returns error if task with given id does not exist or it status is not allowed to update task
+/// Returns error if task with given id does not exist or its status is not allowed to update task
 #[tauri::command]
 pub async fn update_task(request: UpdateTask, pool: State<'_, DbPool>) -> Result<Task> {
     let mut tx = pool

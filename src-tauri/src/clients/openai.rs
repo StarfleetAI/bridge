@@ -10,10 +10,9 @@ use tracing::debug;
 
 use crate::types::Result;
 
-const API_URL: &str = "https://api.openai.com/v1/";
-
 pub struct Client<'a> {
     pub api_key: &'a str,
+    pub api_url: &'a str,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -124,19 +123,19 @@ pub struct Function {
 pub struct FunctionParameters {
     #[serde(rename = "type")]
     pub type_: String,
-    pub properties: HashMap<String, FunctionPropetryValue>,
+    pub properties: HashMap<String, FunctionPropertyValue>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct FunctionPropetryValue {
+pub struct FunctionPropertyValue {
     #[serde(rename = "type")]
     pub type_: String,
     pub description: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct CreateChatCompletionRequest {
-    pub model: String,
+pub struct CreateChatCompletionRequest<'a> {
+    pub model: &'a str,
     pub messages: Vec<Message>,
     pub tools: Option<Vec<Tool>>,
     pub stream: bool,
@@ -187,8 +186,8 @@ pub struct Usage {
 
 impl<'a> Client<'a> {
     #[must_use]
-    pub fn new(api_key: &'a str) -> Self {
-        Self { api_key }
+    pub fn new(api_key: &'a str, api_url: &'a str) -> Self {
+        Self { api_key, api_url }
     }
 
     /// Creates a streaming chat completion.
@@ -198,7 +197,7 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while making the API call.
     pub async fn create_chat_completion_stream(
         &self,
-        mut request: CreateChatCompletionRequest,
+        mut request: CreateChatCompletionRequest<'_>,
     ) -> Result<Response> {
         request.stream = true;
 
@@ -215,7 +214,7 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while making the API call.
     pub async fn create_chat_completion(
         &self,
-        request: CreateChatCompletionRequest,
+        request: CreateChatCompletionRequest<'_>,
     ) -> Result<ChatCompletion> {
         Ok(self
             .post("chat/completions", &request)
@@ -230,10 +229,10 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while sending the request or
     /// deserializing the response.
     pub async fn post_stream<B>(&self, endpoint: &str, body: B) -> Result<Response>
-    where
-        B: serde::Serialize,
+        where
+            B: serde::Serialize,
     {
-        let url = format!("{API_URL}{endpoint}");
+        let url = format!("{}{endpoint}", self.api_url);
         let client = reqwest::Client::new();
 
         let body =
@@ -245,6 +244,7 @@ impl<'a> Client<'a> {
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
+            .header("User-Agent", format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")))
             .json(&body)
             .send()
             .await
@@ -258,11 +258,11 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while sending the request or
     /// deserializing the response.
     pub async fn post<T, B>(&self, endpoint: &str, body: B) -> Result<T>
-    where
-        T: serde::de::DeserializeOwned,
-        B: serde::Serialize,
+        where
+            T: serde::de::DeserializeOwned,
+            B: serde::Serialize,
     {
-        let url = format!("{API_URL}{endpoint}");
+        let url = format!("{}{endpoint}", self.api_url);
         let client = reqwest::Client::new();
 
         let body =
@@ -273,6 +273,7 @@ impl<'a> Client<'a> {
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
+            .header("User-Agent", format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")))
             .json(&body)
             .send()
             .await
