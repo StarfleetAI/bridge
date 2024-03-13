@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
+  "query": "SELECT id, model_full_name, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -9,23 +9,28 @@
         "type_info": "Int64"
       },
       {
-        "name": "title",
+        "name": "model_full_name",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "created_at",
+        "name": "title",
         "ordinal": 2,
-        "type_info": "Datetime"
+        "type_info": "Text"
       },
       {
-        "name": "updated_at",
+        "name": "created_at",
         "ordinal": 3,
         "type_info": "Datetime"
       },
       {
-        "name": "is_pinned",
+        "name": "updated_at",
         "ordinal": 4,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "is_pinned",
+        "ordinal": 5,
         "type_info": "Bool"
       }
     ],
@@ -37,8 +42,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "5c65282ca03211eb7dbc1f44e6ef220bbf18ea0744196f7f9cbc997ffc4d027b"
+  "hash": "9d579b1a6b8312ec6cef6502ee555312eee6caf2abe8eb868b3eae7d76132273"
 }

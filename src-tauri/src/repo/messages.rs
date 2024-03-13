@@ -77,6 +77,7 @@ pub struct Message {
     pub tool_calls: Option<String>,
     pub tool_call_id: Option<String>,
     pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -121,7 +122,7 @@ where
         r#"
         SELECT
             id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
         FROM messages
         WHERE chat_id = $1
         ORDER BY id ASC
@@ -149,10 +150,10 @@ where
         Message,
         r#"
         INSERT INTO messages (chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
         RETURNING id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
         "#,
         params.chat_id,
         params.agent_id,
@@ -186,7 +187,7 @@ where
         r#"
         SELECT
             id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
         FROM messages
         WHERE id = $1
         "#,
@@ -247,6 +248,7 @@ pub async fn update_with_completion_result<'a, E>(
 where
     E: Executor<'a, Database = Sqlite>,
 {
+    let now = Utc::now();
     let message = query_as!(
         Message,
         r#"
@@ -256,11 +258,12 @@ where
             content = $3,
             prompt_tokens = $4,
             completion_tokens = $5,
-            tool_calls = $6
+            tool_calls = $6,
+            updated_at = $7
         WHERE id = $1
         RETURNING
             id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
         "#,
         params.id,
         params.status,
@@ -268,6 +271,7 @@ where
         params.prompt_tokens,
         params.completion_tokens,
         params.tool_calls,
+        now
     )
     .fetch_one(executor)
     .await
@@ -302,18 +306,20 @@ pub async fn edit<'a, E>(executor: E, id: i64, content: &str) -> Result<Message>
 where
     E: Executor<'a, Database = Sqlite>,
 {
+    let now = Utc::now();
     let message = query_as!(
         Message,
         r#"
         UPDATE messages
-        SET content = $2
+        SET content = $2, updated_at = $3
         WHERE id = $1
         RETURNING
             id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
         "#,
         id,
-        content
+        content,
+        now
     )
     .fetch_one(executor)
     .await
@@ -331,10 +337,14 @@ pub async fn transition_all<'a, E>(executor: E, from: Status, to: Status) -> Res
 where
     E: Executor<'a, Database = Sqlite>,
 {
+    let now = Utc::now();
     query!(
-        "UPDATE messages SET status = $1 WHERE status = $2",
+        "UPDATE messages
+         SET status = $1, updated_at = $3
+         WHERE status = $2",
         to,
-        from
+        from,
+        now
     )
     .execute(executor)
     .await
@@ -375,7 +385,6 @@ pub async fn create_tool_call_denied(
                 serde_json::from_str(tool_calls).with_context(|| "Failed to parse tool calls")?;
 
             let mut messages = Vec::with_capacity(tool_calls.len());
-
             for tool_call in &tool_calls {
                 let tool_call = tool_call.as_object().ok_or(Error::NoToolCallsFound)?;
                 let tool_call_id = tool_call["id"].as_str().ok_or(Error::NoToolCallId)?;

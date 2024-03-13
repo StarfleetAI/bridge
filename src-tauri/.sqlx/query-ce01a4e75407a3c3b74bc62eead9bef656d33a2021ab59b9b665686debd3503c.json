@@ -27,12 +27,18 @@
         "name": "is_pinned",
         "ordinal": 4,
         "type_info": "Bool"
+      },
+      {
+        "name": "model_full_name",
+        "ordinal": 5,
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Right": 0
     },
     "nullable": [
+      false,
       false,
       false,
       false,

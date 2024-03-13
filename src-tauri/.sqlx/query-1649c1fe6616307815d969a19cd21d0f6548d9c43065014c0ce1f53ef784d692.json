@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE chats SET model_full_name = $1, updated_at = $3 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "1649c1fe6616307815d969a19cd21d0f6548d9c43065014c0ce1f53ef784d692"
+}

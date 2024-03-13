@@ -3,12 +3,21 @@
 
 <script lang="ts" setup>
   import 'floating-vue/dist/style.css'
-  import { Dropdown } from 'floating-vue'
+  import { Dropdown, type Placement } from 'floating-vue'
+
+  withDefaults(
+    defineProps<{
+      placement?: Placement
+    }>(),
+    {
+      placement: 'bottom-end',
+    },
+  )
 </script>
 
 <template>
   <Dropdown
-    placement="bottom-end"
+    :placement="placement"
     class="dropdown-wrapper"
     auto-hide
   >

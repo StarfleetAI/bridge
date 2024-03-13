@@ -238,7 +238,6 @@
       gap: 4px;
       padding: 8px;
       background: var(--surface-3);
-      cursor: pointer;
 
       @include flex(row, flex-start, space-between);
       @include font-inter-700(12px, 22px, var(--text-tertiary));

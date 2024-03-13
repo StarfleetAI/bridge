@@ -37,7 +37,6 @@
     width: 100%;
     height: 56px;
     color: var(--text-tertiary);
-    cursor: pointer;
 
     &__icon {
       display: flex;

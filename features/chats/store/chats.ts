@@ -9,14 +9,15 @@ import {
   deleteChat as deleteChatReq,
   listChats as listChatsReq,
   toggleIsPinned as toggleIsPinnedReq,
+  updateChatModelFullName as updateChatModelFullNameReq,
 } from '../api'
 import { type CreateChat } from '../model'
 
 export const useChatsStore = defineStore('chats', () => {
   const chats = ref<Chat[]>([])
   const pinnedChats = ref<Chat[]>([])
-  const getById = (id: number | string | undefined): Chat | null => {
-    if (id === undefined) {
+  const getById = (id: number | string | undefined | null): Chat | null => {
+    if (id === undefined || id === null) {
       return null
     }
     if (typeof id === 'string') {
@@ -75,6 +76,14 @@ export const useChatsStore = defineStore('chats', () => {
     }
   }
 
+  const updateChatModelFullName = async (id: number, modelFullName: string) => {
+    await updateChatModelFullNameReq(id, modelFullName)
+    const index = chats.value.findIndex((a) => a.id === id)
+    if (index !== undefined && index !== -1) {
+      chats.value[index].model_full_name = modelFullName
+    }
+  }
+
   const $reset = async () => {
     chats.value = []
     await chatsUpdatedUnlisten
@@ -89,5 +98,6 @@ export const useChatsStore = defineStore('chats', () => {
     getById,
     listChats,
     toggleIsPinned,
+    updateChatModelFullName,
   }
 })

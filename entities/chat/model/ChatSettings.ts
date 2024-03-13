@@ -1,4 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-export * from './ListModels'
+export interface ChatSettings {
+  model_full_name: string
+}

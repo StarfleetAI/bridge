@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        UPDATE messages\n        SET content = $2\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        ",
+  "query": "\n        UPDATE messages\n        SET content = $2, updated_at = $3\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -57,10 +57,15 @@
         "name": "created_at",
         "ordinal": 10,
         "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 11,
+        "type_info": "Datetime"
       }
     ],
     "parameters": {
-      "Right": 2
+      "Right": 3
     },
     "nullable": [
       true,
@@ -73,8 +78,9 @@
       true,
       true,
       true,
+      false,
       false
     ]
   },
-  "hash": "63c10d71f7df3fb0d7373eebff36bf43a9478d05bfe6def30d78d3ef501fb152"
+  "hash": "16f0c6aea5bad13974ee1875ffab644d832cf4bb22495dbc5947f5a3b3d941f7"
 }

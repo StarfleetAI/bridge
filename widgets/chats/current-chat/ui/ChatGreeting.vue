@@ -3,11 +3,12 @@
 
 <script lang="ts" setup>
   import { useAgentsNavigation } from '~/features/agent'
+  import { useChatsNavigation } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import { BridgeLargeIcon } from '~/shared/ui/icons'
   import { useModalStore } from '~/shared/ui/modal'
 
-  defineProps<{
+  const props = defineProps<{
     agent: Agent
   }>()
   const emits = defineEmits<{
@@ -25,13 +26,18 @@
   }
 
   const { setSelectedAgent } = useAgentsNavigation()
+  const { setIsSettingsOpened } = useChatsNavigation()
+  const handleClickAgent = () => {
+    setSelectedAgent(props.agent.id)
+    setIsSettingsOpened(null)
+  }
 </script>
 
 <template>
   <div class="greeting">
     <div
       class="greeting__agent-wrapper"
-      @click="setSelectedAgent(agent.id)"
+      @click="handleClickAgent"
     >
       <BridgeLargeIcon />
       <div class="agent__name">

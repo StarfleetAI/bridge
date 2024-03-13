@@ -9,7 +9,7 @@
   import { useAgentsStore } from '~/features/agent/store'
   import { useChatsStore, useMessagesStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
-  import { Status } from '~/entities/chat'
+  import { Status, type ChatSettings } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
   import ChatGreeting from './ChatGreeting.vue'
   import ChatHeader from './ChatHeader.vue'
@@ -17,6 +17,9 @@
   import ChatMessage from './ChatMessage.vue'
   import ChatStartPresets from './ChatStartPresets.vue'
 
+  const props = defineProps<{
+    settings: ChatSettings
+  }>()
   const copyButtonPlugin = new CopyButtonPlugin()
   hljs.addPlugin(copyButtonPlugin)
   const route = useRoute('chats')
@@ -61,14 +64,24 @@
     if (!chatInput.value) {
       return
     }
-    createMessage(chatInput.value, currentAgent.value.id, chatId.value)
+    createMessage({
+      text: chatInput.value,
+      agent_id: currentAgent.value.id,
+      chat_id: chatId.value,
+      model_full_name: props.settings.model_full_name,
+    })
     chatInput.value = ''
     nextTick(() => {
       scrollMessagesListToBottom()
     })
   }
   const selectPreset = (preset: string) => {
-    createMessage(preset, currentAgent.value.id, chatId.value)
+    createMessage({
+      text: preset,
+      agent_id: currentAgent.value.id,
+      chat_id: chatId.value,
+      model_full_name: props.settings.model_full_name,
+    })
   }
 
   onMounted(async () => {

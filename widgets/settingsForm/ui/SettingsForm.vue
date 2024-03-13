@@ -2,32 +2,34 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { getSettings, updateSettings } from '~/features/settings'
+  import { listModels } from '~/features/models'
+  import { useSettingsStore } from '~/features/settings'
+  import { ModelSelect } from '~/entities/models'
   import type { Settings } from '~/entities/settings'
   import { BaseButton } from '~/shared/ui/base'
   import { CrossIcon, SaveIcon, SettingsIcon } from '~/shared/ui/icons'
   import FormField from './FormField.vue'
-
-  const settings = ref<Settings>(await getSettings())
-
-  const changedSettings = ref<Settings>(structuredClone(toRaw(settings.value)))
+  const { getSettings, updateSettings } = useSettingsStore()
+  await getSettings()
+  const { settings } = storeToRefs(useSettingsStore())
+  const changedSettings = ref<Settings>(structuredClone(toRaw(settings.value!)))
 
   const settingsChanged = computed(() => {
     return JSON.stringify(changedSettings.value) !== JSON.stringify(settings.value)
   })
 
   const cancelChanges = () => {
-    changedSettings.value = structuredClone(toRaw(settings.value))
+    changedSettings.value = structuredClone(toRaw(settings.value!))
   }
-  const handleSave = async () => {
-    await updateSettings({
+  const handleSave = () => {
+    updateSettings({
       openai_api_key: changedSettings.value.openai_api_key,
       python_path: changedSettings.value.python_path,
       agents: changedSettings.value.agents,
+      default_model: changedSettings.value.default_model,
     })
-
-    settings.value = await getSettings()
   }
+  const models = ref(await listModels())
 </script>
 
 <template>
@@ -48,6 +50,18 @@
       name="Python Path"
       description="The path to your Python interpreter"
     />
+    <div class="select-field">
+      <div class="select-field__info">
+        <div class="select-field__name">Default model</div>
+        <div class="select-field__description">The default model to use</div>
+      </div>
+      <ModelSelect
+        v-model="changedSettings.default_model"
+        :models="models"
+        class="select-field__input"
+      />
+    </div>
+
     <div class="settings-form__buttons">
       <BaseButton
         :disabled="!settingsChanged"
@@ -88,5 +102,34 @@
     margin-left: 198px;
 
     @include flex($gap: 16px);
+  }
+
+  .select-field {
+    width: 100%;
+    height: 40px;
+
+    @include flex($gap: 16px);
+  }
+
+  .select-field__info {
+    flex-shrink: 0;
+    width: 182px;
+    text-align: end;
+
+    @include flex(column, $align-items: flex-end, $gap: 4px);
+  }
+
+  .select-field__name {
+    @include font-inter-700(12px, 17px, var(--text-secondary));
+  }
+
+  .select-field__description {
+    word-break: break-word;
+
+    @include font-inter-400(12px, 17px, var(--text-tertiary));
+  }
+
+  .select-field__input {
+    width: 300px;
   }
 </style>

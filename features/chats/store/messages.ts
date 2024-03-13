@@ -1,5 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
+
 import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
 import { useChatsStore, type EditMessage } from '~/features/chats'
@@ -12,7 +13,12 @@ import {
 } from '../api'
 
 type ChatId = number
-
+interface CreateMessageParams {
+  text: string
+  agent_id: number
+  chat_id?: number
+  model_full_name: string
+}
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<Record<ChatId, Message[]>>({})
   const getById = ({ id, chat_id }: Message) => {
@@ -23,10 +29,11 @@ export const useMessagesStore = defineStore('messages', () => {
     messages.value[chatId] = await listChatMessages(chatId)
   }
 
-  const createMessage = async (text: string, agent_id: number, chat_id?: number) => {
+  const createMessage = async ({ text, agent_id, chat_id, model_full_name }: CreateMessageParams) => {
     if (!chat_id) {
-      const { createChat } = useChatsStore()
+      const { createChat, updateChatModelFullName } = useChatsStore()
       const newChat = await createChat({ agent_id })
+      await updateChatModelFullName(newChat.id, model_full_name)
       chat_id = newChat.id
       await navigateTo({ name: 'chats', query: { id: newChat.id } })
     }

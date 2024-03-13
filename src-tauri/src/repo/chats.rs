@@ -11,6 +11,7 @@ use crate::types::Result;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Chat {
     pub id: i64,
+    pub model_full_name: String,
     pub title: String,
     pub is_pinned: bool,
     pub created_at: NaiveDateTime,
@@ -29,7 +30,7 @@ where
     if let Some(is_pinned) = is_pinned {
         return Ok(query_as!(
             Chat,
-            "SELECT id, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
+            "SELECT id, model_full_name, title, created_at, updated_at, is_pinned FROM chats WHERE is_pinned = $1 ORDER BY id DESC",
             is_pinned
         )
         .fetch_all(executor)
@@ -136,6 +137,29 @@ where
     .execute(executor)
     .await
     .with_context(|| format!("Failed to toggle pin status for chat with id: {id}"))?;
+
+    Ok(())
+}
+
+/// Change chat model full name by id
+///
+/// # Errors
+///
+/// Return error if the chat with the given ID does not exist.
+pub async fn change_model<'a, E>(executor: E, id: i64, model_full_name: &str) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let now = Utc::now();
+    query!(
+        "UPDATE chats SET model_full_name = $1, updated_at = $3 WHERE id = $2",
+        model_full_name,
+        id,
+        now
+    )
+    .execute(executor)
+    .await
+    .with_context(|| format!("Failed to change model for chat with id: {id}"))?;
 
     Ok(())
 }

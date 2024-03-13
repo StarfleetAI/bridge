@@ -7,12 +7,14 @@
   import { ChatsHistory } from '~/widgets/chats/chats-history'
   import { CurrentChat } from '~/widgets/chats/current-chat'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
-  import { useChatsStore } from '~/features/chats'
+  import { useChatsNavigation, useChatsStore } from '~/features/chats'
+  import { useSettingsStore } from '~/features/settings'
+  import { type ChatSettings as ChatSettingsType } from '~/entities/chat'
   import { BaseContainer } from '~/shared/ui/base'
   definePageMeta({
     title: 'Chats',
   })
-  const { listChats } = useChatsStore()
+  const { listChats, getById: getChatById, updateChatModelFullName } = useChatsStore()
   const { listAgents } = useAgentsStore()
   await Promise.all([(listChats(), listAgents())])
 
@@ -23,16 +25,41 @@
   })
 
   const { selectedAgent } = useAgentsNavigation()
-
+  const { chatSettings } = useChatsNavigation()
   const SidebarComponent = computed(() => {
     if (selectedAgent.value) {
       return AgentFullItem
     }
-    if (currentChatId.value) {
+    if (chatSettings.value) {
       return ChatSettings
     }
     return null
   })
+
+  const { settings } = storeToRefs(useSettingsStore())
+  const chat = computed(() => getChatById(currentChatId.value))
+  const currentChatSettings = ref<ChatSettingsType>({ model_full_name: settings.value?.default_model || '' })
+  const updateCurrentChatSettings = (newVal: ChatSettingsType) => {
+    currentChatSettings.value = newVal
+    if (chat.value) {
+      updateChatModelFullName(chat.value.id, newVal.model_full_name)
+    }
+  }
+
+  watch(
+    () => chat.value,
+    (newVal) => {
+      if (newVal) {
+        currentChatSettings.value.model_full_name = newVal.model_full_name
+      } else {
+        currentChatSettings.value.model_full_name = settings.value?.default_model || ''
+      }
+    },
+    {
+      deep: true,
+      immediate: true,
+    },
+  )
 </script>
 
 <template>
@@ -40,7 +67,10 @@
     <template #main>
       <div class="chats-base">
         <ChatsHistory />
-        <CurrentChat :key="currentChatId" />
+        <CurrentChat
+          :key="currentChatId"
+          :settings="currentChatSettings"
+        />
       </div>
     </template>
     <template
@@ -48,7 +78,11 @@
       #additional
     >
       <div class="chats-additional">
-        <component :is="SidebarComponent" />
+        <component
+          :is="SidebarComponent"
+          :settings="currentChatSettings"
+          @update-settings="updateCurrentChatSettings($event as ChatSettingsType)"
+        />
       </div>
     </template>
   </BaseContainer>

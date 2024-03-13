@@ -212,7 +212,7 @@ async fn generate_chat_title(
         name: None,
     });
 
-    let model = models::get(&*pool, settings_guard.default_model())
+    let model = models::get(&*pool, &chat.model_full_name)
         .await
         .context("Failed to get model")?;
 
@@ -577,7 +577,11 @@ async fn get_chat_completion(
         debug!("Tools: {:?}", tools);
     }
 
-    let model = models::get(&*pool, settings_guard.default_model())
+    let chat = repo::chats::get(&*pool, chat_id)
+        .await
+        .context("Failed to get chat")?;
+
+    let model = models::get(&*pool, &chat.model_full_name)
         .await
         .context("Failed to get model")?;
 
