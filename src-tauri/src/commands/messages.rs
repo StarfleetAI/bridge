@@ -218,7 +218,7 @@ async fn generate_chat_title(
         chat.model_full_name.as_ref().unwrap()
     };
 
-    let model = models::get(&*pool, &model_full_name)
+    let model = models::get(&*pool, model_full_name)
         .await
         .context("Failed to get model")?;
 
