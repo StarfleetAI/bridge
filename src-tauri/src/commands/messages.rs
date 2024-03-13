@@ -213,13 +213,9 @@ async fn generate_chat_title(
     });
 
     let model_full_name = if chat.model_full_name.is_none() {
-        settings_guard
-            .default_model
-            .as_ref()
-            .context("Failed to get default model")?
-            .to_string()
+        settings_guard.default_model()
     } else {
-        chat.model_full_name.unwrap()
+        chat.model_full_name.as_ref().unwrap()
     };
 
     let model = models::get(&*pool, &model_full_name)
