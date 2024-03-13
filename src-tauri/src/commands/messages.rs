@@ -469,11 +469,11 @@ pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     Ok(())
 }
 
-/// Edit message by id.
+/// Update message content by id.
 ///
 /// # Errors
 ///
-/// Returns error if there was a problem while editing message.
+/// Returns error if there was a problem while updating message content.
 #[instrument(skip(pool))]
 #[tauri::command]
 pub async fn update_message_content(
@@ -486,7 +486,11 @@ pub async fn update_message_content(
     let message = repo::messages::get(&mut *tx, id).await?;
 
     if message.role != Role::System && message.role != Role::User {
-        return Err(anyhow!("Message role is not system or user").into());
+        return Err(anyhow!(
+            "Attempted to edit a message with an unsupported role: {:?}",
+            message.role
+        )
+        .into());
     }
 
     let updated_message = repo::messages::update_message_content(&mut *tx, id, &content).await?;
