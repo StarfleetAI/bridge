@@ -297,12 +297,12 @@ where
     Ok(())
 }
 
-/// Edit message content.
+/// Update message content.
 ///
 /// # Errors
 ///
-/// Returns error if there was a problem while editing message.
-pub async fn edit<'a, E>(executor: E, id: i64, content: &str) -> Result<Message>
+/// Returns error if there was a problem while updating message content.
+pub async fn update_message_content<'a, E>(executor: E, id: i64, content: &str) -> Result<Message>
 where
     E: Executor<'a, Database = Sqlite>,
 {
@@ -323,7 +323,7 @@ where
     )
     .fetch_one(executor)
     .await
-    .with_context(|| "Failed to edit message")?;
+    .with_context(|| "Failed to update message content")?;
 
     Ok(message)
 }

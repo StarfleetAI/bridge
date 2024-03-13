@@ -13,11 +13,8 @@ use tracing::instrument;
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-
 #[tauri::command]
 #[instrument(skip(pool))]
 pub async fn list_models(pool: State<'_, DbPool>) -> Result<Vec<models::Model>> {
-    let models = models::list(&*pool).await?;
-
-    Ok(models)
+    models::list(&*pool).await
 }

@@ -160,21 +160,20 @@ pub async fn toggle_chat_is_pinned(id: i64, pool: State<'_, DbPool>) -> Result<(
 ///
 /// Return error if the chat with the given ID does not exist.
 #[tauri::command]
-pub async fn change_chat_model_full_name(
+pub async fn update_chat_model_full_name(
     id: i64,
     model_full_name: String,
     pool: State<'_, DbPool>,
 ) -> Result<()> {
-    let mut tx = pool
-        .begin()
+    // Acquire a connection from the pool
+    let mut conn = pool
+        .inner()
+        .acquire()
         .await
-        .with_context(|| "Failed to begin transaction")?;
+        .with_context(|| "Failed to acquire a connection from the pool")?;
 
-    repo::chats::change_model(&mut *tx, id, &model_full_name).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
+    // Execute the update operation directly without starting a transaction
+    repo::chats::update_model_full_name(&mut *conn, id, &model_full_name).await?;
 
     Ok(())
 }

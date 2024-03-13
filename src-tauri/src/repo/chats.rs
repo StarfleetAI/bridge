@@ -146,7 +146,11 @@ where
 /// # Errors
 ///
 /// Return error if the chat with the given ID does not exist.
-pub async fn change_model<'a, E>(executor: E, id: i64, model_full_name: &str) -> Result<()>
+pub async fn update_model_full_name<'a, E>(
+    executor: E,
+    id: i64,
+    model_full_name: &str,
+) -> Result<()>
 where
     E: Executor<'a, Database = Sqlite>,
 {
