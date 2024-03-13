@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import { AgentFullItem } from '~/widgets/agentFullItem'
-  import { ChatSettings } from '~/widgets/chats/chat-settings'
+  import { ChatSettingsContainer } from '~/widgets/chats/chat-settings'
   import { ChatsHistory } from '~/widgets/chats/chats-history'
   import { CurrentChat } from '~/widgets/chats/current-chat'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
@@ -31,7 +31,7 @@
       return AgentFullItem
     }
     if (chatSettings.value) {
-      return ChatSettings
+      return ChatSettingsContainer
     }
     return null
   })

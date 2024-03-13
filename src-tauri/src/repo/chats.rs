@@ -11,7 +11,7 @@ use crate::types::Result;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Chat {
     pub id: i64,
-    pub model_full_name: String,
+    pub model_full_name: Option<String>,
     pub title: String,
     pub is_pinned: bool,
     pub created_at: NaiveDateTime,
