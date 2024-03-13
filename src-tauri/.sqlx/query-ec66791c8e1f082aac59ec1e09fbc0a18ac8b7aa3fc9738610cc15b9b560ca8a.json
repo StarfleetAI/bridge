@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        UPDATE messages\n        SET\n            status = $2,\n            content = $3,\n            prompt_tokens = $4,\n            completion_tokens = $5,\n            tool_calls = $6\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        ",
+  "query": "\n        SELECT\n            id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at\n        FROM messages\n        WHERE chat_id = $1\n        ORDER BY id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -14,14 +14,14 @@
         "type_info": "Int64"
       },
       {
-        "name": "agent_id",
+        "name": "status",
         "ordinal": 2,
-        "type_info": "Int64"
+        "type_info": "Text"
       },
       {
-        "name": "status",
+        "name": "agent_id",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
         "name": "role",
@@ -57,24 +57,30 @@
         "name": "created_at",
         "ordinal": 10,
         "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 11,
+        "type_info": "Datetime"
       }
     ],
     "parameters": {
-      "Right": 6
+      "Right": 1
     },
     "nullable": [
       true,
       false,
-      true,
-      false,
       false,
       true,
+      false,
       true,
       true,
       true,
       true,
+      true,
+      false,
       false
     ]
   },
-  "hash": "552cb8dc5ded4a2a9549301ae50ceed63a4897d65d037f8a14691c7fa861bc4b"
+  "hash": "ec66791c8e1f082aac59ec1e09fbc0a18ac8b7aa3fc9738610cc15b9b560ca8a"
 }

@@ -71,6 +71,10 @@
       @include font-inter-500(14px, 20px, var(--text-on-button));
     }
 
+    &:hover {
+      opacity: 0.8;
+    }
+
     @include flex(row, center, center, $gap: 8px);
   }
 </style>

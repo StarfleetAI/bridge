@@ -27,6 +27,11 @@
         "name": "is_pinned",
         "ordinal": 4,
         "type_info": "Bool"
+      },
+      {
+        "name": "model_full_name",
+        "ordinal": 5,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -37,7 +42,8 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
   "hash": "ce01a4e75407a3c3b74bc62eead9bef656d33a2021ab59b9b665686debd3503c"

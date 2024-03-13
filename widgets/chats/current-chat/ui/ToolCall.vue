@@ -184,8 +184,8 @@
     width: 100%;
     max-height: 200px;
     margin-top: 16px;
+    border: 0.5px solid var(--border-2);
     border-radius: 6px;
-    background-color: var(--surface-3);
     transition: all 0.2s ease;
 
     &.full {

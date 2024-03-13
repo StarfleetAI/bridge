@@ -75,6 +75,5 @@
     right: 20px;
     border: none;
     background: none;
-    cursor: pointer;
   }
 </style>

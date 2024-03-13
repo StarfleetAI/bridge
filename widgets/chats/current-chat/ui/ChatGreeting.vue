@@ -2,11 +2,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useAgentsNavigation } from '~/features/agent'
+  import { useChatsNavigation } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import { BridgeLargeIcon } from '~/shared/ui/icons'
   import { useModalStore } from '~/shared/ui/modal'
 
-  defineProps<{
+  const props = defineProps<{
     agent: Agent
   }>()
   const emits = defineEmits<{
@@ -22,21 +24,33 @@
       }
     })
   }
+
+  const { setSelectedAgent } = useAgentsNavigation()
+  const { setIsSettingsOpened } = useChatsNavigation()
+  const handleClickAgent = () => {
+    setSelectedAgent(props.agent.id)
+    setIsSettingsOpened(null)
+  }
 </script>
 
 <template>
   <div class="greeting">
-    <BridgeLargeIcon />
-    <div class="agent-name">
-      {{ agent.name }}
-    </div>
     <div
-      v-if="agent.description"
-      class="agent-description"
+      class="greeting__agent-wrapper"
+      @click="handleClickAgent"
     >
-      {{ agent.description }}
+      <BridgeLargeIcon />
+      <div class="agent__name">
+        {{ agent.name }}
+      </div>
+      <div
+        v-if="agent.description"
+        class="agent__description"
+      >
+        {{ agent.description }}
+      </div>
+      <div class="agent__author">by StarfleetAI</div>
     </div>
-    <div class="agent__author">by StarfleetAI</div>
     <div
       class="agent__change"
       @click="openModal"
@@ -48,16 +62,22 @@
 
 <style lang="scss" scoped>
   .greeting {
-    height: 100%;
+    margin: auto;
 
     @include flex(column, center, center, 16px);
   }
 
-  .agent-name {
+  .greeting__agent-wrapper {
+    display: contents;
+  }
+
+  .agent__name {
     @include font-inter-700(20px, 28px, var(--text-secondary));
   }
 
   .agent__description {
+    text-align: center;
+
     @include font-inter-400(16px, 22px, var(--text-secondary));
   }
 

@@ -44,7 +44,6 @@
   .toggle-switch {
     display: flex;
     border-radius: 6px;
-    cursor: pointer;
 
     & > div {
       gap: 8px;

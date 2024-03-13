@@ -97,13 +97,14 @@
   .side-content {
     width: 100%;
     height: 100%;
-    border-left: 1px solid var(--border-3);
+    border-left: 0.5px solid var(--border-3);
     background: var(--surface-1);
   }
 
   .main-content__header {
+    height: 56px;
     padding: 12px 24px 0;
-    border-bottom: 1px solid var(--border-3);
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, space-between, center);
   }

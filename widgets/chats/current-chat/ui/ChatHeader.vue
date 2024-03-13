@@ -2,7 +2,8 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useChatsStore } from '~/features/chats'
+  import { useAgentsNavigation } from '~/features/agent'
+  import { useChatsNavigation, useChatsStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import type { Chat } from '~/entities/chat'
   import { PinIcon, UnpinIcon, BridgeSmallIcon } from '~/shared/ui/icons'
@@ -19,6 +20,13 @@
     }
   }
   const CurrentIcon = computed(() => (props.chat?.is_pinned ? UnpinIcon : PinIcon))
+  const { setIsSettingsOpened } = useChatsNavigation()
+  const { setSelectedAgent } = useAgentsNavigation()
+
+  const handleClickSettings = () => {
+    setSelectedAgent(null)
+    setIsSettingsOpened([props.chat?.id || null, props.agent.id])
+  }
 </script>
 
 <template>
@@ -31,7 +39,10 @@
       height="16"
       @click="handleClick"
     />
-    <div class="chat-header__agent">
+    <div
+      class="chat-header__agent"
+      @click="handleClickSettings"
+    >
       {{ agent.name }}
 
       <BridgeSmallIcon />

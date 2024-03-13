@@ -5,18 +5,20 @@
   import { useAgentsStore } from '@/features/agent'
   import { useDocumentsStore } from '@/features/document'
   import { useDevTools } from '~/shared/lib'
+  import { useSettingsStore } from './features/settings'
 
   useDevTools()
 
-  const abilitiesStore = useAbilitiesStore()
-  const agentsStore = useAgentsStore()
-  const documentsStore = useDocumentsStore()
+  const { listAbilities } = useAbilitiesStore()
+  const { listAgents } = useAgentsStore()
+  const { listDocuments } = useDocumentsStore()
+  const { getSettings } = useSettingsStore()
 
   const loaded = ref(false)
 
   onMounted(async () => {
     await nextTick()
-    await Promise.all([abilitiesStore.listAbilities(), agentsStore.listAgents(), documentsStore.listDocuments()])
+    await Promise.all([listAbilities(), listAgents(), listDocuments(), getSettings()])
     loaded.value = true
   })
 </script>

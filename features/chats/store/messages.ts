@@ -1,27 +1,39 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
+
 import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
-import { useChatsStore } from '~/features/chats'
+import { useChatsStore, type EditMessage } from '~/features/chats'
 import { type Message } from '~/entities/chat'
-import { listChatMessages, createMessage as createMessageReq, deleteMessage as deleteMessageReq } from '../api'
+import {
+  listChatMessages,
+  createMessage as createMessageReq,
+  deleteMessage as deleteMessageReq,
+  editMessage as editMessageReq,
+} from '../api'
 
 type ChatId = number
-
+interface CreateMessageParams {
+  text: string
+  agent_id: number
+  chat_id?: number
+  model_full_name: Nullable<string>
+}
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<Record<ChatId, Message[]>>({})
   const getById = ({ id, chat_id }: Message) => {
-    return messages.value[chat_id]?.find((a) => a.id === id)
+    return messages.value[chat_id]?.find((message) => message.id === id)
   }
 
   const listMessages = async (chatId: number) => {
     messages.value[chatId] = await listChatMessages(chatId)
   }
 
-  const createMessage = async (text: string, agent_id: number, chat_id?: number) => {
+  const createMessage = async ({ text, agent_id, chat_id, model_full_name }: CreateMessageParams) => {
     if (!chat_id) {
-      const { createChat } = useChatsStore()
+      const { createChat, updateChatModelFullName } = useChatsStore()
       const newChat = await createChat({ agent_id })
+      await updateChatModelFullName(newChat.id, model_full_name)
       chat_id = newChat.id
       await navigateTo({ name: 'chats', query: { id: newChat.id } })
     }
@@ -43,6 +55,16 @@ export const useMessagesStore = defineStore('messages', () => {
       messages.value[message.chat_id] = []
     }
     messages.value[message.chat_id].push(message)
+  }
+
+  const editMessage = async (params: EditMessage, chat_id: number) => {
+    const updatedMessage = await editMessageReq(params)
+    if (messages.value[chat_id]) {
+      const index = messages.value[chat_id].findIndex((a) => a.id === updatedMessage.id)
+      if (index !== undefined && index !== -1) {
+        messages.value[chat_id].splice(index, 1, updatedMessage)
+      }
+    }
   }
 
   const updateMessage = (message: Message) => {
@@ -76,6 +98,7 @@ export const useMessagesStore = defineStore('messages', () => {
     deleteMessage,
     addMessage,
     updateMessage,
+    editMessage,
     $reset,
   }
 })

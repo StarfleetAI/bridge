@@ -5,7 +5,8 @@
   import { useAbilitiesStore } from '~/features/ability'
   import { useAgentsStore, useAgentsNavigation } from '~/features/agent'
   import { type Agent } from '~/entities/agents'
-  import { AbilityIcon } from '~/shared/ui/icons'
+  import { BaseButton } from '~/shared/ui/base'
+  import { AbilityIcon, AgentChatIcon, DownloadIcon } from '~/shared/ui/icons'
   import AgentControls from './AgentControls.vue'
 
   const { selectedAgent } = useAgentsNavigation()
@@ -19,11 +20,13 @@
   const agentAbilities = computed(() =>
     abilities.value.filter((ability) => agent.value.ability_ids.includes(ability.id)),
   )
+
+  const agentName = computed(() => agent.value.name || `Agent ${agent.value.id}`)
 </script>
 <template>
   <div class="agent-full-item">
     <div class="agent-full-item__head">
-      <div class="agent-full-item__title">Agent {{ agent.id }}</div>
+      <div class="agent-full-item__title">{{ agentName }}</div>
       <AgentControls :agent="agent" />
     </div>
     <div class="agent-full-item__body">
@@ -33,6 +36,23 @@
         {{ agent.description }}
       </div>
       <div class="agent-full-item__info">by Alex Johnson • installed 4,322 times</div>
+      <div class="agent-full-item__buttons">
+        <BaseButton class="agent-full-item__button install">
+          <template #icon>
+            <DownloadIcon />
+          </template>
+          Install
+        </BaseButton>
+        <BaseButton
+          class="agent-full-item__button chat"
+          @click="navigateTo({ name: 'chats', query: { agent: agent.id } })"
+        >
+          <template #icon>
+            <AgentChatIcon />
+          </template>
+          <span>Chat</span>
+        </BaseButton>
+      </div>
     </div>
     <div class="agent-full-item__abilities">
       <div class="agent-full-item__abilities-title"><AbilityIcon /> Abilities</div>
@@ -59,9 +79,9 @@
     }
 
     &__head {
-      height: 57px;
+      height: 56px;
       padding: 12px 24px;
-      border-bottom: 1px solid var(--border-3);
+      border-bottom: 0.5px solid var(--border-3);
 
       @include flex(row, space-between, center);
     }
@@ -93,6 +113,22 @@
 
     &__info {
       @include font-inter-400(14px, 20px, var(--text-tertiary));
+    }
+
+    &__buttons {
+      margin-top: 24px;
+
+      @include flex($gap: 16px);
+    }
+
+    &__button {
+      &.chat {
+        background-color: var(--surface-4);
+
+        span {
+          color: var(--text-tertiary);
+        }
+      }
     }
 
     &__abilities {

@@ -60,7 +60,7 @@ export default defineNuxtConfig({
       },
     },
     optimizeDeps: {
-      include: ['@tauri-apps/api/event', 'highlight.js', 'highlightjs-copy'],
+      include: ['@tauri-apps/api/event', 'highlight.js', 'highlightjs-copy', 'html-to-text'],
     },
   },
 })

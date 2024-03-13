@@ -153,3 +153,19 @@ pub async fn toggle_chat_is_pinned(id: i64, pool: State<'_, DbPool>) -> Result<(
 
     Ok(())
 }
+
+/// Change chat model full name by id
+///
+/// # Errors
+///
+/// Return error if the chat with the given ID does not exist.
+#[tauri::command]
+pub async fn update_chat_model_full_name(
+    id: i64,
+    model_full_name: Option<String>,
+    pool: State<'_, DbPool>,
+) -> Result<()> {
+    repo::chats::update_model_full_name(&*pool, id, model_full_name).await?;
+
+    Ok(())
+}

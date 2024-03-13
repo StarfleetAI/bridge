@@ -95,7 +95,6 @@
       border-top-left-radius: 6px;
       border-bottom-left-radius: 6px;
       background: var(--surface-3);
-      cursor: pointer;
 
       @include flex(row, center, center);
     }

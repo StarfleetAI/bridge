@@ -32,7 +32,6 @@
     height: 16px;
     border-radius: 15px;
     background-color: var(--surface-4);
-    cursor: pointer;
     transition: background-color 0.2s;
 
     &.on {

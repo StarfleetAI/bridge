@@ -77,3 +77,19 @@ where
     .await
     .context("Failed to get model")?)
 }
+
+/// List models
+///
+/// # Errors
+///
+/// Returns error if there was a problem while fetching models.
+#[instrument(skip(executor))]
+pub async fn list<'a, E>(executor: E) -> Result<Vec<Model>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    Ok(query_as!(Model, "SELECT * FROM models")
+        .fetch_all(executor)
+        .await
+        .context("Failed to list models")?)
+}

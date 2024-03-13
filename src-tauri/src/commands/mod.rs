@@ -6,5 +6,6 @@ pub mod agents;
 pub mod agents_chats;
 pub mod chats;
 pub mod messages;
+pub mod models;
 pub mod settings;
 pub mod tasks;

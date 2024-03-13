@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO messages (chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n        RETURNING id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at\n        ",
+  "query": "\n        INSERT INTO messages (chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)\n        RETURNING id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -57,6 +57,11 @@
         "name": "created_at",
         "ordinal": 10,
         "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 11,
+        "type_info": "Datetime"
       }
     ],
     "parameters": {
@@ -73,8 +78,9 @@
       true,
       true,
       true,
+      false,
       false
     ]
   },
-  "hash": "c456b5201c15f48d748450ebea0c2ec30844fc3f2bb5369476a75320f6b1f0ff"
+  "hash": "c20d4804f7fc764c9af3e38d2963fdc1d0f7b89b1ffeb9c842746c4bab9f2bbb"
 }
