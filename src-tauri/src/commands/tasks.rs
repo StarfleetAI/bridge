@@ -45,18 +45,7 @@ pub struct UpdateTask {
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let task = repo::tasks::cancel(&mut *tx, id).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(task)
+    repo::tasks::cancel(&*pool, id).await
 }
 
 /// Create new task.
@@ -66,13 +55,8 @@ pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 /// Returns error if there was a problem while inserting task into database.
 #[tauri::command]
 pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result<Task> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let task = repo::tasks::create(
-        &mut *tx,
+    repo::tasks::create(
+        &*pool,
         CreateParams {
             agent_id: request.agent_id,
             origin_chat_id: None,
@@ -82,13 +66,7 @@ pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result
             ancestry: request.ancestry.as_deref(),
         },
     )
-    .await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(task)
+    .await
 }
 
 /// Delete task by id.
@@ -122,18 +100,7 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn execute_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let task = repo::tasks::execute(&mut *tx, id).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(task)
+    repo::tasks::execute(&*pool, id).await
 }
 
 /// Get task by id.
@@ -180,18 +147,7 @@ pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) ->
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let task = repo::tasks::pause(&mut *tx, id).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(task)
+    repo::tasks::pause(&*pool, id).await
 }
 
 /// Revise task by id.
@@ -201,18 +157,7 @@ pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn revise_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    let task = repo::tasks::revise(&mut *tx, id).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(task)
+    repo::tasks::revise(&*pool, id).await
 }
 
 /// Update task title or/and summary by id. Title and summary can be optional

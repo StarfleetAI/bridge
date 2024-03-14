@@ -379,13 +379,8 @@ pub async fn deny_tool_call(
 #[tauri::command]
 pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     debug!("Deleting message");
-    let mut tx = pool.begin().await.context("Failed to begin transaction")?;
 
-    repo::messages::delete(&mut *tx, id).await?;
-
-    tx.commit().await.context("Failed to commit transaction")?;
-
-    Ok(())
+    repo::messages::delete(&*pool, id).await
 }
 
 /// Update message content by id.
@@ -393,15 +388,16 @@ pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// # Errors
 ///
 /// Returns error if there was a problem while updating message content.
-#[instrument(skip(pool))]
+#[instrument(skip(content, pool))]
 #[tauri::command]
 pub async fn update_message_content(
     id: i64,
     content: String,
     pool: State<'_, DbPool>,
 ) -> Result<Message> {
+    debug!("Updating message content");
+
     let mut tx = pool.begin().await.context("Failed to begin transaction")?;
-    // check if message role is system or user, if not return error
     let message = repo::messages::get(&mut *tx, id).await?;
 
     if message.role != Role::System && message.role != Role::User {

@@ -61,33 +61,54 @@ pub async fn start_loop(app_handle: AppHandle) {
 
 #[instrument(skip(app_handle))]
 async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
+    let window = app_handle
+        .get_window("main")
+        .context("failed to get main window")?;
     let pool: State<'_, DbPool> = app_handle.state();
 
-    let task = match get_task_for_execution(&pool, None).await {
+    let mut task = match get_task_for_execution(&pool, None).await {
         Ok(Some(task)) => task,
         Ok(None) => return Err(Error::NoRootTasks.into()),
         Err(err) => return Err(err),
     };
 
+    window
+        .emit_all("tasks:updated", &task)
+        .context("Failed to emit event")?;
+
     info!("Root task for execution: #{}. {}", task.id, task.title);
 
     match execute_task(app_handle, &task).await {
-        Ok(status) => repo::tasks::update_status(&*pool, task.id, status).await?,
+        Ok(status) => {
+            debug!(
+                "No errors. Transitioning root task #{} to status: {:?}",
+                task.id, status
+            );
+            repo::tasks::update_status(&*pool, task.id, status).await?;
+
+            task.status = status;
+            window
+                .emit_all("tasks:updated", &task)
+                .context("Failed to emit event")?;
+
+            Ok(())
+        }
         Err(err) => {
             repo::tasks::fail(&*pool, task.id).await?;
 
-            // TODO: send events
+            task.status = Status::Failed;
+            window
+                .emit_all("tasks:updated", &task)
+                .context("Failed to emit event")?;
 
             return Err(err);
         }
-    };
+    }
 
     // while let Some(child) = match get_task_for_execution(&*pool, Some(&task)).await {
     //     Ok(task) => task,
     //     Err(err) => {
     //         tasks::fail(&*pool, task.id).await?;
-    //
-    //         // TODO: send events
     //
     //         bail!(err)
     //     }
@@ -100,18 +121,10 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
     //             tasks::fail(&*pool, child.id).await?;
     //             tasks::fail(&*pool, task.id).await?;
     //
-    //             // TODO: send events
-    //
     //             bail!(err.context("failed to execute child task"))
     //         }
     //     };
     // }
-
-    // TODO: send events
-
-    info!("Root task #{} executed successfully", task.id);
-
-    Ok(())
 }
 
 #[instrument(skip(app_handle, task))]
