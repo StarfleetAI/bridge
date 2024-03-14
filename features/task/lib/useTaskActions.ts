@@ -1,3 +1,6 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
 import { type Task, TaskStatus } from '~/entities/tasks'
 import { CancelIcon, DeleteIcon, DuplicateIcon, PauseIcon, ReviseIcon } from '~/shared/ui/icons'
 import { useTasksStore } from '../store'

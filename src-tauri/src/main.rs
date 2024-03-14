@@ -47,6 +47,7 @@ fn main() -> Result<()> {
             commands::messages::create_message,
             commands::messages::delete_message,
             commands::messages::deny_tool_call,
+            commands::messages::get_raw_message_content,
             commands::messages::update_message_content,
             commands::messages::list_messages,
             commands::models::list_models,

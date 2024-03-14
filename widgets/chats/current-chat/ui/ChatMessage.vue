@@ -5,9 +5,8 @@
   import 'highlight.js/styles/atom-one-dark.min.css'
   import hljs from 'highlight.js'
 
-  import { convert as convertHtml } from 'html-to-text'
   import { useAgentsStore } from '~/features/agent'
-  import { approveToolCall, denyToolCall, useMessagesStore } from '~/features/chats'
+  import { approveToolCall, denyToolCall, getRawMessageContent, useMessagesStore } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
   import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
   import { BaseButton, CopyButton } from '~/shared/ui/base'
@@ -124,13 +123,14 @@
 
   const isEditing = ref(false)
   const contentToEdit = ref('')
-  const startEditing = () => {
+  const startEditing = async () => {
     isEditing.value = true
-    contentToEdit.value = convertHtml(props.message.content)
+    contentToEdit.value = await getRawMessageContent(props.message.id)
   }
 
   const cancelEditing = () => {
     isEditing.value = false
+    contentToEdit.value = ''
   }
   const saveEditing = async () => {
     await editMessage({ id: props.message.id, content: contentToEdit.value }, props.message.chat_id)
@@ -143,8 +143,9 @@
   const showAgentMessageButtons = computed(() => {
     return [Role.ASSISTANT, Role.TOOL].includes(props.message.role)
   })
-  const copyContent = () => {
-    navigator.clipboard.writeText(convertHtml(props.message.content))
+  const copyContent = async () => {
+    const rawContent = await getRawMessageContent(props.message.id)
+    navigator.clipboard.writeText(rawContent)
   }
 </script>
 

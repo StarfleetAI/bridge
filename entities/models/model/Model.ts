@@ -1,6 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
-import { type Provider } from './Provider'
+import { type Provider } from '~/shared/model'
 export interface Model {
   // Provider of the model
   provider: Provider
