@@ -5,19 +5,28 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{query_as, Executor, Sqlite};
-use tracing::{debug, instrument};
+use tracing::{instrument, trace};
 
 use crate::types::Result;
 
-#[derive(Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Clone)]
+const OPENAI_API_URL: &str = "https://api.openai.com/v1/";
+const GROQ_API_URL: &str = "https://api.groq.com/v1/";
+
+#[derive(
+    Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Eq, Clone, Ord, PartialOrd,
+)]
 pub enum Provider {
     #[default]
     OpenAI,
+    Groq,
 }
 
 impl From<String> for Provider {
-    fn from(_s: String) -> Self {
-        Provider::OpenAI
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "Groq" => Provider::Groq,
+            _ => Provider::OpenAI,
+        }
     }
 }
 
@@ -44,6 +53,8 @@ pub struct Model {
     pub audio_in: bool,
     // If model can generate audio output
     pub audio_out: bool,
+    // If model has function calling capabilities
+    pub function_calling: bool,
     // Base URL for the model's API. Leave empty to use provider's default
     pub api_url: Option<String>,
     // API key for the API. Leave empty to use provider's default
@@ -52,6 +63,19 @@ pub struct Model {
     pub is_system: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+impl Model {
+    #[must_use]
+    pub fn api_url_or_default(&self) -> &str {
+        match self.api_url {
+            Some(ref url) => url,
+            None => match self.provider {
+                Provider::OpenAI => OPENAI_API_URL,
+                Provider::Groq => GROQ_API_URL,
+            },
+        }
+    }
 }
 
 /// Get model by full name (`provider/name`).
@@ -64,7 +88,7 @@ pub async fn get<'a, E>(executor: E, full_name: &str) -> Result<Model>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    debug!("Fetching model");
+    trace!("Getting model");
     let (provider, name) = full_name.split_once('/').context("Invalid model name")?;
 
     Ok(query_as!(

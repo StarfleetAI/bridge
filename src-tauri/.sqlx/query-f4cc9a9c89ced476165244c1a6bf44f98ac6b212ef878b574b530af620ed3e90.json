@@ -29,8 +29,13 @@
         "type_info": "Bool"
       },
       {
-        "name": "model_full_name",
+        "name": "kind",
         "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "model_full_name",
+        "ordinal": 6,
         "type_info": "Text"
       }
     ],
@@ -38,6 +43,7 @@
       "Right": 1
     },
     "nullable": [
+      false,
       false,
       false,
       false,

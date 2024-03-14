@@ -10,7 +10,7 @@ use tauri::State;
 use crate::{
     repo::{
         self,
-        chats::Chat,
+        chats::{Chat, Kind},
         messages::{Role, Status},
     },
     types::{DbPool, Result},
@@ -63,7 +63,7 @@ pub async fn create_chat(request: CreateChat, pool: State<'_, DbPool>) -> Result
         .with_context(|| "Failed to begin transaction")?;
 
     let agent = repo::agents::get(&mut *tx, request.agent_id).await?;
-    let chat = repo::chats::create(&mut *tx).await?;
+    let chat = repo::chats::create(&mut *tx, Kind::Direct).await?;
 
     // Add agent to chat
     repo::agents_chats::create(&mut *tx, request.agent_id, chat.id).await?;
@@ -119,18 +119,7 @@ pub async fn delete_chat(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// Returns error if there was a problem while updating the chat title or if the chat with the given ID does not exist.
 #[tauri::command]
 pub async fn update_chat_title(id: i64, title: String, pool: State<'_, DbPool>) -> Result<()> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    repo::chats::update_title(&mut *tx, id, &title).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(())
+    repo::chats::update_title(&*pool, id, &title).await
 }
 
 /// Toggle chat is pinned status by id.
@@ -140,18 +129,7 @@ pub async fn update_chat_title(id: i64, title: String, pool: State<'_, DbPool>) 
 /// Returns error if the chat with the given ID does not exist.
 #[tauri::command]
 pub async fn toggle_chat_is_pinned(id: i64, pool: State<'_, DbPool>) -> Result<()> {
-    let mut tx = pool
-        .begin()
-        .await
-        .with_context(|| "Failed to begin transaction")?;
-
-    repo::chats::toggle_is_pinned(&mut *tx, id).await?;
-
-    tx.commit()
-        .await
-        .with_context(|| "Failed to commit transaction")?;
-
-    Ok(())
+    repo::chats::toggle_is_pinned(&*pool, id).await
 }
 
 /// Change chat model full name by id
@@ -165,7 +143,5 @@ pub async fn update_chat_model_full_name(
     model_full_name: Option<String>,
     pool: State<'_, DbPool>,
 ) -> Result<()> {
-    repo::chats::update_model_full_name(&*pool, id, model_full_name).await?;
-
-    Ok(())
+    repo::chats::update_model_full_name(&*pool, id, model_full_name).await
 }

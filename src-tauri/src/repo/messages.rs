@@ -63,7 +63,8 @@ where
 {
     serializer.serialize_str(&to_html(content.as_ref().unwrap_or(&String::new())))
 }
-#[derive(Serialize, Deserialize, Debug, Clone)]
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Message {
     pub id: i64,
     pub chat_id: i64,
@@ -205,7 +206,7 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while fetching last message id.
-pub async fn get_last_message_id<'a, E>(executor: E, chat_id: i64) -> Result<i64>
+pub async fn get_last_message_id<'a, E>(executor: E, chat_id: i64) -> Result<Option<i64>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
@@ -215,8 +216,34 @@ where
     )
     .fetch_one(executor)
     .await
-    .with_context(|| "Failed to fetch last message id")?
-    .unwrap_or_default())
+    .with_context(|| "Failed to fetch last message id")?)
+}
+
+/// Get last message for chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while fetching last message.
+pub async fn get_last_message<'a, E>(executor: E, chat_id: i64) -> Result<Option<Message>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    Ok(query_as!(
+        Message,
+        r#"
+        SELECT
+            id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+        FROM messages
+        WHERE chat_id = $1
+        ORDER BY id DESC
+        LIMIT 1
+        "#,
+        chat_id,
+    )
+    .fetch_optional(executor)
+    .await
+    .with_context(|| "Failed to get last message")?)
 }
 
 /// Update message status.
@@ -348,7 +375,7 @@ where
     )
     .execute(executor)
     .await
-    .with_context(|| "Failed to set `Writing` messages to `Failed`")?;
+    .with_context(|| "Failed to set `{from}` messages to `{to}`")?;
 
     Ok(())
 }

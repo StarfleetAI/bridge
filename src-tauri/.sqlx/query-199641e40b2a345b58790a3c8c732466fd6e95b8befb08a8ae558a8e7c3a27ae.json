@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO chats (created_at, updated_at) VALUES ($1, $1) RETURNING *",
+  "query": "INSERT INTO chats (kind, created_at, updated_at) VALUES ($1, $2, $2) RETURNING *",
   "describe": {
     "columns": [
       {
@@ -29,15 +29,21 @@
         "type_info": "Bool"
       },
       {
-        "name": "model_full_name",
+        "name": "kind",
         "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "model_full_name",
+        "ordinal": 6,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -46,5 +52,5 @@
       true
     ]
   },
-  "hash": "002c6b7e2192981832f5bdc4b224e921cfe4d331c2832043562b642b6ae04137"
+  "hash": "199641e40b2a345b58790a3c8c732466fd6e95b8befb08a8ae558a8e7c3a27ae"
 }

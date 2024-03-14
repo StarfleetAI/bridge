@@ -1,24 +1,44 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::fs;
 use tracing::debug;
 
-use crate::types::Result;
+use crate::{repo::models::Provider, types::Result};
 
 const DEFAULT_MODEL: &str = "OpenAI/gpt-3.5-turbo";
 const SETTINGS_FILE: &str = "settings.json";
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Tasks {
+    pub execution_concurrency: u16,
+}
+
+impl Default for Tasks {
+    fn default() -> Self {
+        Self {
+            execution_concurrency: 1,
+        }
+    }
+}
+
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub default_model: Option<String>,
-    pub openai_api_key: Option<String>,
     pub python_path: Option<String>,
+    #[serde(default)]
+    pub api_keys: BTreeMap<Provider, String>,
+    #[serde(default)]
     pub agents: Value,
+    #[serde(default)]
+    pub tasks: Tasks,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -88,7 +108,8 @@ impl Settings {
     }
 
     /// Returns `default_model` if it's set, otherwise returns `DEFAULT_MODEL`.
-    #[must_use] pub fn default_model(&self) -> &str {
+    #[must_use]
+    pub fn default_model(&self) -> &str {
         self.default_model.as_deref().unwrap_or(DEFAULT_MODEL)
     }
 }

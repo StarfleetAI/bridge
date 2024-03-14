@@ -4,7 +4,7 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, query, query_as, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
@@ -77,6 +77,14 @@ impl Task {
             None => None,
         }
     }
+
+    #[must_use]
+    pub fn children_ancestry(&self) -> String {
+        match self.ancestry {
+            Some(ref ancestry) => format!("{}/{}", ancestry, self.id),
+            None => self.id.to_string(),
+        }
+    }
 }
 
 pub struct CreateParams<'a> {
@@ -94,6 +102,82 @@ pub struct UpdateParams<'a> {
     pub id: i64,
     pub title: &'a str,
     pub summary: &'a str,
+}
+
+/// Gets root task for execution.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get_root_for_execution<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+) -> Result<Option<Task>> {
+    Ok(query_as!(
+        Task,
+        r#"
+        SELECT
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        FROM tasks
+        WHERE ancestry IS NULL
+        AND status = $1
+        ORDER BY created_at ASC
+        LIMIT 1
+        "#,
+        Status::ToDo,
+    )
+    .fetch_optional(executor)
+    .await
+    .context("Failed to list tasks")?)
+}
+
+/// Gets child task for execution.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get_children_for_execution<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    ancestry: &'a str,
+) -> Result<Option<Task>> {
+    Ok(query_as!(
+        Task,
+        r#"
+        SELECT
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        FROM tasks
+        WHERE ancestry = $1
+        AND status != $2
+        ORDER BY created_at ASC
+        LIMIT 1
+        "#,
+        ancestry,
+        Status::Done,
+    )
+    .fetch_optional(executor)
+    .await
+    .context("Failed to list tasks")?)
 }
 
 /// List all tasks.
@@ -328,7 +412,12 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
     Ok(task)
 }
 
-async fn update_status<'a, E: Executor<'a, Database = Sqlite>>(
+/// Update task status by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating task status.
+pub async fn update_status<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     id: i64,
     status: Status,
@@ -367,6 +456,36 @@ async fn update_status<'a, E: Executor<'a, Database = Sqlite>>(
     Ok(task)
 }
 
+/// Update task execution chat id by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating task execution chat id.
+pub async fn update_execution_chat_id<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+    execution_chat_id: i64,
+) -> Result<()> {
+    let now = Utc::now().naive_utc();
+    query!(
+        r#"
+        UPDATE tasks
+        SET
+            execution_chat_id = $1,
+            updated_at = $2
+        WHERE id = $3
+        "#,
+        execution_chat_id,
+        now,
+        id,
+    )
+    .execute(executor)
+    .await
+    .context("Failed to update task execution chat id")?;
+
+    Ok(())
+}
+
 /// Revise task by id.
 ///
 /// # Errors
@@ -401,6 +520,51 @@ pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64)
 /// Returns error if there was a problem while executing task.
 pub async fn execute<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
     update_status(executor, id, Status::ToDo).await
+}
+
+/// Start task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while starting task.
+pub async fn start_progress<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+) -> Result<Task> {
+    update_status(executor, id, Status::InProgress).await
+}
+
+/// Marks task as waiting for user input by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while marking task as waiting for user input.
+pub async fn wait_for_user<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+) -> Result<Task> {
+    update_status(executor, id, Status::WaitingForUser).await
+}
+
+/// Fail task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while failing task.
+pub async fn fail<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
+    update_status(executor, id, Status::Failed).await
+}
+
+/// Complete task by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while completing task.
+pub async fn complete<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    id: i64,
+) -> Result<Task> {
+    update_status(executor, id, Status::Done).await
 }
 
 /// Get task by id.
@@ -494,6 +658,23 @@ pub async fn delete_for_chat<'a, E: Executor<'a, Database = Sqlite>>(
         .execute(executor)
         .await
         .context("Failed to delete `tasks` records")?;
+
+    Ok(())
+}
+
+/// Transitions tasks from one status to another.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating messages.
+pub async fn transition_all<'a, E>(executor: E, from: Status, to: Status) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!("UPDATE tasks SET status = $1 WHERE status = $2", to, from)
+        .execute(executor)
+        .await
+        .with_context(|| "Failed to set `{from}` tasks to `{to}`")?;
 
     Ok(())
 }

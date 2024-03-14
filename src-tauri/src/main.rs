@@ -9,9 +9,9 @@ use dotenvy::dotenv;
 use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-
-use bridge::{commands, database, settings::Settings, types::Result};
 use tracing_subscriber::{fmt, EnvFilter};
+
+use bridge::{commands, database, settings::Settings, task_executor, types::Result};
 
 fn main() -> Result<()> {
     dotenv().ok();
@@ -109,8 +109,10 @@ fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::E
 
     app_handle.manage(pool);
 
+    block_on(async { task_executor::start_loop(app_handle).await });
+
     info!("Startup sequence completed!");
-    info!("Launching! 🚀");
+    info!("Launching Bridge! 🚀");
 
     Ok(())
 }

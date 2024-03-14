@@ -1,9 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::messages::Error as MessagesError;
-use crate::settings::Error as SettingsError;
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -18,9 +15,11 @@ pub enum Error {
     TokioJoin(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
-    Messages(#[from] MessagesError),
+    Executor(#[from] crate::task_executor::Error),
     #[error(transparent)]
-    Settings(#[from] SettingsError),
+    Messages(#[from] crate::messages::Error),
+    #[error(transparent)]
+    Settings(#[from] crate::settings::Error),
 
     #[error("ability is used by agents")]
     AbilityIsUsedByAgents,
