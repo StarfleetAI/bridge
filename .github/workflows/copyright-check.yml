@@ -16,5 +16,5 @@ jobs:
         with:
           version: latest
 
-      - name: Scan files
+      - name: Check files
         run: pnpm check-copyright
