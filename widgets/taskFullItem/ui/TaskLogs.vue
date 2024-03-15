@@ -142,10 +142,6 @@
     width: 100%;
     padding: 16px 0 0;
 
-    &.is-greeting {
-      height: 100%;
-    }
-
     @include flex(column, space-between, stretch, 64px);
   }
 
