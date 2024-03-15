@@ -126,7 +126,6 @@ export const useTasksStore = defineStore('tasks', () => {
     if (index !== undefined && index !== -1) {
       tasks.value[index] = task
     }
-    console.log(task)
     const { listChats, getById: getChatById } = useChatsStore()
     if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
       listChats()
