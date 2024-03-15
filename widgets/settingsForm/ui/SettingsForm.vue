@@ -23,13 +23,14 @@
   }
   const handleSave = () => {
     updateSettings({
-      openai_api_key: changedSettings.value.openai_api_key,
+      api_keys: changedSettings.value.api_keys,
       python_path: changedSettings.value.python_path,
       agents: changedSettings.value.agents,
       default_model: changedSettings.value.default_model,
     })
   }
   const models = ref(await listModels())
+  const providers = ref(new Set(models.value.map((model) => model.provider)))
 </script>
 
 <template>
@@ -40,13 +41,16 @@
         height="20"
       />General Settings
     </div>
+
     <FormField
-      v-model="changedSettings.openai_api_key"
-      name="OpenAI API Key"
-      description="Your OpenAI API key"
+      v-for="provider in providers"
+      v-model.trim="changedSettings.api_keys[provider]"
+      :name="`${provider} API Key`"
+      :description="`Your ${provider} API Key`"
     />
+
     <FormField
-      v-model="changedSettings.python_path"
+      v-model.trim="changedSettings.python_path"
       name="Python Path"
       description="The path to your Python interpreter"
     />
@@ -56,7 +60,7 @@
         <div class="select-field__description">The default model to use</div>
       </div>
       <ModelSelect
-        v-model="changedSettings.default_model"
+        v-model.trim="changedSettings.default_model"
         :models="models"
         class="select-field__input"
       />

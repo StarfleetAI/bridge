@@ -414,3 +414,17 @@ pub async fn update_message_content(
 
     Ok(updated_message)
 }
+
+/// Get raw message content by id.
+///
+/// # Errors
+///
+/// Returns error if message with given id does not exist.
+#[tauri::command]
+pub async fn get_raw_message_content(id: i64, pool: State<'_, DbPool>) -> Result<String> {
+    let message = repo::messages::get(&*pool, id)
+        .await
+        .with_context(|| "Failed to get message")?;
+
+    Ok(message.content.unwrap_or_default())
+}

@@ -53,6 +53,10 @@ impl From<String> for Status {
     }
 }
 
+pub struct RawContent {
+    pub content: String,
+}
+
 /// Safely render markdown in a message as an untrusted user input.
 fn serialize_content<S>(
     content: &Option<String>,

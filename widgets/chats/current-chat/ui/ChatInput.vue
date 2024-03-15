@@ -28,13 +28,19 @@
       event.preventDefault() // Prevent the default action
       const eventTarget = event.target as HTMLInputElement
       // Calculate the new position and insert the newline
-      const cursorPosition = eventTarget.selectionStart
-      const before = textModel.value?.substring(0, cursorPosition!)
-      const after = textModel.value?.substring(cursorPosition!)
-      textModel.value = `${before}\n${after}`
+      const cursorPosition = eventTarget.selectionStart!
+      const before = eventTarget.value?.substring(0, cursorPosition)
+      const after = eventTarget.value?.substring(cursorPosition)
+      const newValue = `${before}\n${after}`
+
+      eventTarget.value = newValue
+
+      const newCursorPosition = cursorPosition + 1
+      eventTarget.setSelectionRange(newCursorPosition, newCursorPosition)
+      nextTick(() => (input.value = newValue))
     }
 
-    if (!isShiftKey && isEnterKey && textModel.value) {
+    if (!isShiftKey && isEnterKey && input.value) {
       if (props.isProcessing) {
         moveToNextLine()
         return
@@ -54,7 +60,7 @@
     <div class="current-chat__input">
       <textarea
         ref="textarea"
-        v-model="input"
+        v-model.trim="input"
         class="current-chat__input-text"
         placeholder="Message"
         @keydown="handleKeyDown"

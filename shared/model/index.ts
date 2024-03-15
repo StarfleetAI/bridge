@@ -3,3 +3,4 @@
 
 export * from './Month'
 export * from './Pagination'
+export * from './Provider'

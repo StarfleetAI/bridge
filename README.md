@@ -22,8 +22,4 @@ Bridge is a self-contained fully-featured IDE for building and running autonomou
 
 ## Vue DevTools
 
-Check the [Vue DevTools Standalone installation guide](https://devtools.vuejs.org/guide/installation.html#standalone) for a complete set of instructions.
-
-Set **NUXT_PUBLIC_DEVTOOLS_PORT** in your `.env` file to the port number you wish to use.
-
-Run `PORT=YOUR_PORT vue-devtools` and enjoy!
+Just run `pnpm devtools` and enjoy!

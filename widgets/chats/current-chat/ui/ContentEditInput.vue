@@ -14,12 +14,19 @@
     const isEnterKey = event.key === 'Enter'
 
     const moveToNextLine = () => {
-      event.preventDefault()
+      event.preventDefault() // Prevent the default action
       const eventTarget = event.target as HTMLInputElement
-      const cursorPosition = eventTarget.selectionStart
-      const before = textModel.value?.substring(0, cursorPosition!)
-      const after = textModel.value?.substring(cursorPosition!)
-      textModel.value = `${before}\n${after}`
+      // Calculate the new position and insert the newline
+      const cursorPosition = eventTarget.selectionStart!
+      const before = eventTarget.value?.substring(0, cursorPosition)
+      const after = eventTarget.value?.substring(cursorPosition)
+      const newValue = `${before}\n${after}`
+
+      eventTarget.value = newValue
+
+      const newCursorPosition = cursorPosition + 1
+      eventTarget.setSelectionRange(newCursorPosition, newCursorPosition)
+      nextTick(() => (input.value = newValue))
     }
 
     if (!isShiftKey && isEnterKey && textModel.value) {
