@@ -7,8 +7,8 @@
   import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { AvatarsList } from '~/shared/ui/avatars'
-  import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
-  import { ResultIcon, AttachmentIcon } from '~/shared/ui/icons'
+  import { FilesList } from '~/shared/ui/files'
+  import { AttachmentIcon } from '~/shared/ui/icons'
   import ActivityFeed from './ActivityFeed.vue'
   import TaskControls from './TaskControls.vue'
 

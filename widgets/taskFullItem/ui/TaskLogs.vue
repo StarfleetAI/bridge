@@ -11,7 +11,7 @@
   import type { Agent } from '~/entities/agents'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
 
-  import ChatMessage from './ChatMessage.vue'
+  import LogItem from './LogItem.vue'
 
   const copyButtonPlugin = new CopyButtonPlugin()
   hljs.addPlugin(copyButtonPlugin)
@@ -105,16 +105,21 @@
     ref="messagesListRef"
     class="task-logs__messages-wrapper"
   >
-    <div :class="['task-logs__messages', { 'is-greeting': currentChatMessages?.length === 0 }]">
-      <template v-if="currentChatMessages?.length">
-        <ChatMessage
+    <div class="task-logs__messages">
+      <template v-if="!currentChatMessages?.length">
+        <LogItem
           v-for="message in currentChatMessages"
           :key="message.id"
           class="message"
           :message="message"
         />
       </template>
-      <template v-else> no logs yet... </template>
+      <div
+        v-else
+        class="tasks-logs__empty"
+      >
+        No logs yet...
+      </div>
     </div>
   </div>
 </template>
@@ -142,5 +147,9 @@
     }
 
     @include flex(column, space-between, stretch, 64px);
+  }
+
+  .tasks-logs__empty {
+    @include font-inter-400(14px, 20px, var(--text-tertiary));
   }
 </style>

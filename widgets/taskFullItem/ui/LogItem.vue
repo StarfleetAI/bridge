@@ -1,6 +1,8 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+<!-- TODO: Make reusable component for all messages -->
+
 <script lang="ts" setup>
   import 'highlight.js/styles/atom-one-dark.min.css'
   import hljs from 'highlight.js'
