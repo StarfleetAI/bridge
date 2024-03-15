@@ -60,7 +60,15 @@ export default defineNuxtConfig({
       },
     },
     optimizeDeps: {
-      include: ['@tauri-apps/api/event', 'highlight.js', 'highlightjs-copy', 'html-to-text'],
+      include: [
+        '@tauri-apps/api/event',
+        'highlight.js',
+        'highlightjs-copy',
+        '@vueuse/integrations/useChangeCase',
+        'prismjs',
+        'prismjs/components/prism-python',
+        'vue-prism-editor',
+      ],
     },
   },
 })

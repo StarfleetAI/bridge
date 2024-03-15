@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM chats ORDER BY id DESC",
+  "query": "SELECT * FROM chats WHERE kind = $1 ORDER BY id DESC",
   "describe": {
     "columns": [
       {
@@ -40,7 +40,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -52,5 +52,5 @@
       true
     ]
   },
-  "hash": "ce01a4e75407a3c3b74bc62eead9bef656d33a2021ab59b9b665686debd3503c"
+  "hash": "fdaf5a0554f120f2499551d5bd656ec034d6992793824a3634bd729c30202875"
 }
