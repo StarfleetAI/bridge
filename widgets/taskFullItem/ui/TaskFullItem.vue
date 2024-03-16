@@ -7,8 +7,9 @@
   import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { AvatarsList } from '~/shared/ui/avatars'
-  import { FilesList, LargeFilesPreview } from '~/shared/ui/files'
-  import { ResultIcon, AttachmentIcon } from '~/shared/ui/icons'
+  import { FilesList } from '~/shared/ui/files'
+  import { AttachmentIcon } from '~/shared/ui/icons'
+  import ActivityFeed from './ActivityFeed.vue'
   import TaskControls from './TaskControls.vue'
 
   const { selectedTask } = useTasksNavigation()
@@ -189,8 +190,8 @@
         <FilesList :files="[]" />
       </div>
     </div>
-    <div class="task-details__result">
-      <div class="task-details__result-head"><ResultIcon /> Result</div>
+    <!-- <div class="task-details__result">
+      <div class="task-details__result-head"><ResultIcon /> Output</div>
       <LargeFilesPreview
         :files="[
           {
@@ -203,20 +204,15 @@
           },
         ]"
       />
-      <div class="task-details__result-text-wrapper">
-        <div class="task-details__result-title">Stage 1</div>
-        <div class="task-details__result-text">
-          This task involves identifying and implementing robust methods to guarantee the security of data at every
-          stage of Brand Analytics, from collection through storage to analysis. It is crucial to establish a
-          comprehensive approach that safeguards sensitive information and maintains the integrity and confidentiality
-          of the data processed by the neural network.
-        </div>
-      </div>
-    </div>
+    </div> -->
+    <ActivityFeed />
   </div>
 </template>
 <style scoped lang="scss">
   .task-details {
+    overflow: hidden;
+    height: 100%;
+
     &__head {
       height: 57px;
       padding: 12px 24px;
@@ -245,7 +241,6 @@
 
     &__body {
       padding: 24px 0;
-      border-bottom: 0.5px solid var(--pill);
     }
 
     &__top {
@@ -323,6 +318,8 @@
     &__result-text {
       @include font-inter-500(14px, 22px, var(--text-secondary));
     }
+
+    @include flex(column, flex-start, stretch);
   }
 
   .task__title-wrapper {

@@ -66,10 +66,14 @@ where
         .with_context(|| "Failed to fetch chats")?);
     }
 
-    Ok(query_as!(Chat, "SELECT * FROM chats ORDER BY id DESC")
-        .fetch_all(executor)
-        .await
-        .with_context(|| "Failed to fetch chats")?)
+    Ok(query_as!(
+        Chat,
+        "SELECT * FROM chats WHERE kind = $1 ORDER BY id DESC",
+        Kind::Direct,
+    )
+    .fetch_all(executor)
+    .await
+    .with_context(|| "Failed to fetch chats")?)
 }
 
 /// Get chat by id.

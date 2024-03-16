@@ -78,7 +78,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
 
     info!("Root task for execution: #{}. {}", task.id, task.title);
 
-    match execute_task(app_handle, &task).await {
+    match execute_task(app_handle, &mut task).await {
         Ok(status) => {
             debug!(
                 "No errors. Transitioning root task #{} to status: {:?}",
@@ -128,11 +128,18 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
 }
 
 #[instrument(skip(app_handle, task))]
-async fn execute_task(app_handle: &AppHandle, task: &Task) -> Result<Status> {
+async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status> {
     info!("Executing task #{}: {}", task.id, task.title);
 
     let pool: State<'_, DbPool> = app_handle.state();
     let chat = get_task_execution_chat(&pool, task).await?;
+    task.execution_chat_id = Some(chat.id);
+    let window = app_handle
+        .get_window("main")
+        .context("failed to get main window")?;
+    window
+        .emit_all("tasks:updated", &task)
+        .context("Failed to emit event")?;
 
     loop {
         match repo::messages::get_last_message(&*pool, chat.id).await? {

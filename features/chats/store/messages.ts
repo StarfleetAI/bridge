@@ -1,7 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
 import { useChatsStore, type EditMessage } from '~/features/chats'
 import { type Message } from '~/entities/chat'
@@ -76,11 +75,11 @@ export const useMessagesStore = defineStore('messages', () => {
     }
   }
 
-  const msgCreatedUnlisten: Promise<UnlistenFn> = listen('messages:created', (event) => {
-    addMessage(event.payload as Message)
+  const msgCreatedUnlisten = listen<Message>('messages:created', (event) => {
+    addMessage(event.payload)
   })
-  const msgUpdatedUnlisten: Promise<UnlistenFn> = listen('messages:updated', (event) => {
-    const msg = event.payload as Message
+  const msgUpdatedUnlisten = listen<Message>('messages:updated', (event) => {
+    const msg = event.payload
     updateMessage(msg)
   })
 

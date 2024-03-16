@@ -1,6 +1,9 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+import { listen } from '@tauri-apps/api/event'
+// eslint-disable-next-line boundaries/element-types
+import { useChatsStore } from '~/features/chats'
 import { TaskStatus, type Task } from '~/entities/tasks'
 import {
   listRootTasks as listRootTasksReq,
@@ -117,7 +120,25 @@ export const useTasksStore = defineStore('tasks', () => {
     return updatedTask
   }
 
+  const taskUpdatedUnlisten = listen<Task>('tasks:updated', (event) => {
+    const task = event.payload as Task
+    const index = tasks.value.findIndex((a) => a.id === task.id)
+    if (index !== undefined && index !== -1) {
+      tasks.value[index] = task
+    }
+    const { listChats, getById: getChatById } = useChatsStore()
+    if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
+      listChats()
+    }
+  })
+
+  const $reset = async () => {
+    tasks.value = []
+    taskUpdatedUnlisten
+  }
+
   return {
+    $reset,
     tasks,
     tasksGroupsByStatus,
     getById,
