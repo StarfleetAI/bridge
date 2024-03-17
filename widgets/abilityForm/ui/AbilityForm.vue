@@ -41,7 +41,8 @@
       <div class="ability-form__title">Create Ability</div>
       <div class="ability-form__actions">
         <BaseButton
-          type="secondary"
+          size="medium"
+          color="blue"
           :disabled="!saveIsEnabled"
           @click="handleSaveAbility"
         >
@@ -93,7 +94,7 @@
   }
 
   .ability-form__header {
-    padding: 12px 24px;
+    padding: 10px 24px 9.5px;
     border-bottom: 1px solid var(--border-3);
 
     @include flex(row, space-between, center);

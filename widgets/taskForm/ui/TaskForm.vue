@@ -71,7 +71,7 @@
       <div class="task-form__title">Create Task</div>
       <div class="task-form__actions">
         <BaseButton
-          type="secondary"
+          color="blue"
           :disabled="!saveIsEnabled"
           @click="handleSaveTask"
         >

@@ -4,53 +4,158 @@
 <script lang="ts" setup>
   withDefaults(
     defineProps<{
-      type?: 'primary' | 'secondary' | 'approve' | 'decline' | 'update'
+      type?: 'solid' | 'outline'
+      color?: 'blue' | 'green' | 'red' | 'gray'
+      shade?: 'default' | 'soft'
       disabled?: boolean
-      outlined?: boolean
-      size?: 'small' | 'medium'
+      size?: 'large' | 'medium' | 'small' | 'xsmall'
     }>(),
     {
-      type: 'primary',
+      type: 'solid',
+      color: 'blue',
+      shade: 'default',
       disabled: false,
-      outlined: false,
       size: 'medium',
     },
   )
 </script>
 
 <template>
-  <div :class="['base-button', type, size, { disabled, outlined }]">
+  <div :class="['base-button', color, shade, size, type, { disabled }]">
     <slot name="icon" />
-    <slot />
+    <span><slot /></span>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
   .base-button {
-    border-radius: 4px;
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    border-radius: 6px;
+    transition:
+      background-color 0.2s ease-in-out,
+      color 0.2s ease-in-out;
 
-    &.primary {
+    & * {
+      position: relative;
+      z-index: 2;
+    }
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      opacity: 0;
+    }
+
+    &:hover {
+      &:before {
+        opacity: 0.2;
+      }
+    }
+
+    &.blue {
       background-color: var(--button-primary);
       color: var(--text-on-button);
+
+      &.soft {
+        background-color: rgba(68, 75, 209, 0.1);
+        color: var(--button-secondary) !important;
+
+        &:before {
+          display: none !important;
+        }
+
+        &:hover {
+          background-color: rgba(68, 75, 209, 0.2);
+        }
+      }
     }
 
-    &.secondary {
-      background-color: var(--surface-4);
-      color: var(--text-secondary) !important;
-    }
-
-    &.approve {
+    &.green {
       background-color: var(--status-done);
       color: var(--text-on-button);
+
+      &.soft {
+        background-color: rgba(36, 134, 75, 0.1);
+        color: var(--status-done) !important;
+
+        &:before {
+          display: none !important;
+        }
+
+        &:hover {
+          background-color: rgba(36, 134, 75, 0.2) !important;
+        }
+      }
     }
 
-    &.outlined {
-      border: 1px solid var(--border-2);
-      background-color: transparent !important;
-      color: var(--text-tertiary) !important;
+    &.red {
+      background-color: var(--status-failed);
+      color: var(--text-on-button);
+
+      &.soft {
+        background-color: rgba(183, 78, 71, 0.1);
+        color: var(--status-failed) !important;
+
+        &:before {
+          display: none !important;
+        }
+
+        &:hover {
+          background-color: rgba(183, 78, 71, 0.2);
+        }
+      }
+    }
+
+    &.gray {
+      background-color: var(--surface-4);
+      color: var(--text-secondary);
+    }
+
+    &.large {
+      padding: 8px 12px;
+
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      @include font-inter-500(14px, 20px, var(--text-on-button));
+    }
+
+    &.medium {
+      padding: 8px 10px;
+
+      @include font-inter-500(14px, 20px, var(--text-on-button));
+    }
+
+    &.small {
+      padding: 6px 8px;
+
+      @include font-inter-500(14px, 20px, var(--text-on-button));
+    }
+
+    &.xsmall {
+      padding: 4.5px 8px;
+
+      @include font-inter-400(12px, 17px, var(--text-on-button));
+    }
+
+    &.outline {
+      background: none !important;
+      color: var(--text-tertiary);
+      outline: 1px solid var(--border-2);
 
       &:hover {
-        color: var(--text-secondary) !important;
+        color: var(--text-secondary);
       }
     }
 
@@ -59,22 +164,11 @@
       pointer-events: none;
     }
 
-    &.small {
-      padding: 4px 10px;
-
-      @include font-inter-500(12px, 17px, var(--text-on-button));
+    svg {
+      width: 16px;
+      height: 16px;
     }
 
-    &.medium {
-      padding: 6px 10px;
-
-      @include font-inter-500(14px, 20px, var(--text-on-button));
-    }
-
-    &:hover {
-      opacity: 0.8;
-    }
-
-    @include flex(row, center, center, $gap: 8px);
+    @include flex(row, center, center, $gap: 6px);
   }
 </style>

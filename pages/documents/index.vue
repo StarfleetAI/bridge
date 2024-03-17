@@ -50,6 +50,7 @@
             <BaseButton
               :disabled="isCreateDocument"
               size="medium"
+              color="blue"
               @click="createHandle"
             >
               <template #icon>

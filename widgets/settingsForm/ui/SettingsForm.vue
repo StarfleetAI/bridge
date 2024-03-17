@@ -69,7 +69,7 @@
     <div class="settings-form__buttons">
       <BaseButton
         :disabled="!settingsChanged"
-        type="approve"
+        color="green"
         @click="handleSave"
       >
         <template #icon>

@@ -4,6 +4,7 @@
 <script lang="ts" setup>
   import { AbilitiesList } from '~/widgets/abilitiesList'
   import { useAbilitiesNavigation, useAbilitiesStore } from '~/features/ability'
+  import { SearchField } from '~/shared/ui'
   import { BaseContainer, BaseButton } from '~/shared/ui/base'
   import { LibraryIcon, PlusIcon } from '~/shared/ui/icons'
   import { ToggleSwitch } from '~/shared/ui/toggle-switch'
@@ -15,7 +16,7 @@
   const entity = ref('abilities')
 
   const { abilities } = storeToRefs(useAbilitiesStore())
-
+  const searchInput = ref('')
   const { isCreateAbility, enableCreateAbility, selectedAbility } = useAbilitiesNavigation()
 
   const AbilityFullItem = defineAsyncComponent(async () => {
@@ -51,15 +52,22 @@
           <ToggleSwitch
             v-model="entity"
             readonly
+            class="ability-list__entity-switch"
           >
             <template #option-agents> <div @click="() => navigateTo('/agents')">Agents</div> </template>
             <template #option-abilities>
               <div @click="() => navigateTo('/agents/abilities')">Abilities</div>
             </template>
           </ToggleSwitch>
+          <SearchField
+            v-model="searchInput"
+            placeholder="Search Ability"
+            class="ability-list__search"
+          />
           <BaseButton
             :disabled="isCreateAbility"
             size="medium"
+            color="blue"
             class="agents-list__create"
             @click="createHandle"
           >
@@ -99,15 +107,17 @@
   .side-content {
     width: 100%;
     height: 100%;
-    border-left: 1px solid var(--border-3);
+    border-left: 0.5px solid var(--border-3);
     background: var(--surface-1);
   }
 
   .main-content__header {
-    padding: 12px 24px 0;
-    border-bottom: 1px solid var(--border-3);
+    position: relative;
+    height: 56px;
+    padding: 3px 24px 0;
+    border-bottom: 0.5px solid var(--border-3);
 
-    @include flex(row, space-between, center);
+    @include flex(row, flex-start, center);
   }
 
   .list-title {
@@ -123,6 +133,17 @@
   }
 
   .agents-list__create {
-    margin-top: -10px;
+    position: absolute;
+    top: 10px;
+    right: 24px;
+  }
+
+  .ability-list__search {
+    width: 250px;
+    margin: 0 0 5px 10px;
+  }
+
+  .ability-list__entity-switch {
+    margin-bottom: -7px;
   }
 </style>
