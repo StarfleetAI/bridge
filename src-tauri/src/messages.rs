@@ -5,6 +5,8 @@
 pub enum Error {
     #[error("chunk deserialization error: {0}")]
     ChunkDeserialization(#[from] serde_json::Error),
+    #[error("no valid chunk prefix found")]
+    NoValidChunkPrefix,
     #[error("no tool calls found in message")]
     NoToolCallsFound,
     #[error("tool call has no `id`")]
