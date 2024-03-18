@@ -3,7 +3,7 @@
 
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { usePageStateStore, type PageState } from '@/shared/lib/pageState'
+import { usePageStateStore, type PageState } from './pageState'
 
 export const useSavePageState = () => {
   const pageStateStore = usePageStateStore()

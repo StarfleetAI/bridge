@@ -19,10 +19,10 @@
 </script>
 
 <template>
-  <div :class="['link', color, size, { disabled }]">
+  <button :class="['link', color, size, { disabled }]">
     <slot name="icon" />
     <span><slot /></span>
-  </div>
+  </button>
 </template>
 
 <style lang="scss">
@@ -30,6 +30,8 @@
     position: relative;
     display: inline-block;
     overflow: hidden;
+    border: none;
+    box-shadow: none;
     transition: color 0.2s ease-in-out;
 
     &:hover {

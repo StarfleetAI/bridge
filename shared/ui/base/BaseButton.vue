@@ -21,10 +21,10 @@
 </script>
 
 <template>
-  <div :class="['base-button', color, shade, size, type, { disabled }]">
+  <button :class="['base-button', color, shade, size, type, { disabled }]">
     <slot name="icon" />
     <span><slot /></span>
-  </div>
+  </button>
 </template>
 
 <style lang="scss">
@@ -32,7 +32,9 @@
     position: relative;
     display: inline-block;
     overflow: hidden;
+    border: none;
     border-radius: 6px;
+    box-shadow: none;
     transition:
       background-color 0.2s ease-in-out,
       color 0.2s ease-in-out;

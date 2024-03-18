@@ -8,6 +8,7 @@
   import { BaseContainer, BaseButton } from '~/shared/ui/base'
   import { LibraryIcon, PlusIcon } from '~/shared/ui/icons'
   import { ToggleSwitch } from '~/shared/ui/toggle-switch'
+
   definePageMeta({
     title: 'Agents',
   })
