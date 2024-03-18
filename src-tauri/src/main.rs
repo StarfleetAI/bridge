@@ -14,6 +14,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 use bridge::{commands, database, settings::Settings, task_executor, types::Result};
 
 fn main() -> Result<()> {
+    let _ = fix_path_env::fix();
     dotenv().ok();
 
     let format = fmt::format();
@@ -98,6 +99,10 @@ fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::E
         .to_str()
         .expect("Failed to convert app local data dir to string")
         .to_string();
+
+    // Create `app_local_data_dir` if it doesn't exist
+    std::fs::create_dir_all(&app_local_data_dir)
+        .with_context(|| format!("Failed to create app local data dir: {app_local_data_dir}"))?;
 
     let settings = block_on(async { Settings::load_from_disk(&app_local_data_dir).await })?;
     app_handle.manage(RwLock::new(settings));
