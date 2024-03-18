@@ -6,6 +6,7 @@
   import { type ChatsGroups, chatsToGroupsByDate, useChatsStore } from '~/features/chats'
   import { updateChatTitle } from '~/features/chats'
   import type { Chat } from '~/entities/chat'
+  import { ResizableContainer } from '~/shared/ui/base'
   import { BridgeSmallIcon } from '~/shared/ui/icons'
   import NewChatButton from './NewChatButton.vue'
 
@@ -83,74 +84,80 @@
 </script>
 
 <template>
-  <div class="chats-history">
-    <div class="history__control">
-      Chats
-      <NewChatButton />
-    </div>
+  <ResizableContainer
+    min-width="172px"
+    max-width="320px"
+    direction="right"
+  >
+    <div class="chats-history">
+      <div class="history__control">
+        Chats
+        <NewChatButton />
+      </div>
 
-    <div
-      ref="chatsListRef"
-      class="chats-list"
-    >
       <div
-        v-if="pinnedChats.length"
-        class="history-group"
+        ref="chatsListRef"
+        class="chats-list"
       >
-        <div class="history-group__title">Pinned</div>
         <div
-          v-for="chat in pinnedChats"
-          :key="chat.id"
-          :class="['history-item', { active: currentChatId === chat.id }]"
-          @click="handleClick(chat.id)"
+          v-if="pinnedChats.length"
+          class="history-group"
         >
-          <BridgeSmallIcon />
-          <component
-            :is="getItemComponent(chat.id)"
-            :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
-            :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
-            :value="titleToEdit"
-            @keydown.enter="handleSaveTitle"
-            @input="handleInput"
-            @keydown.esc="handleCancelEdit"
+          <div class="history-group__title">Pinned</div>
+          <div
+            v-for="chat in pinnedChats"
+            :key="chat.id"
+            :class="['history-item', { active: currentChatId === chat.id }]"
+            @click="handleClick(chat.id)"
           >
-            {{ getChatTitle(chat) }}
-          </component>
+            <BridgeSmallIcon />
+            <component
+              :is="getItemComponent(chat.id)"
+              :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
+              :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
+              :value="titleToEdit"
+              @keydown.enter="handleSaveTitle"
+              @input="handleInput"
+              @keydown.esc="handleCancelEdit"
+            >
+              {{ getChatTitle(chat) }}
+            </component>
+          </div>
         </div>
-      </div>
-      <div
-        v-for="[date, group] in chatsGroups"
-        :key="date"
-        class="history-group"
-      >
-        <div class="history-group__title">{{ date }}</div>
         <div
-          v-for="chat in group"
-          :key="chat.id"
-          :class="['history-item', { active: currentChatId === chat.id }]"
-          @click="handleClick(chat.id)"
+          v-for="[date, group] in chatsGroups"
+          :key="date"
+          class="history-group"
         >
-          <BridgeSmallIcon />
-          <component
-            :is="getItemComponent(chat.id)"
-            :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
-            :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
-            :value="titleToEdit"
-            @keydown.enter="handleSaveTitle"
-            @input="handleInput"
-            @keydown.esc="handleCancelEdit"
+          <div class="history-group__title">{{ date }}</div>
+          <div
+            v-for="chat in group"
+            :key="chat.id"
+            :class="['history-item', { active: currentChatId === chat.id }]"
+            @click="handleClick(chat.id)"
           >
-            {{ getChatTitle(chat) }}
-          </component>
+            <BridgeSmallIcon />
+            <component
+              :is="getItemComponent(chat.id)"
+              :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
+              :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
+              :value="titleToEdit"
+              @keydown.enter="handleSaveTitle"
+              @input="handleInput"
+              @keydown.esc="handleCancelEdit"
+            >
+              {{ getChatTitle(chat) }}
+            </component>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </ResizableContainer>
 </template>
 
 <style lang="scss" scoped>
   .chats-history {
-    width: 200px;
+    width: 100%;
     height: 100%;
     background-color: var(--surface-7);
     font-size: 12px;

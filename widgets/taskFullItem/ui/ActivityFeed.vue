@@ -2,6 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { ResizableContainer } from '~/shared/ui/base'
   import { LogIcon } from '~/shared/ui/icons'
   import TaskComments from './TaskComments.vue'
   import TaskLogs from './TaskLogs.vue'
@@ -13,34 +14,44 @@
 </script>
 
 <template>
-  <div class="activity-feed">
-    <div class="activity-feed__tabs-switcher">
-      <!-- <div
+  <ResizableContainer
+    direction="top"
+    min-height="120px"
+    max-height="50%"
+    class="activity-feed__container"
+  >
+    <div class="activity-feed">
+      <div class="activity-feed__tabs-switcher">
+        <!-- <div
         :class="['switcher-item', { active: isCommentsActive }]"
         @click="setActiveTab('comments')"
       >
         <CommentsIcon />
         <div class="switcher-item__label">Comments</div>
       </div> -->
-      <div
-        :class="['switcher-item', { active: isLogsActive }]"
-        @click="setActiveTab('logs')"
-      >
-        <LogIcon />
-        <div class="switcher-item__label">Logs</div>
+        <div
+          :class="['switcher-item', { active: isLogsActive }]"
+          @click="setActiveTab('logs')"
+        >
+          <LogIcon />
+          <div class="switcher-item__label">Logs</div>
+        </div>
+      </div>
+      <div class="activity-feed__tabs">
+        <TaskComments v-show="isCommentsActive" />
+        <TaskLogs v-show="isLogsActive" />
       </div>
     </div>
-    <div class="activity-feed__tabs">
-      <TaskComments v-show="isCommentsActive" />
-      <TaskLogs v-show="isLogsActive" />
-    </div>
-  </div>
+  </ResizableContainer>
 </template>
 
 <style lang="scss" scoped>
-  .activity-feed {
-    max-height: 45%;
+  .activity-feed__container {
     margin-top: auto;
+  }
+
+  .activity-feed {
+    height: 100%;
     border-top: 0.5px solid var(--border-2);
     background-color: var(--surface-3);
     box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.5);
