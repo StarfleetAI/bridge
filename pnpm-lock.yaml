@@ -27,8 +27,8 @@ dependencies:
     specifier: ^10.8.0
     version: 10.9.0(change-case@4.1.2)(vue@3.4.21)
   '@vueuse/nuxt':
-    specifier: 10.8.0
-    version: 10.8.0(nuxt@3.10.3)(vue@3.4.21)
+    specifier: 10.9.0
+    version: 10.9.0(nuxt@3.10.3)(vue@3.4.21)
   '@vueuse/router':
     specifier: ^10.8.0
     version: 10.9.0(vue-router@4.3.0)(vue@3.4.21)
@@ -2680,14 +2680,14 @@ packages:
     resolution: {integrity: sha512-iddNbg3yZM0X7qFY2sAotomgdHK7YJ6sKUvQqbvwnf7TmaVPxS4EJydcNsVejNdS8iWCtDk+fYXr7E32nyTnGA==}
     dev: false
 
-  /@vueuse/nuxt@10.8.0(nuxt@3.10.3)(vue@3.4.21):
-    resolution: {integrity: sha512-7b1S52exryoJoAgwH/4GRjtCjr7j8Fc5/H/orAt1DxZuiOGYEOCo7zaoM6twiURSzyiBiUemdvaRJqYzV37W6A==}
+  /@vueuse/nuxt@10.9.0(nuxt@3.10.3)(vue@3.4.21):
+    resolution: {integrity: sha512-nC4Efg28Q6E41fUD5R+zM9uT5c+NfaDzaJCpqaEV/qHj+/BNJmkDBK8POLIUsiVOY35d0oD/YxZ+eVizqWBZow==}
     peerDependencies:
       nuxt: ^3.0.0
     dependencies:
       '@nuxt/kit': 3.10.3
-      '@vueuse/core': 10.8.0(vue@3.4.21)
-      '@vueuse/metadata': 10.8.0
+      '@vueuse/core': 10.9.0(vue@3.4.21)
+      '@vueuse/metadata': 10.9.0
       local-pkg: 0.5.0
       nuxt: 3.10.3(@types/node@20.11.27)(eslint@8.57.0)(sass@1.72.0)(stylelint@16.2.1)(typescript@5.3.3)(vite@5.1.6)(vue-tsc@1.8.27)
       vue-demi: 0.14.7(vue@3.4.21)

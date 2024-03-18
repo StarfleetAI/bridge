@@ -58,7 +58,7 @@
     "@vuelidate/validators": "^2.0.4",
     "@vueuse/core": "10.8.0",
     "@vueuse/integrations": "^10.8.0",
-    "@vueuse/nuxt": "10.8.0",
+    "@vueuse/nuxt": "10.9.0",
     "@vueuse/router": "^10.8.0",
     "change-case": "^4",
     "cross-env": "^7.0.3",
