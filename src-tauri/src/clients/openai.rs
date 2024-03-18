@@ -116,7 +116,10 @@ pub struct Tool {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub name: String,
-    pub parameters: FunctionParameters,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<FunctionParameters>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -229,8 +232,8 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while sending the request or
     /// deserializing the response.
     pub async fn post_stream<B>(&self, endpoint: &str, body: B) -> Result<Response>
-        where
-            B: serde::Serialize,
+    where
+        B: serde::Serialize,
     {
         let url = format!("{}{endpoint}", self.api_url);
         let client = reqwest::Client::new();
@@ -244,7 +247,10 @@ impl<'a> Client<'a> {
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
-            .header("User-Agent", format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")))
+            .header(
+                "User-Agent",
+                format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")),
+            )
             .json(&body)
             .send()
             .await
@@ -258,9 +264,9 @@ impl<'a> Client<'a> {
     /// Returns error if there was a problem while sending the request or
     /// deserializing the response.
     pub async fn post<T, B>(&self, endpoint: &str, body: B) -> Result<T>
-        where
-            T: serde::de::DeserializeOwned,
-            B: serde::Serialize,
+    where
+        T: serde::de::DeserializeOwned,
+        B: serde::Serialize,
     {
         let url = format!("{}{endpoint}", self.api_url);
         let client = reqwest::Client::new();
@@ -273,7 +279,10 @@ impl<'a> Client<'a> {
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
-            .header("User-Agent", format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")))
+            .header(
+                "User-Agent",
+                format!("StarfleetAI-Bridge/{}", env!("CARGO_PKG_VERSION")),
+            )
             .json(&body)
             .send()
             .await
