@@ -106,7 +106,7 @@
     class="task-logs__messages-wrapper"
   >
     <div class="task-logs__messages">
-      <template v-if="!currentChatMessages?.length">
+      <template v-if="currentChatMessages?.length">
         <LogItem
           v-for="message in currentChatMessages"
           :key="message.id"

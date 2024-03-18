@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', 'nuxt-typed-router', '@vueuse/nuxt', 'dayjs-nuxt'],
 
   routeRules: {
-    '/': { redirect: '/agents' },
+    '/': { redirect: '/chats' },
   },
 
   runtimeConfig: {

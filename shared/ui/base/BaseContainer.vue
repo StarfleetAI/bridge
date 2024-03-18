@@ -1,19 +1,26 @@
 <!-- Copyright 2024 StarfleetAI -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+  import { ResizableContainer } from '../base'
+</script>
 
 <template>
   <div class="base-container">
     <div class="base-container__main">
       <slot name="main" />
     </div>
-    <div
+    <ResizableContainer
       v-if="$slots.additional"
-      class="base-container__additional"
+      min-width="300px"
+      max-width="40%"
+      direction="left"
+      initial-width="40%"
     >
-      <slot name="additional" />
-    </div>
+      <div class="base-container__additional">
+        <slot name="additional" />
+      </div>
+    </ResizableContainer>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -31,7 +38,7 @@
   }
 
   .base-container__additional {
-    flex-shrink: 0;
-    width: 40%;
+    width: 100%;
+    height: 100%;
   }
 </style>

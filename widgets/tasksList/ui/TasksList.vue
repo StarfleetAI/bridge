@@ -86,10 +86,11 @@
   }
 
   .tasks-list__groups {
-    overflow-x: hidden;
+    overflow: hidden auto;
     padding: 12px 24px;
 
     @include flex(column);
+    @include add-scrollbar;
   }
 
   .tasks-list__group {
