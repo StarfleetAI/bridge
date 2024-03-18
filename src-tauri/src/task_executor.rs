@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 use anyhow::{anyhow, Context};
+use serde_json::json;
 use tauri::{AppHandle, Manager, State};
 use tokio::spawn;
 use tokio::sync::RwLock;
@@ -11,8 +12,9 @@ use tokio::time::sleep;
 use tracing::{debug, error, info, instrument, trace};
 
 use crate::clients::openai::ToolCall;
+use crate::repo::abilities::Ability;
 use crate::repo::chats::{Chat, Kind};
-use crate::repo::messages::{Message, Role};
+use crate::repo::messages::{CreateParams, Message, Role};
 use crate::repo::tasks::{Status, Task};
 use crate::repo::{self};
 use crate::settings::Settings;
@@ -154,7 +156,26 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                             return Ok(new_status);
                         }
                     }
-                    None => return Ok(Status::WaitingForUser),
+                    None => {
+                        // TODO: it's better to send a task and a last message to a "router" LLM
+                        //       call to get a response with a function call
+                        repo::messages::create(
+                            &*pool,
+                            CreateParams {
+                                chat_id: chat.id,
+                                role: Role::User,
+                                status: repo::messages::Status::Completed,
+                                content: Some(
+                                    "Respond only with a tool call according to a situation"
+                                        .to_string(),
+                                ),
+                                ..Default::default()
+                            },
+                        )
+                        .await?;
+
+                        send_to_agent(chat.id, app_handle, task).await?;
+                    }
                 },
                 Role::System => {
                     return Err(anyhow!("unexpected system message in the execution chat").into());
@@ -175,29 +196,41 @@ async fn call_tools(
     app_handle: &AppHandle,
     tool_calls: &str,
 ) -> Result<Option<Status>> {
-    let _tool_calls: Vec<ToolCall> =
-        serde_json::from_str(tool_calls).context("Failed to parse tool calls")?;
+    let mut new_status = None;
+    let tool_calls: Vec<ToolCall> =
+        serde_json::from_str(tool_calls).context("failed to parse tool calls")?;
 
-    // TODO: 2. Detect any internal function calls
+    // Call task management tools
+    for tool_call in tool_calls {
+        new_status = match tool_call.function.name.as_str() {
+            "sfai_done" => Some(Status::Done),
+            "sfai_fail" => Some(Status::Failed),
+            "sfai_wait_for_user" => Some(Status::WaitingForUser),
+            _ => None,
+        }
+    }
 
-    // 3. Call external tools
-    // TODO: (if any)
+    // Call other tools
     crate::abilities::execute_for_message(message, app_handle).await?;
 
-    Ok(None)
+    Ok(new_status)
 }
+
+const BRIDGE_AGENT_PROMPT: &str =
+    "Call `sfai_done` once you think you've completed the task, `sfai_fail` if you think the task is not possible to complete, or `sfai_wait_for_user` if you need more information from the user.";
 
 #[instrument(skip(task, app_handle))]
 async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Result<()> {
-    // TODO: use the virtual abilities (the internal ones).
     let pool: State<'_, DbPool> = app_handle.state();
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
+
+    let system_prompt = format!("{}\n\n---\n\n{}", agent.system_message, BRIDGE_AGENT_PROMPT);
 
     let messages = vec![
         Message {
             chat_id,
             role: Role::System,
-            content: Some(agent.system_message),
+            content: Some(system_prompt),
             ..Default::default()
         },
         Message {
@@ -208,7 +241,42 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
         },
     ];
 
-    let abilities = vec![];
+    // TODO: it's inefficient to use `Ability` here, since we're serializing parameters to JSON
+    //       only to deserialize them back in `chats::get_completion`. Consider using [`Tool`]
+    //       instead.
+    //
+    // TODO: It's also slightly inefficient to create these abilities on every iteration.
+    //       Consider caching them or something.
+    //
+    // TODO: `description` is not sent to the OpenAI right now.
+    let abilities = vec![
+        Ability::for_fn(
+            "Mark task as Done",
+            "Mark current task as done",
+            &json!({
+                "name": "sfai_done",
+                "description": "Mark current task as done."
+            }),
+        ),
+        Ability::for_fn(
+            "Mark task as Failed",
+            "Mark current task as failed",
+            &json!({
+                "name": "sfai_fail",
+                "description": "Mark current task as failed."
+            }),
+        ),
+        Ability::for_fn(
+            "Wait for user",
+            "Wait for user input",
+            &json!({
+                "name": "sfai_wait_for_user",
+                "description": "Wait for user input."
+            }),
+        ),
+    ];
+
+    // {"name":"read_file","parameters":{"type":"object","properties":{"file_name":{"type":"string","description":"File name to read"}}}}
 
     chats::get_completion(chat_id, app_handle, Some(messages), Some(abilities)).await?;
 

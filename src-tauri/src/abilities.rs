@@ -67,6 +67,11 @@ pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> R
 
     let mut handles = Vec::with_capacity(tool_calls.len());
     for tool_call in tool_calls {
+        // Skip internal tool calls
+        if tool_call.function.name.starts_with("sfai_") {
+            continue;
+        }
+
         let abilities = abilities.clone();
         let app_local_data_dir = app_local_data_dir.clone();
         let msg = message.clone();

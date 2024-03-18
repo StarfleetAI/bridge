@@ -4,11 +4,12 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, query, query_as, Sqlite};
+use serde_json::Value;
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Ability {
     pub id: i64,
     pub name: String,
@@ -17,6 +18,25 @@ pub struct Ability {
     pub parameters_json: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+impl Ability {
+    /// Constructs virtual ability for a function.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `parameters_json` cannot be serialized.
+    #[must_use]
+    pub fn for_fn(name: &str, description: &str, parameters_json: &Value) -> Self {
+        Self {
+            name: name.to_string(),
+            description: description.to_string(),
+            parameters_json: serde_json::to_string(&parameters_json)
+                .expect("failed to serialize parameters_json"),
+
+            ..Default::default()
+        }
+    }
 }
 
 pub struct CreateParams {

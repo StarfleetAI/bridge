@@ -29,7 +29,7 @@ const DONE_CHUNK: &str = "data: [DONE]";
 
 /// Does the whole chat completion routine.
 // TODO: refactor this function.
-#[instrument(skip(app_handle, messages_pre))]
+#[instrument(skip(app_handle, messages_pre, abilities))]
 #[allow(clippy::too_many_lines)]
 pub async fn get_completion(
     chat_id: i64,
@@ -203,7 +203,8 @@ pub async fn get_completion(
                 };
             } else {
                 match apply_completion_chunk(&mut message, chunk) {
-                    Err(errors::Error::Messages(messages::Error::ChunkDeserialization(_))) => {
+                    Err(errors::Error::Messages(messages::Error::ChunkDeserialization(_) |
+messages::Error::NoValidChunkPrefix)) => {
                         debug!("Error parsing chunk, might be incomplete, pushing to remainder");
                         chunk_remainder = chunk.to_string();
                     }
@@ -259,7 +260,7 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
         chunk
             .trim()
             .strip_prefix("data: ")
-            .context(format!("Failed to strip prefix for chunk: {chunk}"))?,
+            .ok_or(messages::Error::NoValidChunkPrefix)?,
     )
     .map_err(messages::Error::ChunkDeserialization)?;
 
