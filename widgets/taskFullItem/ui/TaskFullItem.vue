@@ -214,9 +214,9 @@
     height: 100%;
 
     &__head {
-      height: 57px;
+      height: 56px;
       padding: 12px 24px;
-      border-bottom: 1px solid var(--border-3);
+      border-bottom: 0.5px solid var(--border-3);
 
       @include flex(row, space-between, center);
     }

@@ -134,19 +134,19 @@
     }
 
     &.medium {
-      padding: 8px 10px;
+      padding: 6px 10px;
 
       @include font-inter-500(14px, 20px, var(--text-on-button));
     }
 
     &.small {
-      padding: 6px 8px;
+      padding: 4px 8px;
 
       @include font-inter-500(14px, 20px, var(--text-on-button));
     }
 
     &.xsmall {
-      padding: 4.5px 8px;
+      padding: 4px 8px;
 
       @include font-inter-400(12px, 17px, var(--text-on-button));
     }

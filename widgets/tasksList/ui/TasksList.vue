@@ -31,6 +31,8 @@
         <BaseButton
           :disabled="isCreateTask"
           size="medium"
+          color="blue"
+          type="solid"
           class="task-list__create"
           @click="enableCreateTask"
         >
@@ -72,8 +74,9 @@
   }
 
   .tasks-list__header {
+    height: 56px;
     padding: 12px 24px;
-    border-bottom: 1px solid var(--border-3);
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, flex-start, stretch);
   }
