@@ -37,13 +37,18 @@
       </div>
       <div class="agent-full-item__info">by Alex Johnson • installed 4,322 times</div>
       <div class="agent-full-item__buttons">
-        <BaseButton class="agent-full-item__button install">
+        <BaseButton
+          size="large"
+          class="agent-full-item__button install"
+        >
           <template #icon>
             <DownloadIcon />
           </template>
           Install
         </BaseButton>
         <BaseButton
+          size="large"
+          color="gray"
           class="agent-full-item__button chat"
           @click="navigateTo({ name: 'chats', query: { agent: agent.id } })"
         >

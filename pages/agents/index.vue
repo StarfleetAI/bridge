@@ -4,6 +4,7 @@
 <script lang="ts" setup>
   import { AgentsList } from '~/widgets/agentsList'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
+  import { SearchField } from '~/shared/ui'
   import { BaseContainer, BaseButton } from '~/shared/ui/base'
   import { LibraryIcon, PlusIcon } from '~/shared/ui/icons'
   import { ToggleSwitch } from '~/shared/ui/toggle-switch'
@@ -15,7 +16,7 @@
   const entity = ref('agents')
 
   const { agents } = storeToRefs(useAgentsStore())
-
+  const searchInput = ref('')
   const { isCreateAgent, enableCreateAgent, selectedAgent } = useAgentsNavigation()
 
   const AgentFullItem = defineAsyncComponent(async () => {
@@ -51,6 +52,7 @@
           <ToggleSwitch
             v-model="entity"
             readonly
+            class="agent-list__entity-switch"
           >
             <template #option-agents>
               <div @click="() => navigateTo('/agents')">Agents</div>
@@ -59,9 +61,15 @@
               <div @click="() => navigateTo('/agents/abilities')">Abilities</div>
             </template>
           </ToggleSwitch>
+          <SearchField
+            v-model="searchInput"
+            placeholder="Search Agent"
+            class="agents-list__search"
+          />
           <BaseButton
             :disabled="isCreateAgent"
             size="medium"
+            color="blue"
             class="agents-list__create"
             @click="createHandle"
           >
@@ -102,11 +110,12 @@
   }
 
   .main-content__header {
+    position: relative;
     height: 56px;
-    padding: 12px 24px 0;
+    padding: 3px 24px 0;
     border-bottom: 0.5px solid var(--border-3);
 
-    @include flex(row, space-between, center);
+    @include flex(row, flex-start, center);
   }
 
   .list-title {
@@ -122,6 +131,17 @@
   }
 
   .agents-list__create {
-    margin-top: -10px;
+    position: absolute;
+    top: 10px;
+    right: 24px;
+  }
+
+  .agents-list__search {
+    width: 250px;
+    margin: 0 0 5px 10px;
+  }
+
+  .agent-list__entity-switch {
+    margin-bottom: -7px;
   }
 </style>

@@ -29,7 +29,7 @@
       <div class="agent-form__title">Create Document</div>
       <div class="agent-form__actions">
         <BaseButton
-          type="secondary"
+          color="blue"
           :disabled="!saveIsEnabled"
           @click="handleSaveDocument"
         >
