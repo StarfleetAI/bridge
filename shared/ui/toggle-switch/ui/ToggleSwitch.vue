@@ -48,7 +48,7 @@
     & > div {
       gap: 8px;
       padding: 8px 8px 16px;
-      border-bottom: 1px solid transparent;
+      border-bottom: 0.5px solid transparent;
 
       div {
         color: var(--text-tertiary);
@@ -59,7 +59,7 @@
       }
 
       &.active {
-        border-bottom: 1px solid var(--text-primary);
+        border-bottom: 0.5px solid var(--text-primary);
         color: var(--text-primary);
 
         svg {

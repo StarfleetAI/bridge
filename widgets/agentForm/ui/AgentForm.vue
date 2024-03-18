@@ -46,7 +46,7 @@
       <div class="agent-form__title">Create Agent</div>
       <div class="agent-form__actions">
         <BaseButton
-          type="secondary"
+          color="blue"
           :disabled="!saveIsEnabled"
           @click="handleSaveAgent"
         >
@@ -162,8 +162,8 @@
   }
 
   .agent-form__header {
-    padding: 12px 24px;
-    border-bottom: 1px solid var(--border-3);
+    padding: 10px 24px 9.5px;
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, space-between, center);
   }
@@ -178,7 +178,7 @@
 
   .agent-form__body {
     padding: 26px 24px;
-    border-bottom: 1px solid var(--border-3);
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(column, $gap: 24px);
   }
