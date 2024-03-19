@@ -24,7 +24,6 @@
   const handleSave = () => {
     updateSettings({
       api_keys: changedSettings.value.api_keys,
-      python_path: changedSettings.value.python_path,
       agents: changedSettings.value.agents,
       default_model: changedSettings.value.default_model,
     })
@@ -47,12 +46,6 @@
       v-model.trim="changedSettings.api_keys[provider]"
       :name="`${provider} API Key`"
       :description="`Your ${provider} API Key`"
-    />
-
-    <FormField
-      v-model.trim="changedSettings.python_path"
-      name="Python Path"
-      description="The path to your Python interpreter"
     />
     <div class="select-field">
       <div class="select-field__info">

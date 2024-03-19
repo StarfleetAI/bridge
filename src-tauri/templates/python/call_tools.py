@@ -4,8 +4,6 @@
 import json
 from typing import Annotated, Callable, Dict, Any, get_origin, get_args
 
-PYTHON_PATH = '{{ python_path }}'
-
 {{ code }}
 
 tool_call = {{ tool_call }}

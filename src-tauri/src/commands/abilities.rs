@@ -7,14 +7,13 @@ use anyhow::Context;
 use askama::Template;
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use tokio::{process::Command, sync::RwLock};
 use tracing::debug;
 
 use crate::{
     clients::openai::{Function, Tool},
+    docker,
     errors::Error,
     repo::{self, abilities::Ability},
-    settings::Settings,
     types::{DbPool, Result},
 };
 
@@ -56,22 +55,21 @@ struct GetFunctionDefinitionTemplate<'a> {
 ///
 /// Returns error if there was a problem when determining function parameters.
 // TODO: work correctly if there are imports in the code
-pub async fn get_function_definition(code: &str, python_path: &str) -> Result<Function> {
+pub async fn get_function_definition(code: &str) -> Result<Function> {
     let template = GetFunctionDefinitionTemplate { code };
-    let output = Command::new(python_path)
-        .arg("-c")
-        .arg(
-            template
-                .render()
-                .context("Failed to render `get_function_definition` script")?,
-        )
-        .output()
-        .await
-        .with_context(|| "Failed to execute python script")?;
+
+    // TODO: seems a little bit inefficient to run a container only to get a function definition.
+    //       Consider using some Python parser library to get type hints on a Rust side.
+    let output = docker::run_python_code(
+        &template
+            .render()
+            .context("Failed to render `get_function_definition` script")?,
+    )
+    .await?;
 
     debug!("Function definition script output: {:?}", output);
 
-    let tool: Tool = serde_json::from_slice(&output.stdout)
+    let tool: Tool = serde_json::from_str(&output)
         .with_context(|| "Failed to parse function definition script output")?;
 
     Ok(tool.function)
@@ -81,10 +79,12 @@ pub async fn get_function_definition(code: &str, python_path: &str) -> Result<Fu
 /// from each line.
 fn preprocess_code(code: &str) -> String {
     let mut result = String::new();
+
     for line in code.lines() {
         result.push_str(line.trim_end());
         result.push('\n');
     }
+
     result.trim().to_string()
 }
 
@@ -107,20 +107,12 @@ pub async fn list_abilities(pool: State<'_, DbPool>) -> Result<AbilitiesList> {
 ///
 /// Returns error if there was a problem while inserting new ability.
 #[tauri::command]
-pub async fn create_ability(
-    request: CreateAbility,
-    pool: State<'_, DbPool>,
-    settings: State<'_, RwLock<Settings>>,
-) -> Result<Ability> {
+pub async fn create_ability(request: CreateAbility, pool: State<'_, DbPool>) -> Result<Ability> {
     let code = preprocess_code(&request.code);
 
-    let settings_guard = settings.read().await;
-    let params = match &settings_guard.python_path {
-        Some(path) => get_function_definition(&code, path)
-            .await
-            .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
-        None => return Err(anyhow::anyhow!("Python path is not set").into()),
-    };
+    let params = get_function_definition(&code)
+        .await
+        .with_context(|| format!("Failed to get function parameters for code: {code}"))?;
 
     let params_json = serde_json::to_string(&params)
         .with_context(|| "Failed to serialize function parameters to json")?;
@@ -146,20 +138,12 @@ pub async fn create_ability(
 /// Returns error if ability with given id does not exist or there was an error
 /// while accessing database.
 #[tauri::command]
-pub async fn update_ability(
-    request: UpdateAbility,
-    pool: State<'_, DbPool>,
-    settings: State<'_, RwLock<Settings>>,
-) -> Result<Ability> {
+pub async fn update_ability(request: UpdateAbility, pool: State<'_, DbPool>) -> Result<Ability> {
     let code = preprocess_code(&request.code);
 
-    let settings_guard = settings.read().await;
-    let params = match &settings_guard.python_path {
-        Some(path) => get_function_definition(&code, path)
-            .await
-            .with_context(|| format!("Failed to get function parameters for code: {code}"))?,
-        None => return Err(anyhow::anyhow!("Python path is not set").into()),
-    };
+    let params = get_function_definition(&code)
+        .await
+        .with_context(|| format!("Failed to get function parameters for code: {code}"))?;
 
     let params_json = serde_json::to_string(&params)
         .with_context(|| "Failed to serialize function parameters to json")?;
