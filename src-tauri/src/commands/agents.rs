@@ -25,6 +25,7 @@ pub struct Agent {
     pub description: String,
     pub system_message: String,
     pub ability_ids: Vec<i64>,
+    pub is_enabled: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -79,6 +80,7 @@ pub async fn list_agents(pool: State<'_, DbPool>) -> Result<AgentsList> {
             name: row.name,
             description: row.description,
             system_message: row.system_message,
+            is_enabled: row.is_enabled,
             ability_ids: abilities.get(&row.id).unwrap_or(&Vec::new()).clone(),
             created_at: row.created_at,
             updated_at: row.updated_at,
@@ -124,9 +126,24 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
         description: agent.description,
         system_message: agent.system_message,
         ability_ids: request.ability_ids,
+        is_enabled: agent.is_enabled,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })
+}
+
+/// Update `is_enabled` field for agent by id.
+///
+/// # Errors
+///
+/// Returns error if any error occurs while accessing database.
+#[tauri::command]
+pub async fn update_agent_is_enabled(
+    id: i64,
+    is_enabled: bool,
+    pool: State<'_, DbPool>,
+) -> Result<()> {
+    repo::agents::update_is_enabled(&*pool, id, is_enabled).await
 }
 
 /// Update agent by id.
@@ -169,6 +186,7 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
         description: agent.description,
         system_message: agent.system_message,
         ability_ids: request.ability_ids,
+        is_enabled: agent.is_enabled,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })

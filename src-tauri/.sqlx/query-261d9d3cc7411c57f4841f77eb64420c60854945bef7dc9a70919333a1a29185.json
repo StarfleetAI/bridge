@@ -32,12 +32,18 @@
         "name": "updated_at",
         "ordinal": 5,
         "type_info": "Datetime"
+      },
+      {
+        "name": "is_enabled",
+        "ordinal": 6,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Right": 4
     },
     "nullable": [
+      false,
       false,
       false,
       false,

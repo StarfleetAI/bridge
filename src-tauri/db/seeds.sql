@@ -1,6 +1,17 @@
 -- Copyright 2024 StarfleetAI
 -- SPDX-License-Identifier: Apache-2.0
 
+INSERT INTO agents (
+    id, name, description, system_message, is_enabled, created_at, updated_at
+) VALUES
+    (1, 'Bridge', 'Your helpful assistant', 'You are an assistant for the "Bridge" - autonomous AI agents IDE, developed by StarfleetAI. Your role is to help user with his tasks.', 1, '2024-03-19T04:20:00.230289+00:00', '2024-03-19T04:20:00.230289+00:00')
+ON CONFLICT (id) DO UPDATE SET
+    name = excluded.name,
+    description = excluded.description,
+    system_message = excluded.system_message,
+    is_enabled = excluded.is_enabled,
+    updated_at = '2024-03-19T04:20:00.230289+00:00';
+
 INSERT INTO models (
     provider, name, context_length, max_tokens,
     text_in, text_out, image_in, image_out, audio_in, audio_out, function_calling,
