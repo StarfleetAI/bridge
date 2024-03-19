@@ -5,12 +5,20 @@ import { useRouteQuery } from '@vueuse/router'
 
 export const useAbilitiesNavigation = () => {
   const isCreateAbility = useRouteQuery('create', 'false', { transform: (value: 'false' | 'true') => value === 'true' })
+  const isEditAbility = useRouteQuery('edit', 'false', { transform: (value: 'false' | 'true') => value === 'true' })
   const enableCreateAbility = () => {
     isCreateAbility.value = true
+    isEditAbility.value = false
     selectedAbility.value = null
+  }
+
+  const enableEditAbility = () => {
+    isCreateAbility.value = false
+    isEditAbility.value = true
   }
   const disableCreateAbility = () => {
     isCreateAbility.value = false
+    isEditAbility.value = false
     selectedAbility.value = null
   }
 
@@ -26,10 +34,12 @@ export const useAbilitiesNavigation = () => {
 
   return {
     isCreateAbility: readonly(isCreateAbility),
+    isEditAbility: readonly(isEditAbility),
     enableCreateAbility,
     disableCreateAbility,
     selectedAbility: readonly(selectedAbility),
     setSelectedAbility,
     enableCreateAbilityState,
+    enableEditAbility,
   }
 }

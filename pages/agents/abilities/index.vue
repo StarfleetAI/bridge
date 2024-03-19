@@ -17,7 +17,7 @@
 
   const { abilities } = storeToRefs(useAbilitiesStore())
   const searchInput = ref('')
-  const { isCreateAbility, enableCreateAbility, selectedAbility } = useAbilitiesNavigation()
+  const { isCreateAbility, enableCreateAbility, isEditAbility, selectedAbility } = useAbilitiesNavigation()
 
   const AbilityFullItem = defineAsyncComponent(async () => {
     const module = await import('~/widgets/abilityFullItem')
@@ -31,6 +31,9 @@
 
   const sideContentComponent = computed(() => {
     if (isCreateAbility.value) {
+      return AbilityForm
+    }
+    if (isEditAbility.value) {
       return AbilityForm
     }
     if (selectedAbility.value) {
