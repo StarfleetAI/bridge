@@ -15,11 +15,13 @@ pub enum Error {
     TokioJoin(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
-    Executor(#[from] crate::task_executor::Error),
+    Docker(#[from] crate::docker::Error),
     #[error(transparent)]
     Messages(#[from] crate::messages::Error),
     #[error(transparent)]
     Settings(#[from] crate::settings::Error),
+    #[error(transparent)]
+    Executor(#[from] crate::task_executor::Error),
 
     #[error("ability is used by agents")]
     AbilityIsUsedByAgents,
