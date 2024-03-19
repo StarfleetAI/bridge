@@ -17,7 +17,7 @@
 
   const { agents } = storeToRefs(useAgentsStore())
   const searchInput = ref('')
-  const { isCreateAgent, enableCreateAgent, selectedAgent } = useAgentsNavigation()
+  const { isCreateAgent, enableCreateAgent, isEditAgent, selectedAgent } = useAgentsNavigation()
 
   const AgentFullItem = defineAsyncComponent(async () => {
     const module = await import('~/widgets/agentFullItem')
@@ -31,6 +31,9 @@
 
   const sideContentComponent = computed(() => {
     if (isCreateAgent.value) {
+      return AgentForm
+    }
+    if (isEditAgent.value) {
       return AgentForm
     }
     if (selectedAgent.value) {
