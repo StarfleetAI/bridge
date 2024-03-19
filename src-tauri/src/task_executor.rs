@@ -14,7 +14,7 @@ use tracing::{debug, error, info, instrument, trace};
 use crate::clients::openai::ToolCall;
 use crate::repo::abilities::Ability;
 use crate::repo::chats::{Chat, Kind};
-use crate::repo::messages::{CreateParams, Message, Role};
+use crate::repo::messages::{self, CreateParams, Message, Role};
 use crate::repo::tasks::{Status, Task};
 use crate::repo::{self};
 use crate::settings::Settings;
@@ -159,7 +159,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                     None => {
                         // TODO: it's better to send a task and a last message to a "router" LLM
                         //       call to get a response with a function call
-                        repo::messages::create(
+                        let message = repo::messages::create(
                             &*pool,
                             CreateParams {
                                 chat_id: chat.id,
@@ -173,6 +173,10 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                             },
                         )
                         .await?;
+
+                        window
+                            .emit_all("messages:created", &message)
+                            .context("Failed to emit event")?;
 
                         send_to_agent(chat.id, app_handle, task).await?;
                     }
@@ -197,6 +201,9 @@ async fn call_tools(
     tool_calls: &str,
 ) -> Result<Option<Status>> {
     let mut new_status = None;
+
+    complete_message(message, app_handle).await?;
+
     let tool_calls: Vec<ToolCall> =
         serde_json::from_str(tool_calls).context("failed to parse tool calls")?;
 
@@ -214,6 +221,24 @@ async fn call_tools(
     crate::abilities::execute_for_message(message, app_handle).await?;
 
     Ok(new_status)
+}
+
+async fn complete_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
+    let pool: State<'_, DbPool> = app_handle.state();
+    let window = app_handle
+        .get_window("main")
+        .context("Failed to get main window")?;
+
+    repo::messages::update_status(&*pool, message.id, messages::Status::Completed).await?;
+
+    let mut message = message.clone();
+    message.status = messages::Status::Completed;
+
+    window
+        .emit_all("messages:updated", &message)
+        .context("Failed to emit event")?;
+
+    Ok(())
 }
 
 const BRIDGE_AGENT_PROMPT: &str =
@@ -275,8 +300,6 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
             }),
         ),
     ];
-
-    // {"name":"read_file","parameters":{"type":"object","properties":{"file_name":{"type":"string","description":"File name to read"}}}}
 
     chats::get_completion(chat_id, app_handle, Some(messages), Some(abilities)).await?;
 

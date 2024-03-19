@@ -3,7 +3,7 @@
 
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
-use sqlx::{Executor, query, query_as, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
@@ -12,6 +12,7 @@ pub struct Agent {
     pub name: String,
     pub description: String,
     pub system_message: String,
+    pub is_enabled: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -151,7 +152,9 @@ where
         UPDATE agents
         SET name = $2, description = $3, system_message = $4, updated_at = $5
         WHERE id = $1
-        RETURNING id as "id!", name, description, system_message, created_at, updated_at
+        RETURNING
+            id as "id!", name, description, system_message, created_at, updated_at,
+            is_enabled
         "#,
         params.id,
         params.name,
@@ -164,6 +167,28 @@ where
     .with_context(|| "Failed to update agent")?;
 
     Ok(agent)
+}
+
+/// Update `is_enabled` field for agent by id.
+///
+/// # Errors
+///
+/// Returns error if agent with given id does not exist.
+/// Returns error if any error occurs while accessing database.
+pub async fn update_is_enabled<'a, E>(executor: E, id: i64, is_enabled: bool) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!(
+        "UPDATE agents SET is_enabled = $1 WHERE id = $2",
+        is_enabled,
+        id
+    )
+    .execute(executor)
+    .await
+    .with_context(|| "Failed to update agent is_enabled")?;
+
+    Ok(())
 }
 
 /// Delete agent.
