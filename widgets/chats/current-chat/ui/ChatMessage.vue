@@ -101,7 +101,7 @@
   })
   watch(
     () => props.message,
-    async (newVal) => {
+    async () => {
       await nextTick()
       parseAndHighlightContent()
     },
