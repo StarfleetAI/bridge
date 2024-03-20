@@ -76,6 +76,9 @@
   const messageRef = ref<HTMLDivElement>()
 
   const parseAndHighlightContent = () => {
+    messageRef.value?.querySelectorAll('a').forEach((el) => {
+      el.setAttribute('target', '_blank')
+    })
     messageRef.value?.querySelectorAll('pre code').forEach((el) => {
       if (el.getAttribute('data-highlighted') !== 'yes') {
         // add data-language attribute to show it in the highlighter
