@@ -6,6 +6,7 @@ import {
   deleteAgent as deleteAgentReq,
   createAgent as createAgentReq,
   updateAgent as updateAgentReq,
+  enableAgent as enableAgentReq,
 } from '../api'
 import { type CreateAgent, type UpdateAgent } from '../model'
 
@@ -28,6 +29,14 @@ export const useAgentsStore = defineStore('agents', () => {
   const createAgent = async (request: CreateAgent) => {
     const created = await createAgentReq(request)
     agents.value.push(created)
+  }
+
+  const enableAgent = async (id: number, isEnabled: boolean) => {
+    const updated = await enableAgentReq(id, isEnabled)
+    const index = agents.value.findIndex((a) => a.id === updated.id)
+    if (index !== undefined && index !== -1) {
+      agents.value.splice(index, 1, updated)
+    }
   }
 
   const updateAgent = async (request: UpdateAgent) => {
@@ -55,6 +64,7 @@ export const useAgentsStore = defineStore('agents', () => {
     getById,
     listAgents,
     createAgent,
+    enableAgent,
     updateAgent,
     deleteAgent,
     $reset,

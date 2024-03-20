@@ -4,12 +4,18 @@
 <script setup lang="ts">
   import { Switch } from '~/shared/ui/switch'
   import type { Agent } from '../model'
-
-  defineProps<{
+  const props = defineProps<{
     agent: Agent
   }>()
 
-  const active = ref(true)
+  const active = ref(props.agent.is_enabled)
+  const emits = defineEmits<{
+    (event: 'toggleEnable', value: boolean): void
+  }>()
+  watch(active, (value) => {
+    active.value = value
+    emits('toggleEnable', value)
+  })
 </script>
 <template>
   <div
@@ -27,6 +33,7 @@
       <Switch
         v-model="active"
         class="agents-list-item__switch"
+        @click="(event: Event) => event.stopPropagation()"
       />
     </div>
   </div>
