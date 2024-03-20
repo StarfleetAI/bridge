@@ -36,6 +36,7 @@ pub struct UpdateTask {
     pub id: i64,
     pub title: String,
     pub summary: String,
+    pub agent_id: i64,
 }
 
 /// Cancel task by id.
@@ -190,6 +191,7 @@ pub async fn update_task(request: UpdateTask, pool: State<'_, DbPool>) -> Result
             id: request.id,
             title: &request.title,
             summary: &request.summary,
+            agent_id: request.agent_id,
         },
     )
     .await?;
@@ -199,4 +201,26 @@ pub async fn update_task(request: UpdateTask, pool: State<'_, DbPool>) -> Result
         .with_context(|| "Failed to commit transaction")?;
 
     Ok(task)
+}
+
+/// Duplicate task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist.
+#[tauri::command]
+pub async fn duplicate_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let task = repo::tasks::get(&*pool, id).await?;
+    repo::tasks::create(
+        &*pool,
+        CreateParams {
+            status: Status::Draft,
+            agent_id: task.agent_id,
+            origin_chat_id: task.origin_chat_id,
+            title: &task.title,
+            summary: &task.summary,
+            ancestry: task.ancestry.as_deref(),
+        },
+    )
+    .await
 }

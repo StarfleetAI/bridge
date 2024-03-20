@@ -43,6 +43,7 @@
   })
 
   const statusToKebab = computed(() => useChangeCase(props.status, 'paramCase').value)
+  const statusToNormal = computed(() => useChangeCase(props.status, 'sentenceCase').value)
   const showComplete = computed(() => {
     return typeof props.complete === 'number' && typeof props.total === 'number'
   })
@@ -53,8 +54,9 @@
     <span
       v-if="!iconOnly"
       class="task-status__label"
-      >{{ props.status }}</span
     >
+      {{ statusToNormal }}
+    </span>
     <span
       v-if="showComplete"
       class="task-status__complete"

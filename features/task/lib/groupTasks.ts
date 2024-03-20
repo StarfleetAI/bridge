@@ -33,6 +33,7 @@ export const groupTasks = (tasks: Task[]): GroupedTasks => {
     const statusGroup = getStatusGroup(task.status)
     groupedTasks[statusGroup].push(task)
   })
+  // remove empty groups
 
   return groupedTasks
 }

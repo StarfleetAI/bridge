@@ -9,8 +9,10 @@
   import { useChatsStore, useMessagesStore } from '~/features/chats'
   import { useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
+  import { Status } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
 
+  import { ChatInput } from '~/shared/ui/base'
   import LogItem from './LogItem.vue'
 
   const copyButtonPlugin = new CopyButtonPlugin()
@@ -28,6 +30,14 @@
     await listMessages(chatId.value)
   }
 
+  watch(chatId, async (newVal) => {
+    if (newVal) {
+      await listMessages(newVal)
+      await nextTick()
+      scrollMessagesListToBottom()
+    }
+  })
+  const { createMessage } = useMessagesStore()
   const { messages } = storeToRefs(useMessagesStore())
   const { getById: getChatById } = useChatsStore()
   const { agents } = storeToRefs(useAgentsStore())
@@ -47,8 +57,9 @@
 
   watch(
     () => messages.value,
-    () => {
+    async () => {
       if (messagesListRef.value && !isScrolling.value && arrivedState.bottom) {
+        await nextTick()
         scrollMessagesListToBottom()
       }
     },
@@ -98,39 +109,81 @@
       currentAgent.value = structuredClone(toRaw(agent))
     }
   }
+
+  const logsInput = ref('')
+  const isProcessing = computed(() => {
+    if (chatId.value && messages.value[chatId.value]) {
+      return messages.value[chatId.value].at(-1)?.status === Status.WRITING
+    }
+    return false
+  })
+
+  const handleSendMessage = async () => {
+    if (!logsInput.value) {
+      return
+    }
+    createMessage({
+      text: logsInput.value,
+      agent_id: currentAgent.value.id,
+      chat_id: chatId.value,
+      model_full_name: currentChat.value?.model_full_name || null,
+    })
+    logsInput.value = ''
+    nextTick(() => {
+      scrollMessagesListToBottom()
+    })
+  }
 </script>
 
 <template>
-  <div
-    ref="messagesListRef"
-    class="task-logs__messages-wrapper"
-  >
-    <div class="task-logs__messages">
-      <template v-if="currentChatMessages?.length">
-        <LogItem
-          v-for="message in currentChatMessages"
-          :key="message.id"
-          class="message"
-          :message="message"
-        />
-      </template>
-      <div
-        v-else
-        class="tasks-logs__empty"
-      >
-        No logs yet...
+  <div class="task-logs">
+    <div
+      ref="messagesListRef"
+      class="task-logs__messages-wrapper"
+    >
+      <div class="task-logs__messages">
+        <template v-if="currentChatMessages?.length">
+          <LogItem
+            v-for="message in currentChatMessages"
+            :key="message.id"
+            class="message"
+            :message="message"
+          />
+        </template>
+        <div
+          v-else
+          class="tasks-logs__empty"
+        >
+          No logs yet...
+        </div>
       </div>
     </div>
+    <ChatInput
+      v-model="logsInput"
+      :is-processing="isProcessing"
+      :with-files="false"
+      class="task-logs__input"
+      @submit="handleSendMessage"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
+  .task-logs {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 24px;
+
+    @include flex(column, flex-start);
+  }
+
   .task-logs__messages-wrapper {
     flex: 1;
     overflow: auto;
     width: 100%;
     height: 100%;
-    max-height: 545px;
+    max-height: calc(100% - 73px);
     padding: 0 24px;
     padding-bottom: 48px;
     transition: all 0.2s ease;
@@ -147,5 +200,12 @@
 
   .tasks-logs__empty {
     @include font-inter-400(14px, 20px, var(--text-tertiary));
+  }
+
+  .task-logs__input {
+    flex-shrink: 0;
+    max-height: 82px;
+    margin-top: auto;
+    padding: 0 24px;
   }
 </style>

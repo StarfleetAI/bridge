@@ -57,6 +57,7 @@ fn main() -> Result<()> {
             commands::tasks::cancel_task,
             commands::tasks::create_task,
             commands::tasks::delete_task,
+            commands::tasks::duplicate_task,
             commands::tasks::execute_task,
             commands::tasks::get_task,
             commands::tasks::list_child_tasks,

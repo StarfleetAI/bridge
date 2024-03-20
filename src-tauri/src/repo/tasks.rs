@@ -102,6 +102,7 @@ pub struct UpdateParams<'a> {
     pub id: i64,
     pub title: &'a str,
     pub summary: &'a str,
+    pub agent_id: i64,
 }
 
 /// Gets root task for execution.
@@ -385,7 +386,8 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
         SET
             title = COALESCE($1, title),
             summary = COALESCE($2, summary),
-            updated_at = $3
+            updated_at = $3,
+            agent_id = COALESCE($5, agent_id)
         WHERE id = $4
         RETURNING
             id as "id!",
@@ -405,6 +407,7 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
         params.summary,
         now,
         params.id,
+        params.agent_id
     )
     .fetch_one(executor)
     .await

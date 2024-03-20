@@ -11,9 +11,9 @@
   import type { Agent } from '~/entities/agents'
   import { Status, type ChatSettings } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
+  import { ChatInput } from '~/shared/ui/base'
   import ChatGreeting from './ChatGreeting.vue'
   import ChatHeader from './ChatHeader.vue'
-  import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
   import ChatStartPresets from './ChatStartPresets.vue'
 
@@ -176,6 +176,7 @@
     <ChatInput
       v-model="chatInput"
       :is-processing="isProcessing"
+      class="current-chat__input"
       @submit="handleSendMessage"
     />
   </div>
@@ -213,5 +214,11 @@
     }
 
     @include flex(column, space-between, stretch, 64px);
+  }
+
+  .current-chat__input {
+    margin-top: auto;
+    margin-bottom: 32px;
+    padding: 0 24px;
   }
 </style>

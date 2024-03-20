@@ -16,7 +16,7 @@
 <template>
   <ResizableContainer
     direction="top"
-    min-height="120px"
+    min-height="216px"
     max-height="50%"
     class="activity-feed__container"
   >
@@ -77,7 +77,7 @@
   }
 
   .activity-feed__tabs {
-    height: 100%;
-    padding-bottom: 45px;
+    display: flex;
+    height: calc(100% - 45px);
   }
 </style>

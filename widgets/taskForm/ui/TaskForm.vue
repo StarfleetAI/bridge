@@ -4,13 +4,12 @@
 <script lang="ts" setup>
   import { useAgentsStore } from '~/features/agent'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import { AgentSelector } from '~/entities/agents'
   import { TaskInput, TaskStatus, TaskStatusBadge } from '~/entities/tasks'
-  import { AvatarsList } from '~/shared/ui/avatars'
   import { BaseButton } from '~/shared/ui/base'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, CrossIcon, SaveIcon, StarsIcon } from '~/shared/ui/icons'
-
-  const { disableCreateTask } = useTasksNavigation()
+  const { disableCreateTask, setSelectedTask } = useTasksNavigation()
   const { agents } = storeToRefs(useAgentsStore())
   const { listRootTasks, createTask } = useTasksStore()
   const selectedAgent = ref(agents.value[0])
@@ -46,8 +45,9 @@
     finishCreation()
   }
   const handleExecuteTask = async () => {
-    await createTask(getTaskEntity(TaskStatus.TODO))
+    const newTask = await createTask(getTaskEntity(TaskStatus.TODO))
     finishCreation()
+    setSelectedTask(newTask.id)
   }
 
   const finishCreation = () => {
@@ -101,7 +101,10 @@
     <div class="task-form__body">
       <div class="task-form__body-top">
         <TaskStatusBadge :status="TaskStatus.DRAFT" />
-        <AvatarsList :persons="[selectedAgent]" />
+        <AgentSelector
+          v-model="selectedAgent"
+          :agents="agents"
+        />
       </div>
       <div class="task-form__input-container">
         <TaskInput
