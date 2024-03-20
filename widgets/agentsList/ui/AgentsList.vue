@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsNavigation } from '~/features/agent'
+  import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
   import { AgentItem } from '~/entities/agents'
   import type { Agent } from '~/entities/agents'
 
@@ -10,7 +10,12 @@
     agents: Agent[]
   }>()
 
+  const { enableAgent } = useAgentsStore()
+
   const { setSelectedAgent, selectedAgent } = useAgentsNavigation()
+  const setEnableAgent = (id: number, enabled: boolean) => {
+    enableAgent(id, enabled)
+  }
 </script>
 
 <template>
@@ -21,6 +26,7 @@
       :agent="agent"
       :class="{ selected: agent.id === selectedAgent }"
       @click="setSelectedAgent(agent.id)"
+      @toggle-enable="(enabled) => setEnableAgent(agent.id, enabled)"
     />
   </div>
 </template>
