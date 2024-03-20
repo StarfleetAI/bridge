@@ -2,13 +2,16 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAbilitiesStore, useAbilitiesNavigation, createAbility } from '~/features/ability'
+  import { useAbilitiesStore, useAbilitiesNavigation, createAbility, updateAbility } from '~/features/ability'
   import { BaseButton } from '~/shared/ui/base'
   import { CodeInput } from '~/shared/ui/code-input'
   import { CrossIcon, SaveIcon } from '~/shared/ui/icons'
 
-  const { disableCreateAbility } = useAbilitiesNavigation()
+  const { disableCreateAbility, selectedAbility, isEditAbility } = useAbilitiesNavigation()
 
+  const { getById } = useAbilitiesStore()
+
+  const id = ref<number | null>(null)
   const name = ref<string>('')
   const description = ref<string>('')
   const code = ref<string>(`def do_something(
@@ -18,14 +21,34 @@
     # Do the actual job here
     return "Something was successful!"`)
 
+  onMounted(async () => {
+    if (isEditAbility.value) {
+      const ability = await getById(selectedAbility.value!)
+      id.value = ability.id
+      name.value = ability.name
+      description.value = ability.description
+      code.value = ability.code
+    }
+  })
+
   const saveIsEnabled = computed(() => name.value.length > 0)
   const { listAbilities } = useAbilitiesStore()
   const handleSaveAbility = async () => {
-    await createAbility({
-      name: name.value,
-      description: description.value,
-      code: code.value,
-    })
+    if (isEditAbility.value) {
+      await updateAbility({
+        id: id.value !== null ? id.value : 0,
+        name: name.value,
+        description: description.value,
+        code: code.value,
+      })
+    } else {
+      await createAbility({
+        name: name.value,
+        description: description.value,
+        code: code.value,
+      })
+    }
+
     finishCreation()
   }
 
@@ -94,7 +117,7 @@
   }
 
   .ability-form__header {
-    padding: 10px 24px 9.5px;
+    padding: 10px 24px 13.5px;
     border-bottom: 1px solid var(--border-3);
 
     @include flex(row, space-between, center);

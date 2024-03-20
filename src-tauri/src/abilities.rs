@@ -1,29 +1,25 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context};
 use askama::Template;
 use tauri::{AppHandle, Manager, State};
 use tokio::fs::create_dir_all;
-use tokio::process::Command;
-use tokio::sync::RwLock;
 use tokio::{fs, spawn};
 use tracing::{debug, trace};
 
 use crate::clients::openai::ToolCall;
-use crate::repo;
 use crate::repo::abilities::Ability;
 use crate::repo::messages::{CreateParams, Message, Role, Status};
-use crate::settings::Settings;
 use crate::types::{DbPool, Result};
+use crate::{docker, repo};
 
 #[derive(Template)]
 #[template(path = "python/call_tools.py", escape = "none")]
 struct CallToolsTemplate<'a> {
     code: &'a str,
-    python_path: &'a str,
     tool_call: &'a str,
 }
 
@@ -34,7 +30,6 @@ struct CallToolsTemplate<'a> {
 /// Will return an error if there was a problem while executing tool calls.
 pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
     let pool: State<'_, DbPool> = app_handle.state();
-    let settings: State<'_, RwLock<Settings>> = app_handle.state();
 
     let window = app_handle
         .get_window("main")
@@ -53,13 +48,6 @@ pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> R
     let tool_calls: Vec<ToolCall> =
         serde_json::from_str(tool_calls).context("Failed to parse tool calls")?;
 
-    let python_path_string = settings
-        .read()
-        .await
-        .python_path
-        .as_ref()
-        .context("Failed to get python path")?
-        .to_string();
     let app_local_data_dir = app_handle
         .path_resolver()
         .app_local_data_dir()
@@ -76,11 +64,9 @@ pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> R
         let app_local_data_dir = app_local_data_dir.clone();
         let msg = message.clone();
         let tc = tool_call.clone();
-        let python_path_str = python_path_string.clone();
 
         let handle = spawn(async move {
-            let output =
-                execute(&abilities, &app_local_data_dir, &msg, &tc, &python_path_str).await?;
+            let output = execute(&abilities, &app_local_data_dir, &msg, &tc).await?;
             // Wrap output in a code block
             //
             // TODO: This is a temporary solution. It's better to wrap it on before markdown-2-html
@@ -123,15 +109,15 @@ pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> R
 /// Will return an error if the script can't be written, executed or removed.
 pub async fn execute(
     abilities: &[Ability],
-    app_local_data_dir: &PathBuf,
+    app_local_data_dir: &Path,
     message: &Message,
     tool_call: &ToolCall,
-    python_path: &str,
 ) -> Result<String> {
     debug!(
         "Executing tool call `{}` for message `{}`",
         tool_call.id, message.id
     );
+
     // Join the abilities code into one string
     let code = abilities
         .iter()
@@ -161,7 +147,6 @@ pub async fn execute(
     let call_tools_template = CallToolsTemplate {
         code: &code,
         tool_call: &tool_call_string,
-        python_path,
     };
     let content = call_tools_template
         .render()
@@ -172,7 +157,7 @@ pub async fn execute(
 
     // Write script to workdir
     let mut script_path = workdir.clone();
-    script_path.push(script_name);
+    script_path.push(&script_name);
     trace!("Script path: {:?}", script_path);
 
     fs::write(&script_path, content)
@@ -180,25 +165,12 @@ pub async fn execute(
         .with_context(|| "Failed to write script to workdir")?;
 
     // Run script
-    let output = Command::new(python_path)
-        .current_dir(&workdir)
-        .arg(&script_path)
-        .output()
-        .await
-        .with_context(|| "Failed to execute tool_calls script")?;
-
-    trace!("Function call script output: {:?}", output);
-
-    let output = if output.status.success() {
-        String::from_utf8_lossy(&output.stdout)
-    } else {
-        String::from_utf8_lossy(&output.stderr)
-    };
+    let output = docker::run_python_script(&workdir, &script_name).await;
 
     // Delete script
     fs::remove_file(&script_path)
         .await
         .with_context(|| "Failed to remove script from workdir")?;
 
-    Ok(output.to_string())
+    output
 }

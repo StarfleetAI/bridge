@@ -75,31 +75,41 @@
 
   const messageRef = ref<HTMLDivElement>()
 
-  watch(
-    () => [props.message, messageRef.value],
-    () => {
-      if (props.message.content && props.message.status !== Status.WRITING) {
-        messageRef.value?.querySelectorAll('pre code').forEach((el) => {
-          if (el.getAttribute('data-highlighted') !== 'yes') {
-            // add data-language attribute to show it in the highlighter
-            const lang = el.className
-              .split(' ')
-              .find((item) => item.startsWith('language-'))
-              ?.slice(9)
-            if (lang) {
-              if (!hljs.getLanguage(lang)) {
-                el.classList.value = 'language-html'
-              }
-              el.parentElement?.setAttribute('data-language', lang)
-              hljs.highlightElement(el as HTMLElement)
-            }
+  const parseAndHighlightContent = () => {
+    messageRef.value?.querySelectorAll('a').forEach((el) => {
+      el.setAttribute('target', '_blank')
+    })
+    messageRef.value?.querySelectorAll('pre code').forEach((el) => {
+      if (el.getAttribute('data-highlighted') !== 'yes') {
+        // add data-language attribute to show it in the highlighter
+        const lang = el.className
+          .split(' ')
+          .find((item) => item.startsWith('language-'))
+          ?.slice(9)
+
+        if (lang) {
+          if (!hljs.getLanguage(lang)) {
+            el.classList.value = 'language-html'
           }
-        })
+          el.parentElement?.setAttribute('data-language', lang)
+          console.log('highlight', lang)
+
+          hljs.highlightElement(el as HTMLElement)
+        }
       }
+    })
+  }
+  onMounted(() => {
+    parseAndHighlightContent()
+  })
+  watch(
+    () => props.message,
+    async () => {
+      await nextTick()
+      parseAndHighlightContent()
     },
     {
       deep: true,
-      immediate: true,
     },
   )
 
@@ -271,6 +281,7 @@
 
 <style lang="scss" scoped>
   .message {
+    z-index: 2;
     gap: 8px;
 
     &:hover {

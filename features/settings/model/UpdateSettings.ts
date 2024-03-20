@@ -5,7 +5,6 @@ import type { Provider } from '~/shared/model'
 
 export interface UpdateSettings {
   api_keys?: Record<Provider, string>
-  python_path?: string
   agents?: unknown
   default_model: Nullable<string>
 }

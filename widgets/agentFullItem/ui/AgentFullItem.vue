@@ -6,10 +6,10 @@
   import { useAgentsStore, useAgentsNavigation } from '~/features/agent'
   import { type Agent } from '~/entities/agents'
   import { BaseButton } from '~/shared/ui/base'
-  import { AbilityIcon, AgentChatIcon, DownloadIcon } from '~/shared/ui/icons'
+  import { AbilityIcon, AgentChatIcon, EditIcon } from '~/shared/ui/icons'
   import AgentControls from './AgentControls.vue'
 
-  const { selectedAgent } = useAgentsNavigation()
+  const { selectedAgent, enableEditAgent } = useAgentsNavigation()
 
   const { abilities } = storeToRefs(useAbilitiesStore())
 
@@ -37,7 +37,7 @@
       </div>
       <div class="agent-full-item__info">by Alex Johnson • installed 4,322 times</div>
       <div class="agent-full-item__buttons">
-        <BaseButton
+        <!-- <BaseButton
           size="large"
           class="agent-full-item__button install"
         >
@@ -45,6 +45,17 @@
             <DownloadIcon />
           </template>
           Install
+        </BaseButton> -->
+        <BaseButton
+          size="large"
+          color="gray"
+          class="agent-full-item__button install"
+          @click="enableEditAgent()"
+        >
+          <template #icon>
+            <EditIcon />
+          </template>
+          Edit
         </BaseButton>
         <BaseButton
           size="large"

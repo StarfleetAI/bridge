@@ -6,6 +6,7 @@ pub mod chats;
 pub mod clients;
 pub mod commands;
 pub mod database;
+pub mod docker;
 pub mod errors;
 pub mod messages;
 pub mod repo;

@@ -2,32 +2,63 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useAgentsStore, useAgentsNavigation, createAgent } from '~/features/agent'
+  import { useAbilitiesStore } from '~/features/ability'
+  import { useAgentsStore, useAgentsNavigation, createAgent, updateAgent } from '~/features/agent'
   import { type Ability } from '~/entities/abilities'
+  import { type Agent } from '~/entities/agents'
   import { BaseButton } from '~/shared/ui/base'
   import { CrossIcon, SaveIcon, PlusIcon } from '~/shared/ui/icons'
   import { useModalStore } from '~/shared/ui/modal'
   import AbilitiesAddList from './AbilitiesAddList.vue'
 
-  const { disableCreateAgent } = useAgentsNavigation()
+  const { disableCreateAgent, isEditAgent } = useAgentsNavigation()
 
+  const { selectedAgent } = useAgentsNavigation()
+  const { getById } = useAgentsStore()
+  const { abilities } = storeToRefs(useAbilitiesStore())
+
+  const id = ref<number | null>(null)
   const name = ref<string>('')
   const description = ref<string>('')
   const systemMessage = ref<string>('')
+  const addedAbilities = ref<Ability[]>([])
+
+  onMounted(async () => {
+    if (isEditAgent.value) {
+      const agent: Agent | undefined = await getById(selectedAgent.value)
+      if (agent) {
+        id.value = agent.id
+        name.value = agent.name
+        description.value = agent.description
+        systemMessage.value = agent.system_message
+        addedAbilities.value = abilities.value.filter((item) => agent.ability_ids.includes(item.id))
+      }
+    }
+  })
 
   const saveIsEnabled = computed(() => name.value.length > 0)
   const { listAgents } = useAgentsStore()
   const handleSaveAgent = async () => {
-    await createAgent({
-      name: name.value,
-      description: description.value,
-      system_message: systemMessage.value,
-      ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
-    })
+    if (isEditAgent.value) {
+      await updateAgent({
+        id: id.value !== null ? id.value : 0,
+        name: name.value,
+        description: description.value,
+        system_message: systemMessage.value,
+        ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
+      })
+    } else {
+      await createAgent({
+        name: name.value,
+        description: description.value,
+        system_message: systemMessage.value,
+        ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
+      })
+    }
     finishCreation()
   }
   const modalStore = useModalStore()
-  const addedAbilities = ref<Ability[]>([])
+
   const openModal = () => {
     modalStore.showModal(AbilitiesAddList, { modelValue: addedAbilities }, (val: unknown) => {
       addedAbilities.value = val as Ability[]
@@ -43,7 +74,7 @@
 <template>
   <div class="agent-form">
     <div class="agent-form__header">
-      <div class="agent-form__title">Create Agent</div>
+      <div class="agent-form__title">{{ isEditAgent ? 'Edit Agent' : 'Create Agent' }}</div>
       <div class="agent-form__actions">
         <BaseButton
           color="blue"
@@ -162,7 +193,7 @@
   }
 
   .agent-form__header {
-    padding: 10px 24px 9.5px;
+    padding: 10px 24px 13.5px;
     border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, space-between, center);

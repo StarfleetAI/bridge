@@ -32,7 +32,6 @@ impl Default for Tasks {
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub default_model: Option<String>,
-    pub python_path: Option<String>,
     #[serde(default)]
     pub api_keys: BTreeMap<Provider, String>,
     #[serde(default)]

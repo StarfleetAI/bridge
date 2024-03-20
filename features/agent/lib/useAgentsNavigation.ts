@@ -5,12 +5,19 @@ import { useRouteQuery } from '@vueuse/router'
 
 export const useAgentsNavigation = () => {
   const isCreateAgent = useRouteQuery('create', 'false', { transform: (value: 'false' | 'true') => value === 'true' })
+  const isEditAgent = useRouteQuery('edit', 'false', { transform: (value: 'false' | 'true') => value === 'true' })
   const enableCreateAgent = () => {
     isCreateAgent.value = true
+    isEditAgent.value = false
     selectedAgent.value = null
+  }
+  const enableEditAgent = () => {
+    isCreateAgent.value = false
+    isEditAgent.value = true
   }
   const disableCreateAgent = () => {
     isCreateAgent.value = false
+    isEditAgent.value = false
     selectedAgent.value = null
   }
 
@@ -23,7 +30,9 @@ export const useAgentsNavigation = () => {
   }
   return {
     isCreateAgent: readonly(isCreateAgent),
+    isEditAgent: readonly(isEditAgent),
     enableCreateAgent,
+    enableEditAgent,
     disableCreateAgent,
     selectedAgent: readonly(selectedAgent),
     setSelectedAgent,
