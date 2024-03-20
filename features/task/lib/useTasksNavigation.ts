@@ -4,13 +4,13 @@
 import { useRouteQuery } from '@vueuse/router'
 
 export const useTasksNavigation = () => {
-  const isCreateTask = useRouteQuery('create', null, { transform: (value: null | 'true') => value === 'true' || null })
+  const isCreateTask = useRouteQuery('create', 'false', { transform: (value: 'false' | 'true') => value === 'true' })
   const enableCreateTask = () => {
     isCreateTask.value = true
     selectedTask.value = null
   }
   const disableCreateTask = () => {
-    isCreateTask.value = null
+    isCreateTask.value = false
   }
 
   const selectedTask = useRouteQuery('task', '', {

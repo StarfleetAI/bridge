@@ -8,7 +8,6 @@
     defineProps<{
       isProcessing: boolean
       withFiles?: boolean
-      singleLine?: boolean
     }>(),
     {
       withFiles: true,

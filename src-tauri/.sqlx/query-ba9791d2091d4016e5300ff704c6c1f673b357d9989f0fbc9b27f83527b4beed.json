@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        UPDATE tasks\n        SET\n            title = COALESCE($1, title),\n            summary = COALESCE($2, summary),\n            updated_at = $3,\n            agent_id = COALESCE($5, agent_id)\n        WHERE id = $4\n        RETURNING\n            id as \"id!\",\n            agent_id,\n            origin_chat_id,\n            control_chat_id,\n            execution_chat_id,\n            title,\n            summary,\n            status,\n            ancestry,\n            ancestry_level,\n            created_at,\n            updated_at\n        ",
+  "query": "\n        UPDATE tasks\n        SET\n            title = COALESCE($1, title),\n            summary = COALESCE($2, summary),\n            updated_at = $3,\n            agent_id = $5\n        WHERE id = $4\n        RETURNING\n            id as \"id!\",\n            agent_id,\n            origin_chat_id,\n            control_chat_id,\n            execution_chat_id,\n            title,\n            summary,\n            status,\n            ancestry,\n            ancestry_level,\n            created_at,\n            updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -82,5 +82,5 @@
       false
     ]
   },
-  "hash": "85540555937a3c84015d69f7ae858398bafcb139e2cdbc1d3b4c858682bd0e15"
+  "hash": "ba9791d2091d4016e5300ff704c6c1f673b357d9989f0fbc9b27f83527b4beed"
 }

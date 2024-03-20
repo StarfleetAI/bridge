@@ -387,7 +387,7 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
             title = COALESCE($1, title),
             summary = COALESCE($2, summary),
             updated_at = $3,
-            agent_id = COALESCE($5, agent_id)
+            agent_id = $5
         WHERE id = $4
         RETURNING
             id as "id!",
