@@ -36,6 +36,7 @@ fn main() -> Result<()> {
             commands::agents::delete_agent,
             commands::agents::list_agents,
             commands::agents::update_agent,
+            commands::agents::update_agent_is_enabled,
             commands::agents_chats::list_agents_chats,
             commands::chats::update_chat_model_full_name,
             commands::chats::create_chat,
