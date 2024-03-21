@@ -2,7 +2,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useRouteQuery } from '@vueuse/router'
   import { type ChatsGroups, chatsToGroupsByDate, useChatsStore } from '~/features/chats'
   import { updateChatTitle } from '~/features/chats'
   import type { Chat } from '~/entities/chat'
@@ -38,14 +37,10 @@
     }
   }
 
-  const chatId = useRouteQuery('id', '', {
-    transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
-  })
-
   const handleClick = (newId: number) => {
     if (currentChatId.value !== newId) {
-      chatId.value = newId
       chatToEditTitle.value = null
+      navigateTo({ name: 'chats', query: { id: newId } })
     } else {
       chatToEditTitle.value = newId
       setChatToEditTitle(newId)

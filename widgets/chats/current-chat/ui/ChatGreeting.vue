@@ -29,7 +29,7 @@
   const { setIsSettingsOpened } = useChatsNavigation()
   const handleClickAgent = () => {
     setSelectedAgent(props.agent.id)
-    setIsSettingsOpened(null)
+    setIsSettingsOpened(false)
   }
 </script>
 

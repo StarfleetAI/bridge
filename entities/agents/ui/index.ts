@@ -3,3 +3,4 @@
 
 export { default as AgentItem } from './AgentItem.vue'
 export { default as AbilityItem } from './AbilityItem.vue'
+export { default as AgentSelector } from './AgentSelector.vue'

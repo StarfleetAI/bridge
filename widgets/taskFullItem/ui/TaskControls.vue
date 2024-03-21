@@ -9,7 +9,6 @@
   import { KebabIcon, CrossIcon, StarsIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{ task: Task }>()
-  const emits = defineEmits<{ update: [task: Task] }>()
   const { taskActions } = useTaskActions(toRef(() => props.task))
   const { executeTask } = useTasksStore()
   const { setSelectedTask } = useTasksNavigation()
@@ -20,15 +19,12 @@
         navigateTo('/tasks')
       } else if (isDuplicate) {
         setSelectedTask(updatedTask!.id)
-      } else {
-        emits('update', updatedTask!)
       }
     })
   }
 
   const handleExecuteTask = async () => {
-    const updatedTask = await executeTask(props.task.id)
-    emits('update', updatedTask!)
+    await executeTask(props.task.id)
   }
 </script>
 
@@ -56,7 +52,7 @@
           :key="label"
           v-close-popper
           :class="['task-controls__action', { delete: label === 'Delete Task' }]"
-          @click="handleActionClick(action, label === 'Delete Task', label === 'Duplicate Task')"
+          @click="handleActionClick(action, label === 'Delete Task', label === 'Duplicate')"
         >
           <template #icon>
             <component

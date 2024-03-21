@@ -23,7 +23,7 @@ jobs:
         run: pnpm lint
 
       - name: Run TS Check
-        run: pnpm ts-check
+        run: pnpm ts
 
       - name: Run Prettier
         run: pnpm format-check

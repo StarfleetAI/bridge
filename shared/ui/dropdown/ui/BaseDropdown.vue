@@ -8,6 +8,7 @@
   withDefaults(
     defineProps<{
       placement?: Placement
+      disabled?: boolean
     }>(),
     {
       placement: 'bottom-end',
@@ -20,6 +21,7 @@
     :placement="placement"
     class="dropdown-wrapper"
     auto-hide
+    :disabled="disabled"
   >
     <slot />
     <template #popper>

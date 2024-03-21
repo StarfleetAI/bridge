@@ -77,10 +77,14 @@ export const useMessagesStore = defineStore('messages', () => {
 
   const msgCreatedUnlisten = listen<Message>('messages:created', (event) => {
     addMessage(event.payload)
+  }).catch((e) => {
+    console.log(e)
   })
   const msgUpdatedUnlisten = listen<Message>('messages:updated', (event) => {
     const msg = event.payload
     updateMessage(msg)
+  }).catch((e) => {
+    console.log(e)
   })
 
   const $reset = async () => {
