@@ -10,6 +10,7 @@ pub mod agents_chats;
 pub mod chats;
 pub mod messages;
 pub mod models;
+pub mod task_results;
 pub mod tasks;
 
 #[derive(Serialize, Deserialize, Debug)]

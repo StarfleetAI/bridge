@@ -1,7 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::sync::RwLock;
@@ -9,7 +9,7 @@ use tracing::{debug, instrument, trace};
 
 use crate::{
     clients::openai::{
-        Client, CreateChatCompletionRequest, FunctionCall, Tool, ToolCall, ToolType,
+        Client, CreateChatCompletionRequest, Function, FunctionCall, Tool, ToolCall, ToolType,
     },
     errors, messages,
     repo::{
@@ -95,11 +95,15 @@ pub async fn get_completion(
             match abilities
                 .into_iter()
                 .map(
-                    |ability| match serde_json::from_str(&ability.parameters_json) {
-                        Ok(function) => Ok(Tool {
-                            type_: "function".to_string(),
-                            function,
-                        }),
+                    |ability| match serde_json::from_str::<Function>(&ability.parameters_json) {
+                        Ok(mut function) => {
+                            function.description = Some(ability.description);
+
+                            Ok(Tool {
+                                type_: "function".to_string(),
+                                function,
+                            })
+                        }
                         Err(err) => Err(errors::Error::Internal(err.into())),
                     },
                 )
@@ -203,8 +207,10 @@ pub async fn get_completion(
                 };
             } else {
                 match apply_completion_chunk(&mut message, chunk) {
-                    Err(errors::Error::Messages(messages::Error::ChunkDeserialization(_) |
-messages::Error::NoValidChunkPrefix)) => {
+                    Err(errors::Error::Messages(
+                        messages::Error::ChunkDeserialization(_)
+                        | messages::Error::NoValidChunkPrefix,
+                    )) => {
                         debug!("Error parsing chunk, might be incomplete, pushing to remainder");
                         chunk_remainder = chunk.to_string();
                     }
@@ -226,6 +232,12 @@ messages::Error::NoValidChunkPrefix)) => {
                 return Err(err.into());
             };
         }
+    }
+
+    if message.status == Status::Writing {
+        fail_message(&window, &pool, &mut message).await?;
+
+        return Err(anyhow!("Failed to get completion").into());
     }
 
     Ok(())
