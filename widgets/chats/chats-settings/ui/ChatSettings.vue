@@ -54,8 +54,6 @@
   watch(
     () => chat.value,
     () => {
-      console.log(123)
-
       handleChangeChat()
     },
     {
