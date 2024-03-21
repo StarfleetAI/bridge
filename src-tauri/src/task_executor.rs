@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 use anyhow::{anyhow, Context};
+use serde::Deserialize;
 use serde_json::json;
 use tauri::{AppHandle, Manager, State};
 use tokio::spawn;
@@ -11,15 +12,17 @@ use tokio::sync::RwLock;
 use tokio::time::sleep;
 use tracing::{debug, error, info, instrument, trace};
 
+use crate::{chats, errors, utils};
 use crate::clients::openai::ToolCall;
-use crate::repo::abilities::Ability;
-use crate::repo::chats::{Chat, Kind};
-use crate::repo::messages::{self, CreateParams, Message, Role};
-use crate::repo::tasks::{Status, Task};
-use crate::repo::{self};
+use crate::repo::{
+    self,
+    abilities::Ability,
+    chats::{Chat, Kind},
+    messages::{CreateParams, Message, Role},
+    tasks::{Status, Task},
+};
 use crate::settings::Settings;
 use crate::types::{DbPool, Result};
-use crate::{chats, errors};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -63,9 +66,6 @@ pub async fn start_loop(app_handle: AppHandle) {
 
 #[instrument(skip(app_handle))]
 async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
-    let window = app_handle
-        .get_window("main")
-        .context("failed to get main window")?;
     let pool: State<'_, DbPool> = app_handle.state();
 
     let mut task = match get_task_for_execution(&pool, None).await {
@@ -74,9 +74,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
         Err(err) => return Err(err),
     };
 
-    window
-        .emit_all("tasks:updated", &task)
-        .context("Failed to emit event")?;
+    utils::emit_event(app_handle, "tasks:updated", &task)?;
 
     info!("Root task for execution: #{}. {}", task.id, task.title);
 
@@ -89,9 +87,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
             repo::tasks::update_status(&*pool, task.id, status).await?;
 
             task.status = status;
-            window
-                .emit_all("tasks:updated", &task)
-                .context("Failed to emit event")?;
+            utils::emit_event(app_handle, "tasks:updated", &task)?;
 
             Ok(())
         }
@@ -99,9 +95,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
             repo::tasks::fail(&*pool, task.id).await?;
 
             task.status = Status::Failed;
-            window
-                .emit_all("tasks:updated", &task)
-                .context("Failed to emit event")?;
+            utils::emit_event(app_handle, "tasks:updated", &task)?;
 
             return Err(err);
         }
@@ -135,13 +129,9 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
 
     let pool: State<'_, DbPool> = app_handle.state();
     let chat = get_task_execution_chat(&pool, task).await?;
+
     task.execution_chat_id = Some(chat.id);
-    let window = app_handle
-        .get_window("main")
-        .context("failed to get main window")?;
-    window
-        .emit_all("tasks:updated", &task)
-        .context("Failed to emit event")?;
+    utils::emit_event(app_handle, "tasks:updated", &task)?;
 
     loop {
         match repo::messages::get_last_message(&*pool, chat.id).await? {
@@ -151,7 +141,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                     Some(tool_calls) => {
                         // I acknowledge, that this is weird to pass `tool_calls` alongside the `message`, but why not since it's already unpacked from `Option`?
                         if let Some(new_status) =
-                            call_tools(&message, app_handle, tool_calls).await?
+                            call_tools(&message, app_handle, tool_calls, task.id).await?
                         {
                             return Ok(new_status);
                         }
@@ -174,9 +164,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                         )
                         .await?;
 
-                        window
-                            .emit_all("messages:created", &message)
-                            .context("Failed to emit event")?;
+                        utils::emit_event(app_handle, "messages:created", &message)?;
 
                         send_to_agent(chat.id, app_handle, task).await?;
                     }
@@ -190,15 +178,22 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
     }
 }
 
+#[derive(Deserialize)]
+struct SfaiProvideTextResultArgs {
+    text: String,
+    is_done: bool,
+}
+
 /// Call tools.
 ///
 /// Returns optional new task status. This is useful when the task execution is finished and the
-/// task status should be updated. For example, when the LLM marks the task as `Completed`.
+/// task status should be updated. For example, when the LLM marks the task as `Done`.
 #[instrument(skip(message, app_handle, tool_calls))]
 async fn call_tools(
     message: &Message,
     app_handle: &AppHandle,
     tool_calls: &str,
+    task_id: i64,
 ) -> Result<Option<Status>> {
     let mut new_status = None;
 
@@ -209,11 +204,15 @@ async fn call_tools(
 
     // Call task management tools
     for tool_call in tool_calls {
-        new_status = match tool_call.function.name.as_str() {
-            "sfai_done" => Some(Status::Done),
-            "sfai_fail" => Some(Status::Failed),
-            "sfai_wait_for_user" => Some(Status::WaitingForUser),
-            _ => None,
+        match tool_call.function.name.as_str() {
+            "sfai_done" => new_status = Some(Status::Done),
+            "sfai_fail" => new_status = Some(Status::Failed),
+            "sfai_wait_for_user" => new_status = Some(Status::WaitingForUser),
+            "sfai_provide_text_result" => {
+                new_status =
+                    sfai_provide_text_result(message, app_handle, task_id, &tool_call).await?;
+            }
+            _ => {}
         }
     }
 
@@ -223,26 +222,81 @@ async fn call_tools(
     Ok(new_status)
 }
 
+/// Provide a text result for the task.
+///
+/// # Errors
+///
+/// Returns an error if the tool call arguments cannot be parsed or the task result cannot be
+/// created.
+#[instrument(skip(message, app_handle, task_id, tool_call))]
+async fn sfai_provide_text_result(
+    message: &Message,
+    app_handle: &AppHandle,
+    task_id: i64,
+    tool_call: &ToolCall,
+) -> Result<Option<Status>> {
+    let mut new_status = None;
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    let args: SfaiProvideTextResultArgs = serde_json::from_str(&tool_call.function.arguments)
+        .context("Failed to parse tool call arguments")?;
+
+    let task_result = repo::task_results::create(
+        &*pool,
+        repo::task_results::CreateParams {
+            agent_id: message
+                .agent_id
+                .context("Agent is not set for the message with a tool call")?,
+            task_id,
+            kind: repo::task_results::Kind::Text,
+            data: args.text,
+        },
+    )
+    .await?;
+
+    if args.is_done {
+        new_status = Some(Status::Done);
+    }
+
+    let message = repo::messages::create(
+        &*pool,
+        CreateParams {
+            chat_id: message.chat_id,
+            status: repo::messages::Status::Completed,
+            role: Role::Tool,
+            content: Some("Text result has been created".to_string()),
+            tool_call_id: Some(tool_call.id.clone()),
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    utils::emit_event(app_handle, "task_results:created", &task_result)?;
+    utils::emit_event(app_handle, "messages:created", &message)?;
+
+    Ok(new_status)
+}
+
 async fn complete_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
     let pool: State<'_, DbPool> = app_handle.state();
-    let window = app_handle
-        .get_window("main")
-        .context("Failed to get main window")?;
-
-    repo::messages::update_status(&*pool, message.id, messages::Status::Completed).await?;
+    repo::messages::update_status(&*pool, message.id, repo::messages::Status::Completed).await?;
 
     let mut message = message.clone();
-    message.status = messages::Status::Completed;
+    message.status = repo::messages::Status::Completed;
 
-    window
-        .emit_all("messages:updated", &message)
-        .context("Failed to emit event")?;
+    utils::emit_event(app_handle, "messages:updated", &message)?;
 
     Ok(())
 }
 
-const BRIDGE_AGENT_PROMPT: &str =
-    "Call `sfai_done` once you think you've completed the task, `sfai_fail` if you think the task is not possible to complete, or `sfai_wait_for_user` if you need more information from the user.";
+// TODO: this agent prompt should differs for different kinds of expected task results, since
+//       the LLM should be explicitly instructed on how to provide these results properly.
+const BRIDGE_AGENT_PROMPT: &str = r"You're working on a task from a user.
+The text result must be provided using a call to `sfai_provide_text_result` function.
+Do not output text response to a user task in a message, only use a tool call.
+
+You're also in a charge of changing the task status when it's appropriate.
+Call `sfai_done` once you think you've completed the task, `sfai_fail` if you think the task is not possible to complete, or `sfai_wait_for_user` if you need more information from the user.";
 
 #[instrument(skip(task, app_handle))]
 async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Result<()> {
@@ -272,31 +326,42 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
     //
     // TODO: It's also slightly inefficient to create these abilities on every iteration.
     //       Consider caching them or something.
-    //
-    // TODO: `description` is not sent to the OpenAI right now.
     let abilities = vec![
         Ability::for_fn(
-            "Mark task as Done",
             "Mark current task as done",
             &json!({
                 "name": "sfai_done",
-                "description": "Mark current task as done."
             }),
         ),
         Ability::for_fn(
-            "Mark task as Failed",
             "Mark current task as failed",
             &json!({
                 "name": "sfai_fail",
-                "description": "Mark current task as failed."
             }),
         ),
         Ability::for_fn(
-            "Wait for user",
-            "Wait for user input",
+            "Wait for additional user input",
             &json!({
                 "name": "sfai_wait_for_user",
-                "description": "Wait for user input."
+            }),
+        ),
+        Ability::for_fn(
+            "Provide a text result for the task",
+            &json!({
+                "name": "sfai_provide_text_result",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                            "description": "A text result of the task"
+                        },
+                        "is_done": {
+                            "type": "boolean",
+                            "description": "Whether the task execution is finished or not"
+                        }
+                    }
+                }
             }),
         ),
     ];
@@ -327,7 +392,7 @@ async fn get_task_execution_chat(pool: &DbPool, task: &Task) -> Result<Chat> {
 async fn get_task_for_execution(pool: &DbPool, parent: Option<&Task>) -> Result<Option<Task>> {
     let mut tx = pool.begin().await.context("failed to begin transaction")?;
 
-    let task = match parent {
+    let mut task = match parent {
         Some(parent) => {
             if let Some(task) =
                 repo::tasks::get_children_for_execution(&mut *tx, &parent.children_ancestry())
@@ -362,6 +427,7 @@ async fn get_task_for_execution(pool: &DbPool, parent: Option<&Task>) -> Result<
     }
 
     repo::tasks::start_progress(&mut *tx, task.id).await?;
+    task.status = Status::InProgress;
 
     tx.commit().await.context("failed to commit transaction")?;
 

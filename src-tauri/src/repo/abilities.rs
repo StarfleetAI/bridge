@@ -27,9 +27,8 @@ impl Ability {
     ///
     /// Panics if `parameters_json` cannot be serialized.
     #[must_use]
-    pub fn for_fn(name: &str, description: &str, parameters_json: &Value) -> Self {
+    pub fn for_fn(description: &str, parameters_json: &Value) -> Self {
         Self {
-            name: name.to_string(),
             description: description.to_string(),
             parameters_json: serde_json::to_string(&parameters_json)
                 .expect("failed to serialize parameters_json"),
