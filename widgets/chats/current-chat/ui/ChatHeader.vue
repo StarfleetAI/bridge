@@ -6,7 +6,7 @@
   import { useChatsNavigation, useChatsStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import type { Chat } from '~/entities/chat'
-  import { PinIcon, UnpinIcon, BridgeSmallIcon } from '~/shared/ui/icons'
+  import { PinIcon, UnpinIcon, BridgeSmallIcon, SettingsIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{
     agent: Agent
@@ -25,7 +25,11 @@
 
   const handleClickSettings = () => {
     setSelectedAgent(null)
-    setIsSettingsOpened([props.chat?.id || null, props.agent.id])
+    setIsSettingsOpened(true)
+  }
+  const handleClickAgent = () => {
+    setSelectedAgent(props.agent.id)
+    setIsSettingsOpened(false)
   }
 </script>
 
@@ -41,12 +45,17 @@
     />
     <div
       class="chat-header__agent"
-      @click="handleClickSettings"
+      @click="handleClickAgent"
     >
       {{ agent.name }}
 
       <BridgeSmallIcon />
     </div>
+    <SettingsIcon
+      class="chat-header__settigns"
+      color="var(--text-tertiary)"
+      @click="handleClickSettings"
+    />
   </div>
 </template>
 
@@ -60,7 +69,7 @@
     background-color: var(--surface-1);
 
     @include font-inter-700(14px, 20px, var(--text-secondary));
-    @include flex(row, space-between, center);
+    @include flex(row, space-between, center, 24px);
   }
 
   .chat-header__agent {

@@ -30,6 +30,20 @@
   if (chatId.value) {
     await listMessages(chatId.value)
   }
+  const isLoading = ref(false)
+  const getMessages = async (id: number) => {
+    isLoading.value = true
+    await listMessages(id)
+    isLoading.value = false
+  }
+  watch(chatId, async (newVal) => {
+    if (newVal) {
+      setCurrentChatAgent()
+      await getMessages(newVal)
+      await nextTick()
+      scrollMessagesListToBottom()
+    }
+  })
 
   const { messages } = storeToRefs(useMessagesStore())
   const { getById } = useChatsStore()
@@ -121,10 +135,12 @@
   dayjs.extend(utc)
   const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
   const currentAgent = ref<Agent>(structuredClone(toRaw(bridgeAgent.value)))
-  if (currentChat.value?.agents_ids?.length === 1) {
-    const agent = getAgentById(currentChat.value?.agents_ids[0])
-    if (agent) {
-      currentAgent.value = structuredClone(toRaw(agent))
+  const setCurrentChatAgent = () => {
+    if (currentChat.value?.agents_ids?.length === 1) {
+      const agent = getAgentById(currentChat.value?.agents_ids[0])
+      if (agent) {
+        currentAgent.value = structuredClone(toRaw(agent))
+      }
     }
   }
 
@@ -142,6 +158,10 @@
   if (selectedAgent.value) {
     handleAgentChange(selectedAgent.value)
   }
+
+  const showGreeting = computed(() => {
+    return isLoading.value === false && currentChatMessages.value?.length === 0
+  })
 </script>
 
 <template>
@@ -161,9 +181,10 @@
             :key="message.id"
             class="message"
             :message="message"
+            :is-last="message.id === currentChatMessages.at(-1)?.id"
           />
         </template>
-        <template v-else>
+        <template v-if="showGreeting">
           <ChatGreeting
             class="message"
             :agent="currentAgent"
@@ -187,7 +208,7 @@
     position: relative;
     flex: 1;
     width: 100%;
-    min-width: 0;
+    min-width: 583px;
 
     @include flex(column, flex-start, stretch);
   }
@@ -208,6 +229,7 @@
     max-width: 720px;
     margin: 0 auto;
     padding: 16px 0 0;
+    padding-bottom: 16px;
 
     &.is-greeting {
       height: 100%;

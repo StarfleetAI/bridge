@@ -24,12 +24,12 @@
   })
 
   const { selectedAgent } = useAgentsNavigation()
-  const { chatSettings } = useChatsNavigation()
+  const { chatSettingsIsOpened } = useChatsNavigation()
   const SidebarComponent = computed(() => {
     if (selectedAgent.value) {
       return AgentFullItem
     }
-    if (chatSettings.value) {
+    if (chatSettingsIsOpened.value) {
       return ChatSettings
     }
     return null
@@ -65,10 +65,7 @@
     <template #main>
       <div class="chats-base">
         <ChatsHistory />
-        <CurrentChat
-          :key="currentChatId"
-          :settings="currentChatSettings"
-        />
+        <CurrentChat :settings="currentChatSettings" />
       </div>
     </template>
     <template

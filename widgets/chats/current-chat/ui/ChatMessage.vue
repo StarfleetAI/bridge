@@ -19,13 +19,13 @@
     EditIcon,
     CopyIcon,
     RetryIcon,
-    DislikeIcon,
   } from '~/shared/ui/icons'
   import ContentEditInput from './ContentEditInput.vue'
   import ToolCall from './ToolCall.vue'
 
   const props = defineProps<{
     message: Message
+    isLast: boolean
   }>()
 
   const { getById: getAgentById } = useAgentsStore()
@@ -151,7 +151,10 @@
     return [Role.SYSTEM, Role.USER].includes(props.message.role)
   })
   const showAgentMessageButtons = computed(() => {
-    return [Role.ASSISTANT, Role.TOOL].includes(props.message.role)
+    return [Role.ASSISTANT, Role.TOOL].includes(props.message.role) && props.message.status !== Status.WRITING
+  })
+  const showRetryButton = computed(() => {
+    return props.message.role === Role.ASSISTANT && props.isLast
   })
   const copyContent = async () => {
     const rawContent = await getRawMessageContent(props.message.id)
@@ -271,8 +274,7 @@
         />
         <template v-if="showAgentMessageButtons">
           <CopyIcon @click="copyContent" />
-          <RetryIcon />
-          <DislikeIcon />
+          <RetryIcon v-if="showRetryButton" />
         </template>
       </div>
     </div>
@@ -281,6 +283,7 @@
 
 <style lang="scss" scoped>
   .message {
+    position: relative;
     z-index: 2;
     gap: 8px;
 
@@ -303,7 +306,6 @@
   }
 
   .message__body {
-    position: relative;
     flex: 1 0;
     gap: 8px;
     width: 100%;
@@ -429,6 +431,7 @@
     gap: 16px;
     align-items: center;
     width: 100%;
+    height: 53px;
     padding: 16px 0;
 
     & svg {
