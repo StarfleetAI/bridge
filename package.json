@@ -14,7 +14,7 @@
     "lint:fix": "eslint --ext .vue,.ts ./ --fix",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "ts-check": "nuxi typecheck .",
+    "ts": "nuxi typecheck .",
     "test:unit": "vitest run",
     "stylelint": "stylelint \"./**/*.{vue,scss}\" --color --cache --quiet-deprecation-warnings",
     "stylelint-fix": "stylelint \"./**/*.{vue,scss}\" --color --cache --quiet-deprecation-warnings --fix",
