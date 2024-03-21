@@ -107,7 +107,7 @@
     position: relative;
     gap: 7px;
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
 
     @include flex(column);
   }

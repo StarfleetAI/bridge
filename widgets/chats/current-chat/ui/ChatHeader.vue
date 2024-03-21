@@ -52,6 +52,7 @@
 
 <style lang="scss" scoped>
   .chat-header {
+    flex-shrink: 0;
     width: 100%;
     height: 56px;
     padding: 8px 16px;

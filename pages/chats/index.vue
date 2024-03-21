@@ -89,6 +89,8 @@
 <style lang="scss" scoped>
   .chats-base {
     flex: 1;
+    width: 100%;
+    min-width: 0;
 
     @include flex(row, flex-start, stretch);
   }

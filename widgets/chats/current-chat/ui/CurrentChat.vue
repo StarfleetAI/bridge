@@ -186,13 +186,14 @@
   .current-chat {
     position: relative;
     flex: 1;
+    width: 100%;
+    min-width: 0;
 
     @include flex(column, flex-start, stretch);
   }
 
   .current-chat__messages-wrapper {
-    flex: 1;
-    overflow: auto;
+    overflow: hidden auto;
     width: 100%;
     height: 100%;
     padding: 0 24px;
@@ -203,9 +204,8 @@
   }
 
   .current-chat__messages {
-    flex: 1;
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
     margin: 0 auto;
     padding: 16px 0 0;
 

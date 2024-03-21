@@ -387,8 +387,8 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
             title = COALESCE($1, title),
             summary = COALESCE($2, summary),
             updated_at = $3,
-            agent_id = $5
-        WHERE id = $4
+            agent_id = $4
+        WHERE id = $5
         RETURNING
             id as "id!",
             agent_id,
@@ -406,8 +406,8 @@ pub async fn update<'a, E: Executor<'a, Database = Sqlite>>(
         params.title,
         params.summary,
         now,
+        params.agent_id,
         params.id,
-        params.agent_id
     )
     .fetch_one(executor)
     .await

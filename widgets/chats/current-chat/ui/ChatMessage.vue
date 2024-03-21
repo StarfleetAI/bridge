@@ -79,9 +79,10 @@
     messageRef.value?.querySelectorAll('a').forEach((el) => {
       el.setAttribute('target', '_blank')
     })
+
     messageRef.value?.querySelectorAll('pre code').forEach((el) => {
       if (el.getAttribute('data-highlighted') !== 'yes') {
-        // add data-language attribute to show it in the highlighter
+        // Add data-language attribute to show it in the highlighter
         const lang = el.className
           .split(' ')
           .find((item) => item.startsWith('language-'))
@@ -92,7 +93,6 @@
             el.classList.value = 'language-html'
           }
           el.parentElement?.setAttribute('data-language', lang)
-          console.log('highlight', lang)
 
           hljs.highlightElement(el as HTMLElement)
         }
@@ -306,6 +306,8 @@
     position: relative;
     flex: 1 0;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
 
     @include flex(column, flex-start, stretch);
   }
@@ -453,7 +455,8 @@
     position: relative;
     overflow: hidden;
     width: 100%;
-    max-width: 646px;
+    min-width: 0;
+    max-width: 688px;
     border-radius: 6px;
 
     &:before {
@@ -465,14 +468,6 @@
       font-family: Inter, sans-serif;
 
       @include font-inter-500(14px, 20px, var(--text-primary));
-    }
-
-    & > code {
-      overflow: auto;
-      overflow-y: hidden;
-      overscroll-behavior: auto;
-
-      @include add-scrollbar;
     }
 
     @include flex(column-reverse);
@@ -521,6 +516,14 @@
 
   :deep(.hljs-copy-alert) {
     display: none;
+  }
+
+  :deep(code) {
+    overflow: auto;
+    overflow-y: hidden;
+    overscroll-behavior: auto;
+
+    @include add-scrollbar;
   }
 
   :deep(code[data-highlighted='yes']) {
