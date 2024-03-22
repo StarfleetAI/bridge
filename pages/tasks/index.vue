@@ -2,28 +2,23 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { TaskForm } from '~/widgets/taskForm'
+  import { TaskFullItem } from '~/widgets/taskFullItem'
   import { TasksList } from '~/widgets/tasksList'
-  import { useTasksNavigation } from '~/features/task'
+  import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { BaseContainer } from '~/shared/ui/base'
-
   definePageMeta({
     title: 'Tasks',
   })
 
   const { isCreateTask, selectedTask } = useTasksNavigation()
-  const TaskFullItem = defineAsyncComponent(async () => {
-    const module = await import('~/widgets/taskFullItem')
-    return module.TaskFullItem
-  })
-  const TaskForm = defineAsyncComponent(async () => {
-    const module = await import('~/widgets/taskForm')
-    return module.TaskForm
-  })
+  const { tasks } = storeToRefs(useTasksStore())
+
   const sideContentComponent = computed(() => {
     if (isCreateTask.value) {
       return TaskForm
     }
-    if (selectedTask.value) {
+    if (selectedTask.value && tasks.value.length) {
       return TaskFullItem
     }
     return null
@@ -43,10 +38,7 @@
         v-if="sideContentComponent"
         class="side-content"
       >
-        <component
-          :is="sideContentComponent"
-          :key="String(selectedTask)"
-        />
+        <component :is="sideContentComponent" />
       </div>
     </template>
   </BaseContainer>

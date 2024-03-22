@@ -4,7 +4,7 @@
 import { listen } from '@tauri-apps/api/event'
 // eslint-disable-next-line boundaries/element-types
 import { useChatsStore } from '~/features/chats'
-import { TaskStatus, type Task } from '~/entities/tasks'
+import { type Task } from '~/entities/tasks'
 import {
   listRootTasks as listRootTasksReq,
   listChildTasks as listChildTasksReq,
@@ -15,6 +15,7 @@ import {
   cancelTask as cancelTaskReq,
   pauseTask as pauseTaskReq,
   executeTask as executeTaskReq,
+  duplicateTask as duplicateTaskReq,
 } from '../api'
 import { groupTasks } from '../lib'
 import { type CreateTask, type ListTasksParams, type UpdateTask } from '../model'
@@ -50,19 +51,14 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
-  const createTask = async (task: CreateTask): Promise<void> => {
+  const createTask = async (task: CreateTask): Promise<Task> => {
     const newTask = await createTaskReq(task)
     tasks.value.unshift(newTask)
+    return newTask
   }
 
-  const duplicateTask = async ({ title, summary, agent_id }: Task): Promise<Task> => {
-    const taskToDuplicate: CreateTask = {
-      title,
-      summary,
-      agent_id,
-      status: TaskStatus.DRAFT,
-    }
-    const newTask = await createTaskReq(taskToDuplicate)
+  const duplicateTask = async (id: number): Promise<Task> => {
+    const newTask = await duplicateTaskReq(id)
     tasks.value.unshift(newTask)
     return newTask
   }
@@ -77,6 +73,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
   const updateTask = async (task: UpdateTask): Promise<Task> => {
     const updatedTask = await updateTaskReq(task)
+
     const index = tasks.value.findIndex((a) => a.id === task.id)
     if (index !== undefined && index !== -1) {
       tasks.value[index] = updatedTask

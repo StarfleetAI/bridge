@@ -14,7 +14,7 @@ export const useTaskActions = (task: Ref<Task>) => {
     return {
       label: 'Duplicate',
       icon: DuplicateIcon,
-      action: () => duplicateTask(task.value),
+      action: () => duplicateTask(task.value.id),
     }
   })
 

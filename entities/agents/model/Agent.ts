@@ -6,6 +6,7 @@ export interface Agent {
   name: string
   description: string
   system_message: string
+  is_enabled: boolean
   ability_ids: number[]
   created_at: Date
   updated_at: Date

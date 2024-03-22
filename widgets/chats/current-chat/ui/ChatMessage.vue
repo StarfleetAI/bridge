@@ -19,13 +19,13 @@
     EditIcon,
     CopyIcon,
     RetryIcon,
-    DislikeIcon,
   } from '~/shared/ui/icons'
   import ContentEditInput from './ContentEditInput.vue'
   import ToolCall from './ToolCall.vue'
 
   const props = defineProps<{
     message: Message
+    isLast: boolean
   }>()
 
   const { getById: getAgentById } = useAgentsStore()
@@ -75,31 +75,41 @@
 
   const messageRef = ref<HTMLDivElement>()
 
-  watch(
-    () => [props.message, messageRef.value],
-    () => {
-      if (props.message.content && props.message.status !== Status.WRITING) {
-        messageRef.value?.querySelectorAll('pre code').forEach((el) => {
-          if (el.getAttribute('data-highlighted') !== 'yes') {
-            // add data-language attribute to show it in the highlighter
-            const lang = el.className
-              .split(' ')
-              .find((item) => item.startsWith('language-'))
-              ?.slice(9)
-            if (lang) {
-              if (!hljs.getLanguage(lang)) {
-                el.classList.value = 'language-html'
-              }
-              el.parentElement?.setAttribute('data-language', lang)
-              hljs.highlightElement(el as HTMLElement)
-            }
+  const parseAndHighlightContent = () => {
+    messageRef.value?.querySelectorAll('a').forEach((el) => {
+      el.setAttribute('target', '_blank')
+    })
+
+    messageRef.value?.querySelectorAll('pre code').forEach((el) => {
+      if (el.getAttribute('data-highlighted') !== 'yes') {
+        // Add data-language attribute to show it in the highlighter
+        const lang = el.className
+          .split(' ')
+          .find((item) => item.startsWith('language-'))
+          ?.slice(9)
+
+        if (lang) {
+          if (!hljs.getLanguage(lang)) {
+            el.classList.value = 'language-html'
           }
-        })
+          el.parentElement?.setAttribute('data-language', lang)
+
+          hljs.highlightElement(el as HTMLElement)
+        }
       }
+    })
+  }
+  onMounted(() => {
+    parseAndHighlightContent()
+  })
+  watch(
+    () => props.message,
+    async () => {
+      await nextTick()
+      parseAndHighlightContent()
     },
     {
       deep: true,
-      immediate: true,
     },
   )
 
@@ -141,7 +151,10 @@
     return [Role.SYSTEM, Role.USER].includes(props.message.role)
   })
   const showAgentMessageButtons = computed(() => {
-    return [Role.ASSISTANT, Role.TOOL].includes(props.message.role)
+    return [Role.ASSISTANT, Role.TOOL].includes(props.message.role) && props.message.status !== Status.WRITING
+  })
+  const showRetryButton = computed(() => {
+    return props.message.role === Role.ASSISTANT && props.isLast
   })
   const copyContent = async () => {
     const rawContent = await getRawMessageContent(props.message.id)
@@ -261,8 +274,7 @@
         />
         <template v-if="showAgentMessageButtons">
           <CopyIcon @click="copyContent" />
-          <RetryIcon />
-          <DislikeIcon />
+          <RetryIcon v-if="showRetryButton" />
         </template>
       </div>
     </div>
@@ -271,6 +283,8 @@
 
 <style lang="scss" scoped>
   .message {
+    position: relative;
+    z-index: 2;
     gap: 8px;
 
     &:hover {
@@ -292,9 +306,10 @@
   }
 
   .message__body {
-    position: relative;
     flex: 1 0;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
 
     @include flex(column, flex-start, stretch);
   }
@@ -416,6 +431,7 @@
     gap: 16px;
     align-items: center;
     width: 100%;
+    height: 53px;
     padding: 16px 0;
 
     & svg {
@@ -442,7 +458,8 @@
     position: relative;
     overflow: hidden;
     width: 100%;
-    max-width: 646px;
+    min-width: 0;
+    max-width: 688px;
     border-radius: 6px;
 
     &:before {
@@ -454,14 +471,6 @@
       font-family: Inter, sans-serif;
 
       @include font-inter-500(14px, 20px, var(--text-primary));
-    }
-
-    & > code {
-      overflow: auto;
-      overflow-y: hidden;
-      overscroll-behavior: auto;
-
-      @include add-scrollbar;
     }
 
     @include flex(column-reverse);
@@ -510,6 +519,14 @@
 
   :deep(.hljs-copy-alert) {
     display: none;
+  }
+
+  :deep(code) {
+    overflow: auto;
+    overflow-y: hidden;
+    overscroll-behavior: auto;
+
+    @include add-scrollbar;
   }
 
   :deep(code[data-highlighted='yes']) {

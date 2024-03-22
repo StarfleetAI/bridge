@@ -18,19 +18,24 @@
   const emits = defineEmits<{
     'update-settings': [settings: ChatSettingsType]
   }>()
-  const { chatSettings } = useChatsNavigation()
+  const { chatId } = useChatsNavigation()
 
   const { getById: getChatById } = useChatsStore()
   const { getById: getAgentById } = useAgentsStore()
-  const chat = computed(() => getChatById(chatSettings.value![0]))
+
+  const chat = computed(() => getChatById(chatId.value))
   const bridgeAgent = computed(() => getAgentById(BRIDGE_AGENT_ID)!)
   const currentAgent = ref<Agent>(structuredClone(toRaw(bridgeAgent.value)))
-  if (chat.value?.agents_ids?.length === 1) {
-    const agent = getAgentById(chat.value?.agents_ids[0])
-    if (agent) {
-      currentAgent.value = structuredClone(toRaw(agent))
+
+  const setChatAgent = () => {
+    if (chat.value?.agents_ids?.length === 1) {
+      const agent = getAgentById(chat.value?.agents_ids[0])
+      if (agent) {
+        currentAgent.value = structuredClone(toRaw(agent))
+      }
     }
   }
+  setChatAgent()
 
   const models = ref<Model[]>(await listModels())
 
@@ -41,6 +46,20 @@
       model_full_name: selectedModel.value,
     })
   }
+
+  const handleChangeChat = () => {
+    selectedModel.value = toRaw(props.settings.model_full_name)
+    setChatAgent()
+  }
+  watch(
+    () => chat.value,
+    () => {
+      handleChangeChat()
+    },
+    {
+      deep: true,
+    },
+  )
 </script>
 
 <template>
@@ -82,13 +101,16 @@
 
 <style lang="scss" scoped>
   .chat-settings {
+    position: relative;
+    z-index: 3;
+
     @include flex(column);
   }
 
   .chat-settings__head {
-    height: 57px;
+    height: 56px;
     padding: 12px 24px;
-    border-bottom: 1px solid var(--border-3);
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, space-between, center);
   }

@@ -12,10 +12,10 @@
     </div>
     <ResizableContainer
       v-if="$slots.additional"
-      min-width="300px"
-      max-width="40%"
+      min-width="480px"
+      max-width="590px"
       direction="left"
-      initial-width="40%"
+      initial-width="590px"
     >
       <div class="base-container__additional">
         <slot name="additional" />
@@ -38,6 +38,7 @@
   }
 
   .base-container__additional {
+    z-index: 3;
     width: 100%;
     height: 100%;
   }

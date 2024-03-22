@@ -50,17 +50,19 @@
         :key="status"
         class="tasks-list__group"
       >
-        <div class="tasks-list__group-name">
-          <b>{{ status }}</b> {{ tasks.length }}
-        </div>
-        <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
-          <TaskItemLine
-            v-for="task in tasks"
-            :key="task.id"
-            :task="task"
-            @click="setSelectedTask(task.id)"
-          />
-        </div>
+        <template v-if="tasks.length">
+          <div class="tasks-list__group-name">
+            <b>{{ status }}</b> {{ tasks.length }}
+          </div>
+          <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
+            <TaskItemLine
+              v-for="task in tasks"
+              :key="task.id"
+              :task="task"
+              @click="setSelectedTask(task.id)"
+            />
+          </div>
+        </template>
       </div>
     </div>
   </div>
