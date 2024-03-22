@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT\n            id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at\n        FROM messages\n        WHERE id = $1\n        ",
+  "query": "\n        UPDATE messages\n        SET\n            status = $2,\n            content = $3,\n            prompt_tokens = $4,\n            completion_tokens = $5,\n            tool_calls = $6,\n            updated_at = $7\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", chat_id, agent_id, status, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,\n            is_self_reflection, is_internal_tool_output\n        ",
   "describe": {
     "columns": [
       {
@@ -14,14 +14,14 @@
         "type_info": "Int64"
       },
       {
-        "name": "status",
+        "name": "agent_id",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
-        "name": "agent_id",
+        "name": "status",
         "ordinal": 3,
-        "type_info": "Int64"
+        "type_info": "Text"
       },
       {
         "name": "role",
@@ -62,25 +62,37 @@
         "name": "updated_at",
         "ordinal": 11,
         "type_info": "Datetime"
+      },
+      {
+        "name": "is_self_reflection",
+        "ordinal": 12,
+        "type_info": "Bool"
+      },
+      {
+        "name": "is_internal_tool_output",
+        "ordinal": 13,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 7
     },
     "nullable": [
-      false,
-      false,
-      false,
       true,
       false,
       true,
+      false,
+      false,
       true,
       true,
       true,
       true,
+      true,
+      false,
+      false,
       false,
       false
     ]
   },
-  "hash": "97f9ab84eb85cf0f3b143c383abd7c753d5db9a6f9274801417a4aeb1df883eb"
+  "hash": "2885d5be2282db6056d2c0f39495342d588b1230099b8dc0c66dedcc6e73b723"
 }

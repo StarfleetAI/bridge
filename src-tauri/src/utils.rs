@@ -20,7 +20,9 @@ where
         .get_window("main")
         .context("Failed to get main window")?;
 
-    window.emit(event, object).context("Failed to emit event")?;
+    window
+        .emit_all(event, object)
+        .context("Failed to emit event")?;
 
     Ok(())
 }
