@@ -1,6 +1,6 @@
 [package]
 name = "bridge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Autonomous AI Agents IDE"
 authors = ["StarfleetAI <mail@starfleetai.com>"]
 license = "Apache-2.0"
