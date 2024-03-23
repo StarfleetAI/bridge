@@ -81,7 +81,7 @@
     if (!chatId.value) {
       return []
     }
-    return messages.value[chatId.value].filter((message) => message.is_internal_tool_output === false)
+    return messages.value[chatId.value]?.filter((message) => message.is_internal_tool_output === false) || []
   })
   const currentChat = computed(() => {
     if (!chatId.value) {
