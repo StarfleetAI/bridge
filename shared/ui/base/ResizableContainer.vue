@@ -99,7 +99,7 @@
   .resizer {
     content: '';
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     display: flex;
 
     &.left,
