@@ -55,6 +55,7 @@ fn main() -> Result<()> {
             commands::models::list_models,
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::task_results::get_task_results,
             commands::tasks::cancel_task,
             commands::tasks::create_task,
             commands::tasks::delete_task,

@@ -1,8 +1,10 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
-use serde::{Deserialize, Serialize};
+use markdown::to_html;
+use serde::{Deserialize, Serialize, Serializer};
 use sqlx::{Executor, Sqlite};
 
 use crate::types::Result;
@@ -25,12 +27,21 @@ impl From<String> for Kind {
     }
 }
 
+/// Safely render markdown in a reuslt data as an untrusted user input.
+fn serialize_data<S>(data: &String, serializer: S) -> std::result::Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&to_html(data.as_str()))
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TaskResult {
     pub id: i64,
     pub agent_id: i64,
     pub task_id: i64,
     pub kind: Kind,
+    #[serde(serialize_with = "serialize_data")]
     pub data: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -70,4 +81,29 @@ where
     )
     .fetch_one(executor)
     .await?)
+}
+
+/// Get task results by task_id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get<'a, E>(executor: E, task_id: i64) -> Result<Vec<TaskResult>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let task_results = sqlx::query_as!(
+        TaskResult,
+        r#"
+        SELECT 
+            id as "id!", agent_id, task_id, kind, data, created_at, updated_at
+        FROM task_results WHERE task_id = $1
+        ORDER BY id ASC
+        "#,
+        task_id
+    )
+    .fetch_all(executor)
+    .await
+    .with_context(|| "Failed to fetch task results")?;
+    Ok(task_results)
 }

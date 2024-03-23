@@ -3,16 +3,16 @@
 
 <script setup lang="ts">
   import { useAgentsStore } from '~/features/agent'
-  import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import { getTaskResults, useTasksNavigation, useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
   import { AgentSelector } from '~/entities/agents'
   import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { FilesList } from '~/shared/ui/files'
-  import { AttachmentIcon } from '~/shared/ui/icons'
+  import { AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
   import ActivityFeed from './ActivityFeed.vue'
   import TaskControls from './TaskControls.vue'
-
+  import TaskResult from './TaskResult.vue'
   const { selectedTask } = useTasksNavigation()
 
   const { getById, updateTask } = useTasksStore()
@@ -20,6 +20,13 @@
     navigateTo('/tasks')
   }
   const task = computed(() => getById(selectedTask.value!) as Task)
+
+  const taskResults = ref(await getTaskResults(task.value.id))
+
+  const updateResults = async () => {
+    taskResults.value = await getTaskResults(task.value.id)
+  }
+
   watch(
     () => selectedTask.value,
     (newVal) => {
@@ -27,7 +34,23 @@
         taskTitle.value = task.value.title
         taskSummary.value = task.value.summary
         agent.value = getAgentById(task.value.agent_id!)!
+        updateResults()
       }
+    },
+    {
+      deep: true,
+    },
+  )
+
+  watch(
+    () => task.value,
+    (newVal) => {
+      if (newVal) {
+        updateResults()
+      }
+    },
+    {
+      deep: true,
     },
   )
 
@@ -198,10 +221,18 @@
         </div>
         <FilesList :files="[]" />
       </div>
-    </div>
-    <!-- <div class="task-details__result">
-      <div class="task-details__result-head"><ResultIcon /> Output</div>
-      <LargeFilesPreview
+      <div
+        v-if="taskResults.length"
+        class="task-details__result"
+      >
+        <div class="task-details__result-head"><ResultIcon /> Output</div>
+        <TaskResult
+          v-for="result in taskResults"
+          :key="result.id"
+          :result="result"
+        />
+
+        <!-- <LargeFilesPreview
         :files="[
           {
             type: 'TXT',
@@ -212,8 +243,10 @@
             size: '1.2 MB',
           },
         ]"
-      />
-    </div> -->
+      /> -->
+      </div>
+    </div>
+
     <ActivityFeed v-if="task.status !== TaskStatus.DRAFT" />
   </div>
 </template>
@@ -249,7 +282,12 @@
     }
 
     &__body {
+      flex: 1;
+      overflow: hidden auto;
+      height: 50%;
       padding: 24px 0;
+
+      @include add-scrollbar;
     }
 
     &__top {

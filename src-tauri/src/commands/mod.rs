@@ -8,4 +8,5 @@ pub mod chats;
 pub mod messages;
 pub mod models;
 pub mod settings;
+pub mod task_results;
 pub mod tasks;

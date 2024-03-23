@@ -2,6 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { AgentFullItem } from '~/widgets/agentFullItem'
   import { AgentsList } from '~/widgets/agentsList'
   import { useAgentsNavigation, useAgentsStore } from '~/features/agent'
   import { SearchField } from '~/shared/ui'
@@ -19,10 +20,7 @@
   const searchInput = ref('')
   const { isCreateAgent, enableCreateAgent, isEditAgent, selectedAgent } = useAgentsNavigation()
 
-  const AgentFullItem = defineAsyncComponent(async () => {
-    const module = await import('~/widgets/agentFullItem')
-    return module.AgentFullItem
-  })
+  const AgentFullItemComponent = defineAsyncComponent(AgentFullItem)
 
   const AgentForm = defineAsyncComponent(async () => {
     const module = await import('~/widgets/agentForm')
@@ -37,7 +35,7 @@
       return AgentForm
     }
     if (selectedAgent.value) {
-      return AgentFullItem
+      return AgentFullItemComponent
     }
     return null
   })
