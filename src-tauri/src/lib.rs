@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod abilities;
+pub mod browser;
 pub mod chats;
 pub mod clients;
 pub mod commands;

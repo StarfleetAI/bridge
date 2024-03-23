@@ -81,6 +81,8 @@ pub struct Message {
     pub completion_tokens: Option<i64>,
     pub tool_calls: Option<String>,
     pub tool_call_id: Option<String>,
+    pub is_self_reflection: bool,
+    pub is_internal_tool_output: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -96,6 +98,8 @@ pub struct CreateParams {
     pub completion_tokens: Option<i64>,
     pub tool_calls: Option<String>,
     pub tool_call_id: Option<String>,
+    pub is_self_reflection: bool,
+    pub is_internal_tool_output: bool,
 }
 
 #[derive(Debug, Default)]
@@ -127,7 +131,8 @@ where
         r#"
         SELECT
             id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
         FROM messages
         WHERE chat_id = $1
         ORDER BY id ASC
@@ -155,10 +160,12 @@ where
         Message,
         r#"
         INSERT INTO messages (chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at, is_self_reflection,
+            is_internal_tool_output)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12)
         RETURNING id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at, is_self_reflection,
+            is_internal_tool_output
         "#,
         params.chat_id,
         params.agent_id,
@@ -170,6 +177,8 @@ where
         params.tool_calls,
         params.tool_call_id,
         now,
+        params.is_self_reflection,
+        params.is_internal_tool_output,
     )
     .fetch_one(executor)
     .await
@@ -192,7 +201,8 @@ where
         r#"
         SELECT
             id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
         FROM messages
         WHERE id = $1
         "#,
@@ -237,7 +247,8 @@ where
         r#"
         SELECT
             id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
         FROM messages
         WHERE chat_id = $1
         ORDER BY id DESC
@@ -248,6 +259,38 @@ where
     .fetch_optional(executor)
     .await
     .with_context(|| "Failed to get last message")?)
+}
+
+/// Get last non self-reflection agent message for chat.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while fetching last non self-reflection message.
+pub async fn get_last_non_self_reflection_message<'a, E>(
+    executor: E,
+    chat_id: i64,
+) -> Result<Option<Message>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    Ok(query_as!(
+        Message,
+        r#"
+        SELECT
+            id as "id!", chat_id, status, agent_id, role, content, prompt_tokens,
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
+        FROM messages
+        WHERE chat_id = $1 AND is_self_reflection = 0 AND role = $2
+        ORDER BY id DESC
+        LIMIT 1
+        "#,
+        chat_id,
+        Role::Assistant,
+    )
+    .fetch_optional(executor)
+    .await
+    .with_context(|| "Failed to get last non self-reflection message")?)
 }
 
 /// Update message status.
@@ -294,7 +337,8 @@ where
         WHERE id = $1
         RETURNING
             id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
         "#,
         params.id,
         params.status,
@@ -346,7 +390,8 @@ where
         WHERE id = $1
         RETURNING
             id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
-            completion_tokens, tool_calls, tool_call_id, created_at, updated_at
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
         "#,
         id,
         content,
