@@ -6,6 +6,7 @@ import 'highlight.js/styles/atom-one-dark.min.css'
 export const highlightCode = (container: HTMLElement) => {
   container.querySelectorAll('a').forEach((el) => {
     el.setAttribute('target', '_blank')
+    el.setAttribute('rel', 'noopener noreferrer')
   })
 
   container.querySelectorAll('pre code').forEach((el) => {
