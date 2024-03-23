@@ -28,11 +28,11 @@ impl From<String> for Kind {
 }
 
 /// Safely render markdown in a reuslt data as an untrusted user input.
-fn serialize_data<S>(data: &String, serializer: S) -> std::result::Result<S::Ok, S::Error>
+fn serialize_data<S>(data: &str, serializer: S) -> std::result::Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    serializer.serialize_str(&to_html(data.as_str()))
+    serializer.serialize_str(&to_html(data))
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -83,7 +83,7 @@ where
     .await?)
 }
 
-/// Get task results by task_id
+/// Get task results by task id
 ///
 /// # Errors
 ///
