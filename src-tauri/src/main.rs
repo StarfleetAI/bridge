@@ -66,6 +66,7 @@ fn main() -> Result<()> {
             commands::tasks::list_child_tasks,
             commands::tasks::list_root_tasks,
             commands::tasks::pause_task,
+            commands::tasks::plan_task,
             commands::tasks::revise_task,
             commands::tasks::update_task,
         ])
