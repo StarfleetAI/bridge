@@ -2,13 +2,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import 'highlight.js/styles/atom-one-dark.min.css'
-  import hljs from 'highlight.js'
-
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall, getRawMessageContent, useMessagesStore } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
-  import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
+  import { utcToLocalTime, getTimeAgo, highlightCode } from '~/shared/lib'
   import { BaseButton, CopyButton } from '~/shared/ui/base'
   import {
     SystemIcon,
@@ -76,28 +73,9 @@
   const messageRef = ref<HTMLDivElement>()
 
   const parseAndHighlightContent = () => {
-    messageRef.value?.querySelectorAll('a').forEach((el) => {
-      el.setAttribute('target', '_blank')
-    })
-
-    messageRef.value?.querySelectorAll('pre code').forEach((el) => {
-      if (el.getAttribute('data-highlighted') !== 'yes') {
-        // Add data-language attribute to show it in the highlighter
-        const lang = el.className
-          .split(' ')
-          .find((item) => item.startsWith('language-'))
-          ?.slice(9)
-
-        if (lang) {
-          if (!hljs.getLanguage(lang)) {
-            el.classList.value = 'language-html'
-          }
-          el.parentElement?.setAttribute('data-language', lang)
-
-          hljs.highlightElement(el as HTMLElement)
-        }
-      }
-    })
+    if (messageRef.value) {
+      highlightCode(messageRef.value)
+    }
   }
   onMounted(() => {
     parseAndHighlightContent()

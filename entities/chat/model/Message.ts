@@ -16,4 +16,5 @@ export interface Message {
   tool_calls: Nullable<string>
   tool_call_id: Nullable<string>
   created_at: string
+  is_internal_tool_output: boolean
 }

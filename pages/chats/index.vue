@@ -10,6 +10,9 @@
   import { useChatsNavigation, useChatsStore } from '~/features/chats'
   import { type ChatSettings as ChatSettingsType } from '~/entities/chat'
   import { BaseContainer } from '~/shared/ui/base'
+
+  const AgentFullItemComponent = defineAsyncComponent(AgentFullItem)
+  const ChatSettingsComponent = defineAsyncComponent(ChatSettings)
   definePageMeta({
     title: 'Chats',
   })
@@ -27,10 +30,10 @@
   const { chatSettingsIsOpened } = useChatsNavigation()
   const SidebarComponent = computed(() => {
     if (selectedAgent.value) {
-      return AgentFullItem
+      return AgentFullItemComponent
     }
     if (chatSettingsIsOpened.value) {
-      return ChatSettings
+      return ChatSettingsComponent
     }
     return null
   })
