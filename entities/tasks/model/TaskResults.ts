@@ -12,6 +12,7 @@ export interface TaskResult {
   task_id: number
   kind: TaskResultKind
   data: string
+  parsed_data?: string
   created_at: string
   updated_at: string
 }

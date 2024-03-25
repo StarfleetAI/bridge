@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import type { TaskResult } from '~/entities/tasks'
+  import { TaskResultKind, type TaskResult } from '~/entities/tasks'
   import { highlightCode } from '~/shared/lib'
 
   const props = defineProps<{
@@ -29,6 +29,12 @@
       deep: true,
     },
   )
+  const resultContent = computed(() => {
+    if (props.result.kind === TaskResultKind.Text) {
+      return props.result.parsed_data || ''
+    }
+    return props.result.data
+  })
 </script>
 
 <template>
@@ -38,8 +44,8 @@
         <div
           ref="resultRef"
           class="result__content-markdown"
-          v-html="props.result.data"
-        ></div>
+          v-html="resultContent"
+        />
       </div>
     </div>
   </div>

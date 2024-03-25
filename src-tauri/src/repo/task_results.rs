@@ -4,7 +4,7 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use markdown::to_html;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Sqlite};
 
 use crate::types::Result;
@@ -27,21 +27,12 @@ impl From<String> for Kind {
     }
 }
 
-/// Safely render markdown in a reuslt data as an untrusted user input.
-fn serialize_data<S>(data: &str, serializer: S) -> std::result::Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&to_html(data))
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TaskResult {
     pub id: i64,
     pub agent_id: i64,
     pub task_id: i64,
     pub kind: Kind,
-    #[serde(serialize_with = "serialize_data")]
     pub data: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -83,12 +74,12 @@ where
     .await?)
 }
 
-/// Get task results by task id
+/// List task results by task id
 ///
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn get<'a, E>(executor: E, task_id: i64) -> Result<Vec<TaskResult>>
+pub async fn list<'a, E>(executor: E, task_id: i64) -> Result<Vec<TaskResult>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
@@ -106,4 +97,30 @@ where
     .await
     .with_context(|| "Failed to fetch task results")?;
     Ok(task_results)
+}
+
+/// Get text data by task result id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get_text_data<'a, E>(executor: E, id: i64) -> Result<String>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let task_result = sqlx::query!(
+        r#"
+        SELECT data
+        FROM task_results
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to fetch task result")?;
+
+    // Safely render markdown in a result as an untrusted input.
+    let serialized_data = to_html(task_result.data.as_str());
+    Ok(serialized_data)
 }

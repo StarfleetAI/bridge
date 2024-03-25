@@ -6,10 +6,10 @@
 
 use anyhow::Context;
 use dotenvy::dotenv;
-use tauri::{App, async_runtime::block_on, generate_handler, LogicalSize, Manager};
+use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
 use tokio::sync::RwLock;
 use tracing::info;
-use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::{fmt, EnvFilter};
 
 use bridge::{commands, database, settings::Settings, task_executor, types::Result};
 
@@ -55,7 +55,8 @@ fn main() -> Result<()> {
             commands::models::list_models,
             commands::settings::get_settings,
             commands::settings::update_settings,
-            commands::task_results::get_task_results,
+            commands::task_results::get_task_result_text_data,
+            commands::task_results::list_task_results,
             commands::tasks::cancel_task,
             commands::tasks::create_task,
             commands::tasks::delete_task,
