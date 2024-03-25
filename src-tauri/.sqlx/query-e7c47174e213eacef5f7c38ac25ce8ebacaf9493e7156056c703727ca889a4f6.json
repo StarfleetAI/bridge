@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO task_results (agent_id, task_id, kind, data, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING *\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "agent_id",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "task_id",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "kind",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "data",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 6,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e7c47174e213eacef5f7c38ac25ce8ebacaf9493e7156056c703727ca889a4f6"
+}

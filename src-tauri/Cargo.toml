@@ -1,6 +1,6 @@
 [package]
 name = "bridge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Autonomous AI Agents IDE"
 authors = ["StarfleetAI <mail@starfleetai.com>"]
 license = "Apache-2.0"
@@ -20,10 +20,11 @@ askama = "0.12.1"
 bollard = "0.16.0"
 chrono = { version = "0.4.35", features = ["serde"] }
 dotenvy = "0.15.7"
+fantoccini = { version = "0.19.3", default-features = false, features = ["rustls-tls"] }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 futures-util = "0.3.30"
 markdown = "1.0.0-alpha.16"
-reqwest = { version = "0.11.26", default-features = false, features = ["rustls-tls", "tokio-rustls", "json"] }
+reqwest = { version = "0.12.0", default-features = false, features = ["rustls-tls", "json", "http2"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "sqlite", "migrate", "chrono"] }
@@ -38,4 +39,4 @@ tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
-custom-protocol = [ "tauri/custom-protocol" ]
+custom-protocol = ["tauri/custom-protocol"]

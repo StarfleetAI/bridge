@@ -43,7 +43,7 @@
     <CrossIcon
       width="20"
       height="20"
-      @click="setIsSettingsOpened(null)"
+      @click="setIsSettingsOpened(false)"
     />
   </div>
 </template>

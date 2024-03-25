@@ -53,7 +53,7 @@
       min-height: 20px;
       max-height: 136px;
 
-      @include font-inter-500(14px, 20px, var(--text-primary));
+      @include font-inter-400(14px, 20px, var(--text-primary));
     }
 
     &:focus {

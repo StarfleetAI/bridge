@@ -1,7 +1,7 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::sync::RwLock;
@@ -9,7 +9,7 @@ use tracing::{debug, instrument, trace};
 
 use crate::{
     clients::openai::{
-        Client, CreateChatCompletionRequest, FunctionCall, Tool, ToolCall, ToolType,
+        Client, CreateChatCompletionRequest, Function, FunctionCall, Tool, ToolCall, ToolType,
     },
     errors, messages,
     repo::{
@@ -27,15 +27,22 @@ use crate::{
 const CHUNK_SEPARATOR: &str = "\n\n";
 const DONE_CHUNK: &str = "data: [DONE]";
 
+#[derive(Debug, Default)]
+pub struct GetCompletionParams {
+    pub messages_pre: Option<Vec<Message>>,
+    pub messages_post: Option<Vec<Message>>,
+    pub abilities: Option<Vec<Ability>>,
+    pub is_self_reflection: bool,
+}
+
 /// Does the whole chat completion routine.
 // TODO: refactor this function.
-#[instrument(skip(app_handle, messages_pre, abilities))]
+#[instrument(skip(app_handle, params))]
 #[allow(clippy::too_many_lines)]
 pub async fn get_completion(
-    chat_id: i64,
     app_handle: &AppHandle,
-    messages_pre: Option<Vec<Message>>,
-    abilities: Option<Vec<Ability>>,
+    chat_id: i64,
+    params: GetCompletionParams,
 ) -> Result<()> {
     debug!("Getting chat completion");
     let pool: State<'_, DbPool> = app_handle.state();
@@ -50,8 +57,13 @@ pub async fn get_completion(
     let mut tx = pool.begin().await.context("Failed to begin transaction")?;
 
     let mut messages = repo::messages::list(&mut *tx, ListParams { chat_id }).await?;
-    if let Some(messages_pre) = messages_pre {
+
+    if let Some(messages_pre) = params.messages_pre {
         messages = messages_pre.into_iter().chain(messages).collect();
+    }
+
+    if let Some(messages_post) = params.messages_post {
+        messages = messages.into_iter().chain(messages_post).collect();
     }
 
     trace!("Messages so far: {:?}", messages);
@@ -59,7 +71,7 @@ pub async fn get_completion(
     // Get current agent.
     let agent = repo::agents::get_for_chat(&mut *tx, chat_id).await?;
     let agent_abilities = repo::abilities::list_for_agent(&mut *tx, agent.id).await?;
-    let abilities = match abilities {
+    let abilities = match params.abilities {
         Some(abilities) => abilities.into_iter().chain(agent_abilities).collect(),
         None => agent_abilities,
     };
@@ -77,6 +89,7 @@ pub async fn get_completion(
             agent_id: Some(agent.id),
             status: Status::Writing,
             role: Role::Assistant,
+            is_self_reflection: params.is_self_reflection,
             ..Default::default()
         },
     )
@@ -95,11 +108,15 @@ pub async fn get_completion(
             match abilities
                 .into_iter()
                 .map(
-                    |ability| match serde_json::from_str(&ability.parameters_json) {
-                        Ok(function) => Ok(Tool {
-                            type_: "function".to_string(),
-                            function,
-                        }),
+                    |ability| match serde_json::from_str::<Function>(&ability.parameters_json) {
+                        Ok(mut function) => {
+                            function.description = Some(ability.description);
+
+                            Ok(Tool {
+                                type_: "function".to_string(),
+                                function,
+                            })
+                        }
                         Err(err) => Err(errors::Error::Internal(err.into())),
                     },
                 )
@@ -183,6 +200,21 @@ pub async fn get_completion(
                     None => Status::Completed,
                 };
 
+                // Cleanup tool calls arguments due to newlines in JSON values causing issues.
+                if let Some(tool_calls_str) = &message.tool_calls {
+                    let mut tool_calls: Vec<ToolCall> =
+                        serde_json::from_str(tool_calls_str).expect("Failed to parse tool call");
+
+                    for tool_call in &mut tool_calls {
+                        tool_call.function.arguments =
+                            cleanup_json_string_newlines(&tool_call.function.arguments);
+                    }
+
+                    message.tool_calls = Some(
+                        serde_json::to_string(&tool_calls).expect("Failed to serialize tool calls"),
+                    );
+                }
+
                 if let Err(err) = repo::messages::update_with_completion_result(
                     &*pool,
                     UpdateWithCompletionResultParams {
@@ -203,8 +235,11 @@ pub async fn get_completion(
                 };
             } else {
                 match apply_completion_chunk(&mut message, chunk) {
-                    Err(errors::Error::Messages(messages::Error::ChunkDeserialization(_) |
-messages::Error::NoValidChunkPrefix)) => {
+                    Err(errors::Error::Messages(
+                        messages::Error::ChunkDeserialization(_)
+                        | messages::Error::NoValidChunkPrefix,
+                    )) => {
+                        // TODO: might be incomplete chunk, but might, as well, be an error. Handle this properly.
                         debug!("Error parsing chunk, might be incomplete, pushing to remainder");
                         chunk_remainder = chunk.to_string();
                     }
@@ -226,6 +261,12 @@ messages::Error::NoValidChunkPrefix)) => {
                 return Err(err.into());
             };
         }
+    }
+
+    if message.status == Status::Writing {
+        fail_message(&window, &pool, &mut message).await?;
+
+        return Err(anyhow!("Failed to get completion").into());
     }
 
     Ok(())
@@ -373,4 +414,50 @@ fn apply_completion_chunk(message: &mut Message, chunk: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+// This function is used to remove newlines from the JSON struct. It should not alter the keys or the values, only the newlines between them.
+fn cleanup_json_string_newlines(json_str: &str) -> String {
+    let mut new_json_str = String::with_capacity(json_str.len());
+    let mut in_quotes = false;
+    let mut last_char = ' ';
+
+    for c in json_str.chars() {
+        if c == '"' && last_char != '\\' {
+            in_quotes = !in_quotes;
+        }
+
+        if c == '\n' {
+            if in_quotes {
+                new_json_str.push_str("\\n");
+                last_char = c;
+            }
+
+            continue;
+        }
+
+        new_json_str.push(c);
+        last_char = c;
+    }
+
+    new_json_str.trim().replace('\n', "\\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cleanup_json_string_newlines() {
+        let json_str = r#"[{"id":"call_qSoLU7GYixJU7OLXKJxGdBGz","type":"function","function":{"name":"sfai_provide_text_result","arguments":"{\n\"text\": \"In Vue 3, the 'ref' keyword is used in the composition API to create \\\"reac\ntive\\\" references. While regular JavaScript variables won't be reactive inside Vue's templating system, `ref` creates a reactive and mutable object that can be used to keep track of changes in your Vue component. \n\nA ref is defined as follows:\n```javascript\nimport { ref } from 'vue'\n\nconst myVar = ref('initial value')\n```\nYou would access a ref value with `.value`:\n```javascript\nconsole.log(myVar.value)\n```\n\nOne practical example is if we wanted a button click to increment a counter:\n```javascript\nimport { ref } from 'vue'\n\nconst counter = ref(0)\n\n// In your method\nconst increment = () => {\n  counter.value += 1\n}\n\nexport default {\n  setup() {\n    return { counter , increment }\n  }\n}\n```\nIn this scenario, anytime `counter.value` is updated, Vue.js would be aware of the changes and re-render as needed. 'ref' is useful to track stateful values throughout your Vue application.\",\n\"is_done\": true\n} \n"}}]"#;
+        let tool_calls: Vec<ToolCall> =
+            serde_json::from_str(json_str).expect("Failed to parse tool call");
+
+        let expected = r#"{"text": "In Vue 3, the 'ref' keyword is used in the composition API to create \"reac\ntive\" references. While regular JavaScript variables won't be reactive inside Vue's templating system, `ref` creates a reactive and mutable object that can be used to keep track of changes in your Vue component. \n\nA ref is defined as follows:\n```javascript\nimport { ref } from 'vue'\n\nconst myVar = ref('initial value')\n```\nYou would access a ref value with `.value`:\n```javascript\nconsole.log(myVar.value)\n```\n\nOne practical example is if we wanted a button click to increment a counter:\n```javascript\nimport { ref } from 'vue'\n\nconst counter = ref(0)\n\n// In your method\nconst increment = () => {\n  counter.value += 1\n}\n\nexport default {\n  setup() {\n    return { counter , increment }\n  }\n}\n```\nIn this scenario, anytime `counter.value` is updated, Vue.js would be aware of the changes and re-render as needed. 'ref' is useful to track stateful values throughout your Vue application.","is_done": true}"#;
+
+        assert_eq!(
+            cleanup_json_string_newlines(&tool_calls[0].function.arguments),
+            expected
+        );
+    }
 }

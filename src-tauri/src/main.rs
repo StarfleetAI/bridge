@@ -6,10 +6,10 @@
 
 use anyhow::Context;
 use dotenvy::dotenv;
-use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
+use tauri::{App, async_runtime::block_on, generate_handler, LogicalSize, Manager};
 use tokio::sync::RwLock;
-use tracing::{debug, info};
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing::info;
+use tracing_subscriber::{EnvFilter, fmt};
 
 use bridge::{commands, database, settings::Settings, task_executor, types::Result};
 
@@ -23,7 +23,7 @@ fn main() -> Result<()> {
         .event_format(format)
         .init();
 
-    tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
+    // tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
 
     info!("Starting Bridge...");
     tauri::Builder::default()
@@ -36,6 +36,7 @@ fn main() -> Result<()> {
             commands::agents::delete_agent,
             commands::agents::list_agents,
             commands::agents::update_agent,
+            commands::agents::update_agent_is_enabled,
             commands::agents_chats::list_agents_chats,
             commands::chats::update_chat_model_full_name,
             commands::chats::create_chat,
@@ -57,6 +58,7 @@ fn main() -> Result<()> {
             commands::tasks::cancel_task,
             commands::tasks::create_task,
             commands::tasks::delete_task,
+            commands::tasks::duplicate_task,
             commands::tasks::execute_task,
             commands::tasks::get_task,
             commands::tasks::list_child_tasks,
@@ -76,21 +78,6 @@ fn main() -> Result<()> {
 // using the setup_handler, but it can't be async, so we need to spawn a task to do the actual
 // work.
 fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let app_handle = app.handle();
-
-    tauri_plugin_deep_link::register("starfleetai-bridge", move |request| {
-        debug!("Received deep link: {}", request);
-        app_handle
-            .emit_all("scheme-request-received", request)
-            .unwrap();
-    })
-    .with_context(|| "Failed to register deep link handler")?;
-
-    #[cfg(not(target_os = "macos"))]
-    if let Some(url) = std::env::args().nth(1) {
-        app.emit_all("scheme-request-received", url).unwrap();
-    }
-
     let app_handle = app.handle();
     let app_local_data_dir = app_handle
         .path_resolver()
@@ -115,7 +102,7 @@ fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::E
 
     app_handle.manage(pool);
 
-    block_on(async { task_executor::start_loop(app_handle).await });
+    block_on(async { task_executor::start_loop(&app_handle).await });
 
     info!("Startup sequence completed!");
     info!("Launching Bridge! 🚀");

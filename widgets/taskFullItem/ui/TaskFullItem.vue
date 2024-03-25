@@ -4,9 +4,10 @@
 <script setup lang="ts">
   import { useAgentsStore } from '~/features/agent'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import type { Agent } from '~/entities/agents'
+  import { AgentSelector } from '~/entities/agents'
   import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
-  import { AvatarsList } from '~/shared/ui/avatars'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon } from '~/shared/ui/icons'
   import ActivityFeed from './ActivityFeed.vue'
@@ -18,11 +19,17 @@
   if (!getById(selectedTask.value!)) {
     navigateTo('/tasks')
   }
-  const task = ref(getById(selectedTask.value!) as Task)
-
-  const setUpdatedTask = (updatedTask: Task) => {
-    task.value = updatedTask
-  }
+  const task = computed(() => getById(selectedTask.value!) as Task)
+  watch(
+    () => selectedTask.value,
+    (newVal) => {
+      if (newVal) {
+        taskTitle.value = task.value.title
+        taskSummary.value = task.value.summary
+        agent.value = getAgentById(task.value.agent_id!)!
+      }
+    },
+  )
 
   const createdAt = computed(() => {
     if (task.value) {
@@ -33,10 +40,9 @@
   })
 
   const { getById: getAgentById } = useAgentsStore()
+  const { agents } = storeToRefs(useAgentsStore())
 
-  const agent = computed(() => {
-    return getAgentById(task.value.agent_id)
-  })
+  const agent = ref<Agent>(getAgentById(task.value.agent_id!)!)
 
   const taskIsEditable = computed(() => {
     return [
@@ -65,8 +71,12 @@
   }
 
   const handleUpdate = async () => {
-    const { id } = await updateTask({ id: task.value.id, title: taskTitle.value, summary: taskSummary.value })
-    setUpdatedTask(getById(id)!)
+    const { id } = await updateTask({
+      id: task.value.id,
+      title: taskTitle.value,
+      summary: taskSummary.value,
+      agent_id: agent.value.id,
+    })
     return id
   }
 
@@ -114,10 +124,7 @@
         <b>Task #{{ task.id }}</b> {{ createdAt }}
       </div>
 
-      <TaskControls
-        :task="task"
-        @update="setUpdatedTask"
-      />
+      <TaskControls :task="task" />
     </div>
     <div class="task-details__body">
       <!-- TODO: back to parent task -->
@@ -128,9 +135,11 @@
         <div class="task-details__status">
           <TaskStatusBadge :status="task.status" />
         </div>
-        <AvatarsList
-          v-if="agent"
-          :persons="[{ name: agent?.name, avatar: '', link: '' }]"
+        <AgentSelector
+          v-model="agent"
+          :agents="agents"
+          :disabled="!taskIsEditable"
+          @update:model-value="handleUpdate"
         />
       </div>
       <div class="task-details__middle">
@@ -205,7 +214,7 @@
         ]"
       />
     </div> -->
-    <ActivityFeed />
+    <ActivityFeed v-if="task.status !== TaskStatus.DRAFT" />
   </div>
 </template>
 <style scoped lang="scss">

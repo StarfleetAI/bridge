@@ -66,7 +66,7 @@
           <template #icon>
             <AgentChatIcon />
           </template>
-          <span>Chat</span>
+          Chat
         </BaseButton>
       </div>
     </div>
@@ -140,10 +140,6 @@
     &__button {
       &.chat {
         background-color: var(--surface-4);
-
-        span {
-          color: var(--text-tertiary);
-        }
       }
     }
 

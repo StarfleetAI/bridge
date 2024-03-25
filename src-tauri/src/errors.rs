@@ -15,6 +15,8 @@ pub enum Error {
     TokioJoin(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
+    Browser(#[from] crate::browser::Error),
+    #[error(transparent)]
     Docker(#[from] crate::docker::Error),
     #[error(transparent)]
     Messages(#[from] crate::messages::Error),

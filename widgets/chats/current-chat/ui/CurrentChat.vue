@@ -11,9 +11,9 @@
   import type { Agent } from '~/entities/agents'
   import { Status, type ChatSettings } from '~/entities/chat'
   import { BRIDGE_AGENT_ID } from '~/shared/lib'
+  import { ChatInput } from '~/shared/ui/base'
   import ChatGreeting from './ChatGreeting.vue'
   import ChatHeader from './ChatHeader.vue'
-  import ChatInput from './ChatInput.vue'
   import ChatMessage from './ChatMessage.vue'
   import ChatStartPresets from './ChatStartPresets.vue'
 
@@ -30,6 +30,20 @@
   if (chatId.value) {
     await listMessages(chatId.value)
   }
+  const isLoading = ref(false)
+  const getMessages = async (id: number) => {
+    isLoading.value = true
+    await listMessages(id)
+    isLoading.value = false
+  }
+  watch(chatId, async (newVal) => {
+    if (newVal) {
+      setCurrentChatAgent()
+      await getMessages(newVal)
+      await nextTick()
+      scrollMessagesListToBottom()
+    }
+  })
 
   const { messages } = storeToRefs(useMessagesStore())
   const { getById } = useChatsStore()
@@ -121,10 +135,12 @@
   dayjs.extend(utc)
   const bridgeAgent = computed(() => agents.value.find((agent) => agent.id === BRIDGE_AGENT_ID)!)
   const currentAgent = ref<Agent>(structuredClone(toRaw(bridgeAgent.value)))
-  if (currentChat.value?.agents_ids?.length === 1) {
-    const agent = getAgentById(currentChat.value?.agents_ids[0])
-    if (agent) {
-      currentAgent.value = structuredClone(toRaw(agent))
+  const setCurrentChatAgent = () => {
+    if (currentChat.value?.agents_ids?.length === 1) {
+      const agent = getAgentById(currentChat.value?.agents_ids[0])
+      if (agent) {
+        currentAgent.value = structuredClone(toRaw(agent))
+      }
     }
   }
 
@@ -142,6 +158,10 @@
   if (selectedAgent.value) {
     handleAgentChange(selectedAgent.value)
   }
+
+  const showGreeting = computed(() => {
+    return isLoading.value === false && currentChatMessages.value?.length === 0
+  })
 </script>
 
 <template>
@@ -161,9 +181,10 @@
             :key="message.id"
             class="message"
             :message="message"
+            :is-last="message.id === currentChatMessages.at(-1)?.id"
           />
         </template>
-        <template v-else>
+        <template v-if="showGreeting">
           <ChatGreeting
             class="message"
             :agent="currentAgent"
@@ -176,6 +197,7 @@
     <ChatInput
       v-model="chatInput"
       :is-processing="isProcessing"
+      class="current-chat__input"
       @submit="handleSendMessage"
     />
   </div>
@@ -185,13 +207,14 @@
   .current-chat {
     position: relative;
     flex: 1;
+    width: 100%;
+    min-width: 583px;
 
     @include flex(column, flex-start, stretch);
   }
 
   .current-chat__messages-wrapper {
-    flex: 1;
-    overflow: auto;
+    overflow: hidden auto;
     width: 100%;
     height: 100%;
     padding: 0 24px;
@@ -202,16 +225,22 @@
   }
 
   .current-chat__messages {
-    flex: 1;
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
     margin: 0 auto;
     padding: 16px 0 0;
+    padding-bottom: 16px;
 
     &.is-greeting {
       height: 100%;
     }
 
     @include flex(column, space-between, stretch, 64px);
+  }
+
+  .current-chat__input {
+    margin-top: auto;
+    margin-bottom: 32px;
+    padding: 0 24px;
   }
 </style>

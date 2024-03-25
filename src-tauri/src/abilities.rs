@@ -6,15 +6,15 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Context};
 use askama::Template;
 use tauri::{AppHandle, Manager, State};
-use tokio::fs::create_dir_all;
 use tokio::{fs, spawn};
+use tokio::fs::create_dir_all;
 use tracing::{debug, trace};
 
+use crate::{docker, repo};
 use crate::clients::openai::ToolCall;
 use crate::repo::abilities::Ability;
 use crate::repo::messages::{CreateParams, Message, Role, Status};
 use crate::types::{DbPool, Result};
-use crate::{docker, repo};
 
 #[derive(Template)]
 #[template(path = "python/call_tools.py", escape = "none")]

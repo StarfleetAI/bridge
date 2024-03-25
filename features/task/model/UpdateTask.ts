@@ -5,4 +5,5 @@ export interface UpdateTask {
   id: number
   title?: string
   summary?: string
+  agent_id: number
 }

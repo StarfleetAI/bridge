@@ -4,9 +4,15 @@
 <script lang="ts" setup>
   import { AttachmentIcon, SendIcon } from '~/shared/ui/icons'
 
-  const props = defineProps<{
-    isProcessing: boolean
-  }>()
+  const props = withDefaults(
+    defineProps<{
+      isProcessing: boolean
+      withFiles?: boolean
+    }>(),
+    {
+      withFiles: true,
+    },
+  )
   const emits = defineEmits<{
     (e: 'submit'): void
   }>()
@@ -56,84 +62,93 @@
 </script>
 
 <template>
-  <div class="current-chat__input-container">
-    <div class="current-chat__input">
+  <div class="chat-input-container">
+    <div class="chat-input">
       <textarea
         ref="textarea"
         v-model.trim="input"
-        class="current-chat__input-text"
+        :class="['chat-input-text', { 'full-width': !withFiles }]"
         placeholder="Message"
         @keydown="handleKeyDown"
       />
       <SendIcon
         v-if="!isProcessing"
-        class="current-chat__input-send"
+        class="chat-input-send"
         @click="$emit('submit')"
       />
 
-      <label
-        for="currrent-chat__input-file"
-        class="current-chat__input-file-icon"
-      >
-        <AttachmentIcon />
-      </label>
-      <input
-        id="currrent-chat__input-file"
-        type="file"
-        class="current-chat__input-file"
-        @input="handleFileInput"
-      />
+      <template v-if="withFiles">
+        <label
+          for="currrent-chat__input-file"
+          class="chat-input-file-icon"
+        >
+          <AttachmentIcon />
+        </label>
+        <input
+          id="currrent-chat__input-file"
+          type="file"
+          class="chat-input-file"
+          @input="handleFileInput"
+        />
+      </template>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-  .current-chat__input-container {
+  .chat-input-container {
     align-self: center;
     width: 100%;
-    margin-top: auto;
-    margin-bottom: 32px;
-    padding: 0 24px;
 
     @include flex($justify-content: center);
   }
 
-  .current-chat__input {
+  .chat-input {
     position: relative;
     gap: 7px;
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
 
     @include flex(column);
   }
 
-  .current-chat__input-text {
+  .chat-input-text {
     width: 100%;
-    min-height: 56px;
+    min-height: 48px;
     max-height: 200px;
     padding: 16px 52px;
-    border: 1px solid var(--text-tertiary);
-    border-radius: 8px;
-    background-color: var(--surface-1);
+    border: 0.5px solid var(--text-tertiary);
+    border-radius: 12px;
+    background-color: transparent;
     resize: none;
     transition: border-color 0.1s ease;
 
     &:focus {
-      border-color: var(--border-standart);
+      border-width: 1px;
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
       outline: none;
     }
 
+    &::placeholder {
+      @include font-inter-400(16px, 22px, var(--text-tertiary));
+    }
+
+    &.full-width {
+      padding-left: 16px;
+    }
+
     @include hide-scrollbar;
-    @include font-inter-500(16px, 22px, var(--text-primary));
+    @include font-inter-500(16px, 22px, var(--text-secondary));
   }
 
-  .current-chat__input-file {
+  .chat-input-file {
     position: absolute;
     right: 0;
     display: none;
   }
 
-  .current-chat__input-file-icon {
+  .chat-input-file-icon {
     position: absolute;
     top: 16px;
     left: 16px;
@@ -144,7 +159,7 @@
     }
   }
 
-  .current-chat__input-send {
+  .chat-input-send {
     position: absolute;
     top: 16px;
     right: 16px;
