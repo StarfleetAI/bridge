@@ -7,9 +7,13 @@ use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::sync::RwLock;
-use tracing::{debug, trace};
 use tracing::instrument;
+use tracing::{debug, trace};
 
+use crate::abilities::{self};
+use crate::chats;
+use crate::chats::GetCompletionParams;
+use crate::repo::models;
 use crate::{
     clients::openai::{Client, CreateChatCompletionRequest},
     repo::{
@@ -19,10 +23,6 @@ use crate::{
     settings::Settings,
     types::{DbPool, Result},
 };
-use crate::abilities::{self};
-use crate::chats;
-use crate::chats::GetCompletionParams;
-use crate::repo::models;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(clippy::module_name_repetitions)]

@@ -5,8 +5,9 @@
 
 use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{AppHandle, State};
 
+use crate::task_planner::TaskPlanner;
 use crate::{
     repo::{
         self,
@@ -37,6 +38,18 @@ pub struct UpdateTask {
     pub title: String,
     pub summary: String,
     pub agent_id: i64,
+}
+
+/// Plan task by id.
+///
+/// # Errors
+///
+/// Returns error if task with given id does not exist or there was a problem while planning task.
+#[tauri::command]
+pub async fn plan_task(app_handle: AppHandle, pool: State<'_, DbPool>, id: i64) -> Result<()> {
+    let mut task = repo::tasks::get(&*pool, id).await?;
+
+    TaskPlanner::new(&mut task, &app_handle).plan().await
 }
 
 /// Cancel task by id.
