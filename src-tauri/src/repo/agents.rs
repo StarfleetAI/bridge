@@ -54,6 +54,31 @@ where
     Ok(agents)
 }
 
+/// List enabled agents.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn list_enabled<'a, E>(executor: E) -> Result<Vec<Agent>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let agents = query_as!(
+        Agent,
+        r#"
+        SELECT *
+        FROM agents
+        WHERE agents.is_enabled = 1
+        ORDER BY agents.id ASC
+        "#
+    )
+    .fetch_all(executor)
+    .await
+    .with_context(|| "Failed to list agents")?;
+
+    Ok(agents)
+}
+
 /// Get agent by id.
 ///
 /// # Errors
