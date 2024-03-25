@@ -160,7 +160,7 @@ impl<'a> TaskPlanner<'a> {
             let task = repo::tasks::create(
                 &*pool,
                 CreateParams {
-                    title: &self.task.title,
+                    title: &sub_task.title,
                     agent_id: sub_task.agent_id,
                     ancestry: Some(&self.task.children_ancestry()),
                     ..Default::default()
@@ -282,6 +282,7 @@ impl<'a> TaskPlanner<'a> {
                         "properties": {
                             "tasks": {
                                 "type": "array",
+                                "description": "List of tasks to plan",
                                 "items": {
                                     "type": "object",
                                     "properties": {
