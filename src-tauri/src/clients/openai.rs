@@ -134,6 +134,8 @@ pub struct FunctionPropertyValue {
     #[serde(rename = "type")]
     pub type_: String,
     pub description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub items: Option<FunctionParameters>,
 }
 
 #[derive(Debug, Serialize)]

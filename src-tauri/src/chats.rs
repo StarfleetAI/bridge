@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::sync::RwLock;
-use tracing::{debug, instrument, trace};
+use tracing::{debug, error, instrument, trace};
 
 use crate::{
     clients::openai::{
@@ -273,10 +273,17 @@ pub async fn construct_tools(abilities: Vec<Ability>) -> Result<Option<Vec<Tool>
                                 function,
                             })
                         }
-                        Err(err) => Err(errors::Error::Internal(err.into())),
+                        Err(err) => {
+                            error!(
+                                "Failed to parse ability parameters ({:?}): {}",
+                                err, ability.parameters_json
+                            );
+                            Err(errors::Error::Internal(err.into()))
+                        }
                     },
                 )
-                .collect::<Result<Vec<Tool>>>()?,
+                .collect::<Result<Vec<Tool>>>()
+                .with_context(|| "Failed to construct tools")?,
         );
     }
 
