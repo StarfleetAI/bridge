@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Window};
 use tokio::sync::RwLock;
-use tracing::{debug, instrument, trace};
+use tracing::{debug, error, instrument, trace};
 
 use crate::{
     clients::openai::{
@@ -102,37 +102,16 @@ pub async fn get_completion(
         .emit_all("messages:created", &message)
         .context("Failed to emit event")?;
 
-    let mut tools = None;
-    if !abilities.is_empty() {
-        tools = Some(
-            match abilities
-                .into_iter()
-                .map(
-                    |ability| match serde_json::from_str::<Function>(&ability.parameters_json) {
-                        Ok(mut function) => {
-                            function.description = Some(ability.description);
+    let tools = match construct_tools(abilities).await {
+        Ok(tools) => tools,
+        Err(err) => {
+            fail_message(&window, &pool, &mut message).await?;
 
-                            Ok(Tool {
-                                type_: "function".to_string(),
-                                function,
-                            })
-                        }
-                        Err(err) => Err(errors::Error::Internal(err.into())),
-                    },
-                )
-                .collect::<Result<Vec<Tool>>>()
-            {
-                Ok(tools) => tools,
-                Err(err) => {
-                    fail_message(&window, &pool, &mut message).await?;
+            return Err(err);
+        }
+    };
 
-                    return Err(err);
-                }
-            },
-        );
-
-        debug!("Tools: {:?}", tools);
-    }
+    debug!("Tools: {:?}", tools);
 
     let model = models::get(&*pool, settings_guard.default_model())
         .await
@@ -270,6 +249,45 @@ pub async fn get_completion(
     }
 
     Ok(())
+}
+
+/// Constructs tools from abilities.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while constructing tools.
+pub async fn construct_tools(abilities: Vec<Ability>) -> Result<Option<Vec<Tool>>> {
+    let mut tools = None;
+
+    if !abilities.is_empty() {
+        tools = Some(
+            abilities
+                .into_iter()
+                .map(
+                    |ability| match serde_json::from_str::<Function>(&ability.parameters_json) {
+                        Ok(mut function) => {
+                            function.description = Some(ability.description);
+
+                            Ok(Tool {
+                                type_: "function".to_string(),
+                                function,
+                            })
+                        }
+                        Err(err) => {
+                            error!(
+                                "Failed to parse ability parameters ({:?}): {}",
+                                err, ability.parameters_json
+                            );
+                            Err(errors::Error::Internal(err.into()))
+                        }
+                    },
+                )
+                .collect::<Result<Vec<Tool>>>()
+                .with_context(|| "Failed to construct tools")?,
+        );
+    }
+
+    Ok(tools)
 }
 
 async fn fail_message(window: &Window, pool: &DbPool, message: &mut Message) -> Result<()> {

@@ -1,7 +1,9 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
+use markdown::to_html;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Sqlite};
 
@@ -70,4 +72,55 @@ where
     )
     .fetch_one(executor)
     .await?)
+}
+
+/// List task results by task id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn list<'a, E>(executor: E, task_id: i64) -> Result<Vec<TaskResult>>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let task_results = sqlx::query_as!(
+        TaskResult,
+        r#"
+        SELECT 
+            id as "id!", agent_id, task_id, kind, data, created_at, updated_at
+        FROM task_results WHERE task_id = $1
+        ORDER BY id ASC
+        "#,
+        task_id
+    )
+    .fetch_all(executor)
+    .await
+    .with_context(|| "Failed to fetch task results")?;
+    Ok(task_results)
+}
+
+/// Get text data by task result id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get_text_data<'a, E>(executor: E, id: i64) -> Result<String>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let task_result = sqlx::query!(
+        r#"
+        SELECT data
+        FROM task_results
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to fetch task result")?;
+
+    // Safely render markdown in a result as an untrusted input.
+    let serialized_data = to_html(task_result.data.as_str());
+    Ok(serialized_data)
 }

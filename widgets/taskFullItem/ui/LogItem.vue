@@ -4,15 +4,12 @@
 <!-- TODO: Make reusable component for all messages -->
 
 <script lang="ts" setup>
-  import 'highlight.js/styles/atom-one-dark.min.css'
-  import hljs from 'highlight.js'
-
   // eslint-disable-next-line boundaries/element-types
   import { ToolCall } from '~/widgets/chats/current-chat'
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
-  import { utcToLocalTime, getTimeAgo } from '~/shared/lib'
+  import { utcToLocalTime, getTimeAgo, highlightCode } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
   import { SystemIcon, NoAvatarIcon, CheckIcon, CrossIcon, ChevronDownIcon } from '~/shared/ui/icons'
 
@@ -64,32 +61,22 @@
   })
 
   const messageRef = ref<HTMLDivElement>()
-
+  const parseAndHighlightContent = () => {
+    if (messageRef.value) {
+      highlightCode(messageRef.value)
+    }
+  }
+  onMounted(() => {
+    parseAndHighlightContent()
+  })
   watch(
-    () => [props.message, messageRef.value],
-    () => {
-      if (props.message.content && props.message.status !== Status.WRITING) {
-        messageRef.value?.querySelectorAll('pre code').forEach((el) => {
-          if (el.getAttribute('data-highlighted') !== 'yes') {
-            // add data-language attribute to show it in the highlighter
-            const lang = el.className
-              .split(' ')
-              .find((item) => item.startsWith('language-'))
-              ?.slice(9)
-            if (lang) {
-              if (!hljs.getLanguage(lang)) {
-                el.classList.value = 'language-html'
-              }
-              el.parentElement?.setAttribute('data-language', lang)
-              hljs.highlightElement(el as HTMLElement)
-            }
-          }
-        })
-      }
+    () => props.message,
+    async () => {
+      await nextTick()
+      parseAndHighlightContent()
     },
     {
       deep: true,
-      immediate: true,
     },
   )
 
@@ -201,6 +188,7 @@
 
 <style lang="scss" scoped>
   .message {
+    z-index: 2;
     gap: 8px;
     width: 100%;
 

@@ -99,7 +99,7 @@
   .resizer {
     content: '';
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     display: flex;
 
     &.left,
@@ -122,6 +122,7 @@
 
     &.top {
       top: 0;
+      z-index: 3;
       width: 100%;
       height: 4px;
       border-top: 1px solid transparent;
