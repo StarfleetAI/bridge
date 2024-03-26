@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT\n            id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at\n        FROM messages\n        WHERE chat_id = $1\n        ORDER BY id ASC\n        ",
+  "query": "\n        SELECT\n            id as \"id!\", chat_id, status, agent_id, role, content, prompt_tokens,\n            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,\n            is_self_reflection, is_internal_tool_output\n        FROM messages\n        WHERE chat_id = $1\n        ORDER BY id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -62,6 +62,16 @@
         "name": "updated_at",
         "ordinal": 11,
         "type_info": "Datetime"
+      },
+      {
+        "name": "is_self_reflection",
+        "ordinal": 12,
+        "type_info": "Bool"
+      },
+      {
+        "name": "is_internal_tool_output",
+        "ordinal": 13,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -79,8 +89,10 @@
       true,
       true,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "ec66791c8e1f082aac59ec1e09fbc0a18ac8b7aa3fc9738610cc15b9b560ca8a"
+  "hash": "945d589be2a9c7fdff79ac7de9d26bc0cbde1db633dca0cc9d3f1224f390edce"
 }

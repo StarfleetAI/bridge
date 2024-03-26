@@ -15,11 +15,15 @@ pub enum Error {
     TokioJoin(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
+    Browser(#[from] crate::browser::Error),
+    #[error(transparent)]
     Docker(#[from] crate::docker::Error),
     #[error(transparent)]
     Messages(#[from] crate::messages::Error),
     #[error(transparent)]
     Settings(#[from] crate::settings::Error),
+    #[error(transparent)]
+    Planner(#[from] crate::task_planner::Error),
     #[error(transparent)]
     Executor(#[from] crate::task_executor::Error),
 

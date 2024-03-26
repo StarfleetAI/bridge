@@ -8,7 +8,7 @@ use anyhow::Context;
 use dotenvy::dotenv;
 use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
 use tokio::sync::RwLock;
-use tracing::{debug, info};
+use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
 
 use bridge::{commands, database, settings::Settings, task_executor, types::Result};
@@ -23,7 +23,7 @@ fn main() -> Result<()> {
         .event_format(format)
         .init();
 
-    tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
+    // tauri_plugin_deep_link::prepare("com.starfleetai.bridge");
 
     info!("Starting Bridge...");
     tauri::Builder::default()
@@ -55,6 +55,8 @@ fn main() -> Result<()> {
             commands::models::list_models,
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::task_results::get_task_result_text_data,
+            commands::task_results::list_task_results,
             commands::tasks::cancel_task,
             commands::tasks::create_task,
             commands::tasks::delete_task,
@@ -64,6 +66,7 @@ fn main() -> Result<()> {
             commands::tasks::list_child_tasks,
             commands::tasks::list_root_tasks,
             commands::tasks::pause_task,
+            commands::tasks::plan_task,
             commands::tasks::revise_task,
             commands::tasks::update_task,
         ])
@@ -78,21 +81,6 @@ fn main() -> Result<()> {
 // using the setup_handler, but it can't be async, so we need to spawn a task to do the actual
 // work.
 fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let app_handle = app.handle();
-
-    tauri_plugin_deep_link::register("starfleetai-bridge", move |request| {
-        debug!("Received deep link: {}", request);
-        app_handle
-            .emit_all("scheme-request-received", request)
-            .unwrap();
-    })
-    .with_context(|| "Failed to register deep link handler")?;
-
-    #[cfg(not(target_os = "macos"))]
-    if let Some(url) = std::env::args().nth(1) {
-        app.emit_all("scheme-request-received", url).unwrap();
-    }
-
     let app_handle = app.handle();
     let app_local_data_dir = app_handle
         .path_resolver()
@@ -117,7 +105,7 @@ fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::E
 
     app_handle.manage(pool);
 
-    block_on(async { task_executor::start_loop(app_handle).await });
+    block_on(async { task_executor::start_loop(&app_handle).await });
 
     info!("Startup sequence completed!");
     info!("Launching Bridge! 🚀");

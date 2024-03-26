@@ -87,6 +87,7 @@ impl Task {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct CreateParams<'a> {
     pub agent_id: i64,
     /// Chat from which this task was created.
@@ -678,6 +679,28 @@ where
         .execute(executor)
         .await
         .with_context(|| "Failed to set `{from}` tasks to `{to}`")?;
+
+    Ok(())
+}
+
+/// Assigns tasks to agent by id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while assigning tasks to agent.
+pub async fn assign<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    task_id: i64,
+    agent_id: i64,
+) -> Result<()> {
+    query!(
+        "UPDATE tasks SET agent_id = $1 WHERE id = $2",
+        agent_id,
+        task_id
+    )
+    .execute(executor)
+    .await
+    .context("Failed to assign task to agent")?;
 
     Ok(())
 }

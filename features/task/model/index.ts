@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * from './CreateTask'
-export * from './TasksList'
+export * from './GroupedTasks'
 export * from './ListTasksParams'
 export * from './StatusGroup'
-export * from './GroupedTasks'
+export * from './TasksList'
 export * from './UpdateTask'

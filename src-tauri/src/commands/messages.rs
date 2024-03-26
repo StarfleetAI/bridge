@@ -12,6 +12,7 @@ use tracing::{debug, trace};
 
 use crate::abilities::{self};
 use crate::chats;
+use crate::chats::GetCompletionParams;
 use crate::repo::models;
 use crate::{
     clients::openai::{Client, CreateChatCompletionRequest},
@@ -126,7 +127,7 @@ pub async fn create_message(
         .emit_all("messages:created", &message)
         .context("Failed to emit event")?;
 
-    chats::get_completion(request.chat_id, &app_handle, None, None)
+    chats::get_completion(&app_handle, request.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
@@ -310,7 +311,7 @@ pub async fn approve_tool_call(
         .emit_all("messages:updated", &message)
         .context("Failed to emit event")?;
 
-    chats::get_completion(message.chat_id, &app_handle, None, None)
+    chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
@@ -361,7 +362,7 @@ pub async fn deny_tool_call(
         .emit_all("messages:created", &denied_message)
         .context("Failed to emit message creation event")?;
 
-    chats::get_completion(message.chat_id, &app_handle, None, None)
+    chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
