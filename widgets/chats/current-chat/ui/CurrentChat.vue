@@ -100,8 +100,6 @@
 
   onMounted(async () => {
     await nextTick()
-    await nextTick()
-    await nextTick()
     scrollMessagesListToBottom()
   })
 

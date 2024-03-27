@@ -68,8 +68,6 @@
 
   onMounted(async () => {
     await nextTick()
-    await nextTick()
-    await nextTick()
     scrollMessagesListToBottom()
   })
 
@@ -207,5 +205,7 @@
     max-height: 82px;
     margin-top: auto;
     padding: 0 24px;
+    padding-top: 24px;
+    border-top: 0.5px solid var(--text-tertiary);
   }
 </style>

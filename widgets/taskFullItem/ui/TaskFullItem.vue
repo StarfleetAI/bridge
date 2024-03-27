@@ -6,7 +6,7 @@
   import { getTaskResults, useTasksNavigation, useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
   import { AgentSelector } from '~/entities/agents'
-  import { TaskStatusBadge, type Task, TaskStatus, TaskInput } from '~/entities/tasks'
+  import { TaskStatusBadge, type Task, TaskTitle, TaskSummary, TaskStatus } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
@@ -78,20 +78,6 @@
   })
 
   const taskTitle = ref(task.value.title)
-  const taskTitlePlaceholder = computed(() => {
-    return task.value.title || `Task #${task.value.id}`
-  })
-  const titleIsEditing = ref(false)
-  const titleInput = ref<InstanceType<typeof TaskInput> | null>(null)
-  const enableTitleEditing = () => {
-    if (!taskIsEditable.value || titleIsEditing.value) {
-      return
-    }
-    titleIsEditing.value = true
-    nextTick(() => {
-      titleInput.value?.focus()
-    })
-  }
 
   const handleUpdate = async () => {
     const { id } = await updateTask({
@@ -100,45 +86,11 @@
       summary: taskSummary.value,
       agent_id: agent.value.id,
     })
+
     return id
   }
 
-  const updateTitle = async () => {
-    await handleUpdate()
-    titleIsEditing.value = false
-  }
-  const titleComponent = computed(() => {
-    if (titleIsEditing.value) {
-      return TaskInput
-    }
-    return 'div'
-  })
-
   const taskSummary = ref(task.value.summary)
-  const summaryIsEditing = ref(false)
-  const summaryInput = ref<InstanceType<typeof TaskInput> | null>(null)
-  const enableSummaryEditing = () => {
-    if (!taskIsEditable.value || summaryIsEditing.value) {
-      return
-    }
-    summaryIsEditing.value = true
-    nextTick(() => {
-      nextTick(() => {
-        summaryInput.value?.focus()
-      })
-    })
-  }
-
-  const updateSummary = async () => {
-    await handleUpdate()
-    summaryIsEditing.value = false
-  }
-  const summaryComponent = computed(() => {
-    if (summaryIsEditing.value) {
-      return TaskInput
-    }
-    return 'div'
-  })
 </script>
 <template>
   <div class="task-details">
@@ -166,58 +118,28 @@
         />
       </div>
       <div class="task-details__middle">
-        <div class="task__title-wrapper">
-          <component
-            :is="titleComponent"
-            ref="titleInput"
-            v-model="taskTitle"
-            :class="[
-              'task__title',
-              {
-                'task__title--editing': titleIsEditing,
-                'task__title--editable': taskIsEditable,
-              },
-            ]"
-            @click="enableTitleEditing"
-            @blur="updateTitle"
-          >
-            <template v-if="!titleIsEditing">
-              {{ taskTitlePlaceholder }}
-            </template>
-          </component>
-        </div>
+        <TaskTitle
+          v-model="taskTitle"
+          :current-title="task.title"
+          :task-id="task.id"
+          @save="handleUpdate"
+        />
 
-        <div class="task__description-wrapper">
-          <component
-            :is="summaryComponent"
-            ref="summaryInput"
-            v-model="taskSummary"
-            is-summary
-            :class="[
-              'task__description',
-              {
-                'task__description--editing': summaryIsEditing,
-                'task__description--editable': taskIsEditable,
-              },
-            ]"
-            @blur="updateSummary"
-            @click="enableSummaryEditing"
-          >
-            <template v-if="!summaryIsEditing">
-              {{ task.summary || 'No summary' }}
-            </template>
-          </component>
-        </div>
+        <TaskSummary
+          v-model="taskSummary"
+          :current-summary="task.summary"
+          @save="handleUpdate"
+        />
 
         <div class="task-details__attachments">
           <div class="task-details__attachments-title">
             <AttachmentIcon
-              width="20"
-              height="20"
+              width="20px"
+              height="20px"
             />
             Attachments
           </div>
-          <div>+ Add</div>
+          <div class="task-details__attachments-add">+ Add</div>
         </div>
         <FilesList :files="[]" />
       </div>
@@ -225,7 +147,7 @@
         v-if="taskResults.length"
         class="task-details__result"
       >
-        <div class="task-details__result-head"><ResultIcon /> Output</div>
+        <div class="task-details__result-head"><ResultIcon /> Result</div>
         <TaskResult
           v-for="result in taskResults"
           :key="result.id"
@@ -257,7 +179,7 @@
 
     &__head {
       height: 56px;
-      padding: 12px 24px;
+      padding: 0 24px;
       border-bottom: 0.5px solid var(--border-3);
 
       @include flex(row, space-between, center);
@@ -285,20 +207,19 @@
       flex: 1;
       overflow: hidden auto;
       height: 50%;
-      padding: 24px 0;
+      padding: 24px 12px;
 
       @include add-scrollbar;
+      @include flex(column, $gap: 8px);
     }
 
     &__top {
-      padding: 0 24px;
+      padding: 0 12px;
 
-      @include flex(row, space-between, space-between);
+      @include flex(row, space-between, center);
     }
 
     &__middle {
-      margin-top: 8px;
-
       @include flex(column, $gap: 8px);
     }
 
@@ -326,20 +247,22 @@
 
     &__attachments {
       margin-top: 16px;
-      padding: 0 24px;
+      padding: 0 12px 0 10px;
 
       &-title {
-        color: var(--text-secondary);
-
+        @include font-inter-500(14px, 20px, var(--text-secondary));
         @include flex(row, flex-start, center, 8px);
       }
 
-      @include font-inter-500(14px, 22px, var(--text-tertiary));
+      &-add {
+        @include font-inter-500(14px, 20px, var(--button-primary));
+      }
+
       @include flex(row, space-between, center);
     }
 
     &__result {
-      padding: 24px;
+      padding: 24px 12px;
     }
 
     &__result-head {
@@ -367,43 +290,5 @@
     }
 
     @include flex(column, flex-start, stretch);
-  }
-
-  .task__title-wrapper {
-    min-height: 41px;
-    max-height: 62px;
-
-    @include line-clamp(2);
-  }
-
-  .task__description-wrapper {
-    min-height: 39px;
-    max-height: 124px;
-
-    @include line-clamp(6);
-  }
-
-  .task__title {
-    @include font-inter-500(18px, 25px, var(--text-primary));
-  }
-
-  .task__description {
-    @include font-inter-400(14px, 20px, var(--text-secondary));
-  }
-
-  .task__title,
-  .task__description {
-    margin: 0 12px;
-    padding: 8px 12px;
-    border-radius: 6px;
-
-    &--editing {
-      width: calc(100% - 24px);
-      margin-bottom: -6px;
-    }
-
-    &--editable:hover {
-      background-color: var(--surface-3);
-    }
   }
 </style>

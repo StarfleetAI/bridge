@@ -1,0 +1,76 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+.task-input__container {
+  position: relative;
+  display: flex;
+
+  //   flex: 1;
+  border-radius: 6px;
+
+  //   background-color: var(--surface-3);
+
+  &--editing {
+    background-color: var(--surface-3);
+
+    & .task-input.summary {
+      overflow: auto;
+      white-space: initial;
+    }
+  }
+
+  &:hover {
+    background-color: var(--surface-3);
+  }
+}
+
+.task-input {
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  outline: none;
+  font-family: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  resize: none;
+  cursor: text;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+
+  &:before,
+  &:after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: transparent;
+  }
+
+  &.summary {
+    display: block;
+    overflow: auto;
+    max-height: 128px;
+    padding-right: 28px;
+    white-space: pre-wrap;
+    transition: max-height 0.1s ease;
+
+    &::placeholder {
+      @include font-inter-400(14px, 20px, var(--text-secondary));
+    }
+
+    &.full {
+      -webkit-line-clamp: unset;
+    }
+
+    @include add-scrollbar;
+    @include font-inter-400(14px, 20px, var(--text-primary));
+  }
+
+  &::placeholder {
+    @include font-inter-500(18px, 25px, var(--text-secondary));
+  }
+
+  @include font-inter-500(18px, 25px, var(--text-primary));
+}

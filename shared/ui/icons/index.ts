@@ -43,6 +43,7 @@ export { default as NoAvatarIcon } from './NoAvatarIcon.vue'
 export { default as PauseIcon } from './PauseIcon.vue'
 export { default as PinIcon } from './PinIcon.vue'
 export { default as PlusIcon } from './PlusIcon.vue'
+export { default as ResizeIcon } from './ResizeIcon.vue'
 export { default as ResultIcon } from './ResultIcon.vue'
 export { default as RetryIcon } from './RetryIcon.vue'
 export { default as ReviseIcon } from './ReviseIcon.vue'
@@ -55,12 +56,25 @@ export { default as StoreIcon } from './StoreIcon.vue'
 export { default as SystemIcon } from './SystemIcon.vue'
 export { default as TaskHeaderIcon } from './TaskHeaderIcon.vue'
 export { default as TasksIcon } from './TasksIcon.vue'
-export { default as TaskStatusDone } from './TaskStatusDone.vue'
-export { default as TaskStatusDraft } from './TaskStatusDraft.vue'
-export { default as TaskStatusFailed } from './TaskStatusFailed.vue'
-export { default as TaskStatusInProgress } from './TaskStatusInProgress.vue'
-export { default as TaskStatusPaused } from './TaskStatusPaused.vue'
-export { default as TaskStatusToDo } from './TaskStatusToDo.vue'
-export { default as TaskStatusWaiting } from './TaskStatusWaiting.vue'
 export { default as UnlinkIcon } from './UnlinkIcon.vue'
 export { default as UnpinIcon } from './UnpinIcon.vue'
+
+// Async components
+const TaskStatusCancelled = () => import('./TaskStatusCancelled.vue')
+const TaskStatusDone = () => import('./TaskStatusDone.vue')
+const TaskStatusDraft = () => import('./TaskStatusDraft.vue')
+const TaskStatusFailed = () => import('./TaskStatusFailed.vue')
+const TaskStatusInProgress = () => import('./TaskStatusInProgress.vue')
+const TaskStatusPaused = () => import('./TaskStatusPaused.vue')
+const TaskStatusToDo = () => import('./TaskStatusToDo.vue')
+const TaskStatusWaiting = () => import('./TaskStatusWaiting.vue')
+export {
+  TaskStatusCancelled,
+  TaskStatusDone,
+  TaskStatusDraft,
+  TaskStatusFailed,
+  TaskStatusInProgress,
+  TaskStatusPaused,
+  TaskStatusToDo,
+  TaskStatusWaiting,
+}

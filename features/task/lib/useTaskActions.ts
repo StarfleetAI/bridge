@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Task, TaskStatus } from '~/entities/tasks'
-import { CancelIcon, DeleteIcon, DuplicateIcon, PauseIcon, ReviseIcon } from '~/shared/ui/icons'
+import { DeleteIcon, DuplicateIcon, PauseIcon, ReviseIcon } from '~/shared/ui/icons'
 import { useTasksStore } from '../store'
+import { useTasksNavigation } from './useTasksNavigation'
 
 export const useTaskActions = (task: Ref<Task>) => {
   const id = computed(() => task.value.id)
   const status = computed(() => task.value.status)
-  const { deleteTask: deleteTaskReq, reviseTask, cancelTask, pauseTask, duplicateTask } = useTasksStore()
+  const { deleteTask: deleteTaskReq, reviseTask, pauseTask, duplicateTask } = useTasksStore()
+  const { setSelectedTask } = useTasksNavigation()
 
   const duplicate = computed(() => {
     return {
       label: 'Duplicate',
       icon: DuplicateIcon,
-      action: () => duplicateTask(task.value.id),
+      action: async () => {
+        const newTask = await duplicateTask(task.value.id)
+        setSelectedTask(newTask.id)
+      },
     }
   })
 
@@ -22,7 +27,10 @@ export const useTaskActions = (task: Ref<Task>) => {
     return {
       label: 'Delete Task',
       icon: DeleteIcon,
-      action: () => deleteTaskReq(id.value),
+      action: async () => {
+        await deleteTaskReq(id.value)
+        navigateTo('/tasks')
+      },
     }
   })
 
@@ -31,14 +39,6 @@ export const useTaskActions = (task: Ref<Task>) => {
       label: 'Revise',
       icon: ReviseIcon,
       action: () => reviseTask(id.value),
-    }
-  })
-
-  const cancel = computed(() => {
-    return {
-      label: 'Cancel',
-      icon: CancelIcon,
-      action: () => cancelTask(id.value),
     }
   })
 
@@ -59,15 +59,19 @@ export const useTaskActions = (task: Ref<Task>) => {
   })
 
   const inProgressActions = computed(() => {
-    return [pause.value, cancel.value, duplicate.value, deleteTask.value]
+    return [pause.value, duplicate.value, deleteTask.value]
   })
 
   const pausedActions = computed(() => {
-    return [revise.value, cancel.value, duplicate.value, deleteTask.value]
+    return [revise.value, duplicate.value, deleteTask.value]
   })
 
   const waitingActions = computed(() => {
     return [pause.value, revise.value, duplicate.value, deleteTask.value]
+  })
+
+  const failedActions = computed(() => {
+    return [revise.value, duplicate.value, deleteTask.value]
   })
 
   const taskActions = computed(() => {
@@ -80,6 +84,8 @@ export const useTaskActions = (task: Ref<Task>) => {
         return pausedActions.value
       case TaskStatus.WAITING_FOR_USER:
         return waitingActions.value
+      case TaskStatus.FAILED:
+        return failedActions.value
       default:
         return baseActions.value
     }

@@ -27,7 +27,7 @@ pub struct TasksList {
 pub struct CreateTask {
     pub agent_id: i64,
     pub title: String,
-    pub summary: String,
+    pub summary: Option<String>,
     pub ancestry: Option<String>,
     pub status: Status,
 }
@@ -75,7 +75,7 @@ pub async fn create_task(request: CreateTask, pool: State<'_, DbPool>) -> Result
             agent_id: request.agent_id,
             origin_chat_id: None,
             title: &request.title,
-            summary: &request.summary,
+            summary: request.summary.as_deref(),
             status: request.status,
             ancestry: request.ancestry.as_deref(),
         },
@@ -178,7 +178,7 @@ pub async fn revise_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 ///
 /// # Errors
 ///
-/// Returns error if task with given id does not exist or its status is not allowed to update task
+/// Returns error if task with given id does not exist
 #[tauri::command]
 pub async fn update_task(request: UpdateTask, pool: State<'_, DbPool>) -> Result<Task> {
     let mut tx = pool
@@ -188,14 +188,6 @@ pub async fn update_task(request: UpdateTask, pool: State<'_, DbPool>) -> Result
 
     if request.title.is_empty() && request.summary.is_empty() {
         return Err(anyhow!("Title and summary cannot be both empty").into());
-    }
-
-    let task = repo::tasks::get(&mut *tx, request.id).await?;
-    if task.status == Status::ToDo
-        || task.status == Status::InProgress
-        || task.status == Status::Done
-    {
-        return Err(anyhow!("Task status is not allowed to update task").into());
     }
 
     let task = repo::tasks::update(
@@ -231,7 +223,7 @@ pub async fn duplicate_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
             agent_id: task.agent_id,
             origin_chat_id: task.origin_chat_id,
             title: &task.title,
-            summary: &task.summary,
+            summary: Some(&task.summary),
             ancestry: task.ancestry.as_deref(),
         },
     )

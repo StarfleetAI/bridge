@@ -7,6 +7,7 @@
   import { type Ability } from '~/entities/abilities'
   import type { Agent } from '~/entities/agents'
   import { Status, type ToolCall } from '~/entities/chat'
+  import { TASK_STATUS_MESSAGES } from '~/entities/tasks'
   import { ChatLoader } from '~/shared/ui/base'
   import { ChevronDownIcon, CubeIcon } from '~/shared/ui/icons'
 
@@ -79,12 +80,64 @@
   const showMoreButtonText = computed(() => {
     return showMore.value ? 'Less' : 'More'
   })
+  const SFAIMessageType = computed(() => {
+    if (!fullAction.value?.function?.name?.startsWith('sfai_')) {
+      return null
+    }
+    return fullAction.value.function.name.slice(5) as 'done' | 'fail' | 'wait_for_user'
+  })
+  const SFAIMessage = computed(() => {
+    if (!SFAIMessageType.value) {
+      return null
+    }
+    switch (SFAIMessageType.value) {
+      case 'done':
+      default:
+        return TASK_STATUS_MESSAGES.DONE
+      case 'fail':
+        return TASK_STATUS_MESSAGES.FAILED
+      case 'wait_for_user':
+        return TASK_STATUS_MESSAGES.WAIT_FOR_USER
+    }
+  })
+  const showSFAIMessage = computed(() => {
+    return !isProcessing.value && SFAIMessage.value
+  })
+
+  const showToolParameters = computed(() => {
+    return !isProcessing.value && !SFAIMessage.value
+  })
+  const parsedStatus = computed(() => {
+    if (SFAIMessageType.value) {
+      switch (SFAIMessageType.value) {
+        case 'wait_for_user':
+          return 'waiting'
+        case 'done':
+        default:
+          return 'done'
+        case 'fail':
+          return 'denied'
+      }
+    }
+    if (props.status === Status.COMPLETED) {
+      return 'done'
+    } else if (props.status === Status.TOOL_CALL_DENIED) {
+      return 'denied'
+    }
+    return null
+  })
 </script>
 
 <template>
-  <div :class="['tool', { done: status === Status.COMPLETED, denied: status === Status.TOOL_CALL_DENIED }]">
+  <div :class="['tool', parsedStatus]">
     <CubeIcon class="tool__icon" />
-    <div class="tool__content">
+    <div v-if="showSFAIMessage">
+      {{ SFAIMessage }}
+    </div>
+    <div
+      v-else
+      class="tool__content"
+    >
       <div class="tool__name">{{ ability?.name }}</div>
       <div class="tool__description">{{ ability?.description }}</div>
       <div
@@ -94,8 +147,9 @@
         <ChatLoader />
         Processing
       </div>
+
       <div
-        v-if="!isProcessing"
+        v-if="showToolParameters"
         ref="parametersWrapperRef"
         :class="['tool__parameters', { full: showMore }]"
       >
@@ -144,6 +198,10 @@
 
     &.denied {
       border-left: 2px solid var(--status-failed);
+    }
+
+    &.waiting {
+      border-left: 2px solid var(--status-waiting);
     }
 
     @include flex(row);
