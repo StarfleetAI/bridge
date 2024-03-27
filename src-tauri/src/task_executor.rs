@@ -312,8 +312,6 @@ async fn interpret_code(
                     ));
                 }
             }
-
-            lines.push(format!("```\nFile `{filename}` has been saved\n```"));
         }
     }
 
