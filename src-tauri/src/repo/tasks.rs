@@ -5,6 +5,9 @@ use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, query_as, Executor, Sqlite};
+use std::path::PathBuf;
+use tauri::AppHandle;
+use tokio::fs::create_dir_all;
 
 use crate::types::Result;
 
@@ -67,15 +70,27 @@ pub struct Task {
 }
 
 impl Task {
-    #[must_use]
-    pub fn parent_id(&self) -> Option<i64> {
-        match self.ancestry {
-            Some(ref ancestry) => ancestry
-                .split('/')
-                .last()
-                .and_then(|id| id.parse::<i64>().ok()),
+    /// Returns parent id of the task.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if there was a problem while parsing parent id.
+    pub fn parent_id(&self) -> Result<Option<i64>> {
+        Ok(match self.ancestry {
+            Some(ref ancestry) => {
+                let segment = ancestry
+                    .split('/')
+                    .last()
+                    .context("No segments found in ancestry")?;
+
+                Some(
+                    segment.parse::<i64>().with_context(|| {
+                        "Failed to parse parent id from ancestry segment {segment}"
+                    })?,
+                )
+            }
             None => None,
-        }
+        })
     }
 
     #[must_use]
@@ -84,6 +99,49 @@ impl Task {
             Some(ref ancestry) => format!("{}/{}", ancestry, self.id),
             None => self.id.to_string(),
         }
+    }
+
+    /// Returns workdir for the task.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if there was a problem while building workdir path.
+    pub async fn workdir(&self, app_handle: &AppHandle) -> Result<PathBuf> {
+        let workdir_name = format!(
+            "wd-task-{}",
+            self.workdir_id().context("Failed to get workdir ID")?
+        );
+
+        // Build workdir path
+        let mut workdir = PathBuf::new();
+        workdir.push(
+            app_handle
+                .path_resolver()
+                .app_local_data_dir()
+                .context("Failed to get app local data dir")?,
+        );
+        workdir.push(workdir_name);
+
+        if !workdir.exists() {
+            create_dir_all(&workdir)
+                .await
+                .with_context(|| "Failed to create workdir")?;
+        }
+
+        Ok(workdir)
+    }
+
+    fn workdir_id(&self) -> Result<i64> {
+        Ok(match self.ancestry {
+            Some(ref ancestry) => ancestry
+                .split('/')
+                .collect::<Vec<_>>()
+                .first()
+                .context("No segments found in ancestry")?
+                .parse::<i64>()
+                .context("Failed to parse workdir id")?,
+            None => self.id,
+        })
     }
 }
 

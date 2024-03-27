@@ -13,6 +13,8 @@ pub struct Agent {
     pub description: String,
     pub system_message: String,
     pub is_enabled: bool,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -21,6 +23,8 @@ pub struct CreateParams {
     pub name: String,
     pub description: String,
     pub system_message: String,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
 }
 
 pub struct UpdateParams {
@@ -28,6 +32,8 @@ pub struct UpdateParams {
     pub name: String,
     pub description: String,
     pub system_message: String,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
 }
 
 /// List all agents.
@@ -145,14 +151,19 @@ where
     let agent = query_as!(
         Agent,
         r#"
-        INSERT INTO agents (name, description, system_message, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $4)
+        INSERT INTO agents (
+            name, description, system_message, created_at, updated_at, is_code_interpreter_enabled,
+            is_web_browser_enabled
+        )
+        VALUES ($1, $2, $3, $4, $4, $5, $6)
         RETURNING *
         "#,
         params.name,
         params.description,
         params.system_message,
         now,
+        params.is_code_interpreter_enabled,
+        params.is_web_browser_enabled,
     )
     .fetch_one(executor)
     .await
@@ -175,17 +186,21 @@ where
         Agent,
         r#"
         UPDATE agents
-        SET name = $2, description = $3, system_message = $4, updated_at = $5
+        SET
+            name = $2, description = $3, system_message = $4, updated_at = $5,
+            is_code_interpreter_enabled = $6, is_web_browser_enabled = $7
         WHERE id = $1
         RETURNING
             id as "id!", name, description, system_message, created_at, updated_at,
-            is_enabled
+            is_enabled, is_code_interpreter_enabled, is_web_browser_enabled
         "#,
         params.id,
         params.name,
         params.description,
         params.system_message,
         now,
+        params.is_code_interpreter_enabled,
+        params.is_web_browser_enabled,
     )
     .fetch_one(executor)
     .await

@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n        UPDATE agents\n        SET name = $2, description = $3, system_message = $4, updated_at = $5\n        WHERE id = $1\n        RETURNING\n            id as \"id!\", name, description, system_message, created_at, updated_at,\n            is_enabled\n        ",
+  "query": "\n        INSERT INTO agents (\n            name, description, system_message, created_at, updated_at, is_code_interpreter_enabled,\n            is_web_browser_enabled\n        )\n        VALUES ($1, $2, $3, $4, $4, $5, $6)\n        RETURNING *\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id!",
+        "name": "id",
         "ordinal": 0,
         "type_info": "Int64"
       },
@@ -37,13 +37,25 @@
         "name": "is_enabled",
         "ordinal": 6,
         "type_info": "Bool"
+      },
+      {
+        "name": "is_code_interpreter_enabled",
+        "ordinal": 7,
+        "type_info": "Bool"
+      },
+      {
+        "name": "is_web_browser_enabled",
+        "ordinal": 8,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 6
     },
     "nullable": [
-      true,
+      false,
+      false,
+      false,
       false,
       false,
       false,
@@ -52,5 +64,5 @@
       false
     ]
   },
-  "hash": "7aa8b6810628cd8454364b72239a500692a2fb37e065e098531c041bb7e76edf"
+  "hash": "317f243dd32ee14eccec07c2240f2cddc2a2de8fc02e94a6ff8ab325dd9c09bf"
 }

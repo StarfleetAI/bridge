@@ -37,12 +37,24 @@
         "name": "is_enabled",
         "ordinal": 6,
         "type_info": "Bool"
+      },
+      {
+        "name": "is_code_interpreter_enabled",
+        "ordinal": 7,
+        "type_info": "Bool"
+      },
+      {
+        "name": "is_web_browser_enabled",
+        "ordinal": 8,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Right": 0
     },
     "nullable": [
+      false,
+      false,
       false,
       false,
       false,
