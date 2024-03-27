@@ -26,6 +26,8 @@ pub struct Agent {
     pub system_message: String,
     pub ability_ids: Vec<i64>,
     pub is_enabled: bool,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -42,6 +44,8 @@ pub struct CreateAgent {
     pub description: String,
     pub system_message: String,
     pub ability_ids: Vec<i64>,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,6 +55,8 @@ pub struct UpdateAgent {
     pub description: String,
     pub system_message: String,
     pub ability_ids: Vec<i64>,
+    pub is_code_interpreter_enabled: bool,
+    pub is_web_browser_enabled: bool,
 }
 
 /// List all agents.
@@ -80,8 +86,10 @@ pub async fn list_agents(pool: State<'_, DbPool>) -> Result<AgentsList> {
             name: row.name,
             description: row.description,
             system_message: row.system_message,
-            is_enabled: row.is_enabled,
             ability_ids: abilities.get(&row.id).unwrap_or(&Vec::new()).clone(),
+            is_enabled: row.is_enabled,
+            is_code_interpreter_enabled: row.is_code_interpreter_enabled,
+            is_web_browser_enabled: row.is_web_browser_enabled,
             created_at: row.created_at,
             updated_at: row.updated_at,
         })
@@ -108,6 +116,8 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
             name: request.name,
             description: request.description,
             system_message: request.system_message,
+            is_code_interpreter_enabled: request.is_code_interpreter_enabled,
+            is_web_browser_enabled: request.is_web_browser_enabled,
         },
     )
     .await?;
@@ -127,6 +137,8 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
         system_message: agent.system_message,
         ability_ids: request.ability_ids,
         is_enabled: agent.is_enabled,
+        is_code_interpreter_enabled: request.is_code_interpreter_enabled,
+        is_web_browser_enabled: request.is_web_browser_enabled,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })
@@ -166,6 +178,8 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
             name: request.name,
             description: request.description,
             system_message: request.system_message,
+            is_code_interpreter_enabled: request.is_code_interpreter_enabled,
+            is_web_browser_enabled: request.is_web_browser_enabled,
         },
     )
     .await?;
@@ -187,6 +201,8 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
         system_message: agent.system_message,
         ability_ids: request.ability_ids,
         is_enabled: agent.is_enabled,
+        is_code_interpreter_enabled: agent.is_code_interpreter_enabled,
+        is_web_browser_enabled: agent.is_web_browser_enabled,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })

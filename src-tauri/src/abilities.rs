@@ -6,15 +6,15 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Context};
 use askama::Template;
 use tauri::{AppHandle, Manager, State};
-use tokio::{fs, spawn};
 use tokio::fs::create_dir_all;
+use tokio::{fs, spawn};
 use tracing::{debug, trace};
 
-use crate::{docker, repo};
 use crate::clients::openai::ToolCall;
 use crate::repo::abilities::Ability;
 use crate::repo::messages::{CreateParams, Message, Role, Status};
 use crate::types::{DbPool, Result};
+use crate::{docker, repo};
 
 #[derive(Template)]
 #[template(path = "python/call_tools.py", escape = "none")]
@@ -30,10 +30,6 @@ struct CallToolsTemplate<'a> {
 /// Will return an error if there was a problem while executing tool calls.
 pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
     let pool: State<'_, DbPool> = app_handle.state();
-
-    let window = app_handle
-        .get_window("main")
-        .context("Failed to get main window")?;
 
     // Load agent abilities
     let abilities = match message.agent_id {
@@ -91,9 +87,7 @@ pub async fn execute_for_message(message: &Message, app_handle: &AppHandle) -> R
         let results_message = repo::messages::create(&*pool, params).await?;
 
         // Emit event
-        window
-            .emit_all("messages:created", &results_message)
-            .context("Failed to emit event")?;
+        app_handle.emit_all("messages:created", &results_message)?;
     }
 
     // Mark message as completed

@@ -12,6 +12,8 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
+    Tauri(#[from] tauri::Error),
+    #[error(transparent)]
     TokioJoin(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
@@ -19,13 +21,13 @@ pub enum Error {
     #[error(transparent)]
     Docker(#[from] crate::docker::Error),
     #[error(transparent)]
+    Executor(#[from] crate::task_executor::Error),
+    #[error(transparent)]
     Messages(#[from] crate::messages::Error),
     #[error(transparent)]
     Settings(#[from] crate::settings::Error),
     #[error(transparent)]
     Planner(#[from] crate::task_planner::Error),
-    #[error(transparent)]
-    Executor(#[from] crate::task_executor::Error),
 
     #[error("ability is used by agents")]
     AbilityIsUsedByAgents,

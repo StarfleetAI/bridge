@@ -3,7 +3,7 @@
 
 use anyhow::{anyhow, Context};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, State, Window};
+use tauri::{AppHandle, Manager, State};
 use tokio::sync::RwLock;
 use tracing::{debug, error, instrument, trace};
 
@@ -47,10 +47,6 @@ pub async fn get_completion(
     debug!("Getting chat completion");
     let pool: State<'_, DbPool> = app_handle.state();
     let settings: State<'_, RwLock<Settings>> = app_handle.state();
-
-    let window = app_handle
-        .get_window("main")
-        .context("Failed to get main window")?;
 
     let settings_guard = settings.read().await;
 
@@ -98,14 +94,12 @@ pub async fn get_completion(
 
     tx.commit().await.context("Failed to commit transaction")?;
 
-    window
-        .emit_all("messages:created", &message)
-        .context("Failed to emit event")?;
+    app_handle.emit_all("messages:created", &message)?;
 
     let tools = match construct_tools(abilities).await {
         Ok(tools) => tools,
         Err(err) => {
-            fail_message(&window, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, &mut message).await?;
 
             return Err(err);
         }
@@ -124,7 +118,7 @@ pub async fn get_completion(
     {
         Ok(api_key) => api_key,
         Err(err) => {
-            fail_message(&window, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, &mut message).await?;
 
             return Err(err.into());
         }
@@ -144,7 +138,7 @@ pub async fn get_completion(
     {
         Ok(response) => response,
         Err(err) => {
-            fail_message(&window, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, &mut message).await?;
 
             return Err(err.into());
         }
@@ -155,7 +149,7 @@ pub async fn get_completion(
     while let Some(chunk) = match response.chunk().await.context("Failed to get chunk") {
         Ok(chunk) => chunk,
         Err(err) => {
-            fail_message(&window, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, &mut message).await?;
 
             return Err(err.into());
         }
@@ -208,7 +202,7 @@ pub async fn get_completion(
                 .await
                 .context("Failed to update assistant message")
                 {
-                    fail_message(&window, &pool, &mut message).await?;
+                    fail_message(app_handle, &pool, &mut message).await?;
 
                     return Err(err.into());
                 };
@@ -223,7 +217,7 @@ pub async fn get_completion(
                         chunk_remainder = chunk.to_string();
                     }
                     Err(err) => {
-                        fail_message(&window, &pool, &mut message).await?;
+                        fail_message(app_handle, &pool, &mut message).await?;
 
                         return Err(err);
                     }
@@ -231,11 +225,8 @@ pub async fn get_completion(
                 };
             }
 
-            if let Err(err) = window
-                .emit_all("messages:updated", &message)
-                .context("Failed to emit event")
-            {
-                fail_message(&window, &pool, &mut message).await?;
+            if let Err(err) = app_handle.emit_all("messages:updated", &message) {
+                fail_message(app_handle, &pool, &mut message).await?;
 
                 return Err(err.into());
             };
@@ -243,7 +234,7 @@ pub async fn get_completion(
     }
 
     if message.status == Status::Writing {
-        fail_message(&window, &pool, &mut message).await?;
+        fail_message(app_handle, &pool, &mut message).await?;
 
         return Err(anyhow!("Failed to get completion").into());
     }
@@ -290,13 +281,11 @@ pub async fn construct_tools(abilities: Vec<Ability>) -> Result<Option<Vec<Tool>
     Ok(tools)
 }
 
-async fn fail_message(window: &Window, pool: &DbPool, message: &mut Message) -> Result<()> {
+async fn fail_message(app_handle: &AppHandle, pool: &DbPool, message: &mut Message) -> Result<()> {
     repo::messages::update_status(pool, message.id, Status::Failed).await?;
     message.status = Status::Failed;
 
-    window
-        .emit_all("messages:updated", &message)
-        .context("Failed to emit event")?;
+    app_handle.emit_all("messages:updated", &message)?;
 
     Ok(())
 }
