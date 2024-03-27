@@ -5,7 +5,7 @@
 
 use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State, Window};
+use tauri::{AppHandle, Manager, State};
 use tokio::sync::RwLock;
 use tracing::instrument;
 use tracing::{debug, trace};
@@ -70,10 +70,9 @@ pub async fn list_messages(request: ListMessages, pool: State<'_, DbPool>) -> Re
 ///
 /// Returns error if there was a problem while inserting new message.
 #[tauri::command]
-#[instrument(skip(app_handle, window, pool, settings))]
+#[instrument(skip(app_handle, pool, settings))]
 pub async fn create_message(
     app_handle: AppHandle,
-    window: Window,
     request: CreateMessage,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
@@ -97,14 +96,10 @@ pub async fn create_message(
             repo::messages::create_tool_call_denied(&mut tx, &last_message).await?;
 
         last_message.status = Status::ToolCallDenied;
-        window
-            .emit_all("messages:updated", &last_message)
-            .context("Failed to emit message update event")?;
+        app_handle.emit_all("messages:updated", &last_message)?;
 
         for denied_message in denied_messages {
-            window
-                .emit_all("messages:created", &denied_message)
-                .context("Failed to emit message creation event")?;
+            app_handle.emit_all("messages:created", &denied_message)?;
         }
     }
 
@@ -123,15 +118,13 @@ pub async fn create_message(
 
     tx.commit().await.context("Failed to commit transaction")?;
 
-    window
-        .emit_all("messages:created", &message)
-        .context("Failed to emit event")?;
+    app_handle.emit_all("messages:created", &message)?;
 
     chats::get_completion(&app_handle, request.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
-    generate_chat_title(request.chat_id, window, pool, settings).await?;
+    generate_chat_title(request.chat_id, &app_handle, pool, settings).await?;
 
     Ok(())
 }
@@ -148,10 +141,10 @@ pub async fn create_message(
 /// # Errors
 ///
 /// Returns error if there was a problem while generating chat title.
-#[instrument(skip(window, pool, settings))]
+#[instrument(skip(app_handle, pool, settings))]
 async fn generate_chat_title(
     chat_id: i64,
-    window: Window,
+    app_handle: &AppHandle,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
@@ -251,9 +244,7 @@ async fn generate_chat_title(
     repo::chats::update_title(&*pool, chat_id, &title).await?;
     chat = repo::chats::get(&*pool, chat_id).await?;
 
-    window
-        .emit_all("chats:updated", &chat)
-        .context("Failed to emit message update event")?;
+    app_handle.emit_all("chats:updated", &chat)?;
 
     Ok(())
 }
@@ -265,13 +256,12 @@ async fn generate_chat_title(
 /// Returns error if there was a problem while performing tool call.
 // TODO(ri-nat): refactor this function.
 #[allow(clippy::too_many_lines)]
-#[instrument(skip(window, pool, settings, app_handle))]
+#[instrument(skip(pool, settings, app_handle))]
 #[tauri::command]
 pub async fn approve_tool_call(
     message_id: i64,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
-    window: Window,
     app_handle: AppHandle,
 ) -> Result<()> {
     debug!("Approving tool call");
@@ -295,9 +285,7 @@ pub async fn approve_tool_call(
 
         // Emit event.
         message.status = Status::Completed;
-        window
-            .emit_all("messages:updated", &message)
-            .context("Failed to emit event")?;
+        app_handle.emit_all("messages:updated", &message)?;
 
         return Err(anyhow!("Message is not a last message in chat").into());
     }
@@ -307,15 +295,13 @@ pub async fn approve_tool_call(
 
     // Emit event
     message.status = Status::Completed;
-    window
-        .emit_all("messages:updated", &message)
-        .context("Failed to emit event")?;
+    app_handle.emit_all("messages:updated", &message)?;
 
     chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
-    generate_chat_title(message.chat_id, window, pool, settings).await?;
+    generate_chat_title(message.chat_id, &app_handle, pool, settings).await?;
 
     Ok(())
 }
@@ -325,14 +311,13 @@ pub async fn approve_tool_call(
 /// # Errors
 ///
 /// Returns error if message with given id does not exist.
-#[instrument(skip(window, pool, settings))]
+#[instrument(skip(app_handle, pool, settings))]
 #[tauri::command]
 pub async fn deny_tool_call(
     message_id: i64,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
     app_handle: AppHandle,
-    window: Window,
 ) -> Result<()> {
     debug!("Denying tool call");
 
@@ -355,18 +340,14 @@ pub async fn deny_tool_call(
 
     message.status = Status::ToolCallDenied;
 
-    window
-        .emit_all("messages:updated", &message)
-        .context("Failed to emit message update event")?;
-    window
-        .emit_all("messages:created", &denied_message)
-        .context("Failed to emit message creation event")?;
+    app_handle.emit_all("messages:updated", &message)?;
+    app_handle.emit_all("messages:created", &denied_message)?;
 
     chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
-    generate_chat_title(message.chat_id, window, pool, settings).await?;
+    generate_chat_title(message.chat_id, &app_handle, pool, settings).await?;
 
     Ok(())
 }

@@ -7,9 +7,9 @@ use anyhow::{anyhow, Context};
 use serde::Deserialize;
 use serde_json::json;
 use tauri::{AppHandle, Manager, State};
-use tokio::spawn;
 use tokio::sync::RwLock;
 use tokio::time::sleep;
+use tokio::{fs, spawn};
 use tracing::{debug, error, info, instrument, trace};
 
 use crate::clients::openai::ToolCall;
@@ -25,7 +25,7 @@ use crate::settings::Settings;
 use crate::types::{DbPool, Result};
 use crate::{
     chats::{self, GetCompletionParams},
-    errors, utils,
+    errors,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -78,7 +78,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
         Err(err) => return Err(err),
     };
 
-    utils::emit_event(app_handle, "tasks:updated", &task)?;
+    app_handle.emit_all("tasks:updated", &task)?;
 
     info!("Root task for execution: #{}. {}", task.id, task.title);
 
@@ -91,7 +91,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
             repo::tasks::update_status(&*pool, task.id, status).await?;
 
             task.status = status;
-            utils::emit_event(app_handle, "tasks:updated", &task)?;
+            app_handle.emit_all("tasks:updated", &task)?;
 
             Ok(())
         }
@@ -99,7 +99,7 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
             repo::tasks::fail(&*pool, task.id).await?;
 
             task.status = Status::Failed;
-            utils::emit_event(app_handle, "tasks:updated", &task)?;
+            app_handle.emit_all("tasks:updated", &task)?;
 
             return Err(err);
         }
@@ -135,7 +135,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
     let chat = get_task_execution_chat(&pool, task).await?;
 
     task.execution_chat_id = Some(chat.id);
-    utils::emit_event(app_handle, "tasks:updated", &task)?;
+    app_handle.emit_all("tasks:updated", &task)?;
 
     // TODO: refactor this loop
     loop {
@@ -146,7 +146,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                     match &message.tool_calls {
                         Some(tool_calls) => {
                             // I acknowledge, that this is weird to pass `tool_calls` alongside the `message`, but why not since it's already unpacked from `Option`?
-                            match call_tools(&message, app_handle, tool_calls, task.id).await {
+                            match call_tools(&message, app_handle, tool_calls, task).await {
                                 Ok(maybe_new_status) => {
                                     complete_message(&message, app_handle).await?;
 
@@ -190,7 +190,7 @@ async fn call_tools(
     message: &Message,
     app_handle: &AppHandle,
     tool_calls: &str,
-    task_id: i64,
+    task: &Task,
 ) -> Result<Option<Status>> {
     let mut new_status = None;
 
@@ -200,20 +200,23 @@ async fn call_tools(
     // Call task management tools
     for tool_call in tool_calls {
         if let Some(status) = match tool_call.function.name.as_str() {
-            "sfai_done" => sfai_done(message, app_handle, task_id, &tool_call).await?,
+            "sfai_done" => sfai_done(message, app_handle, task.id, &tool_call).await?,
             "sfai_fail" => Some(Status::Failed),
             "sfai_wait_for_user" => Some(Status::WaitingForUser),
             "sfai_provide_text_result" => {
                 sfai_provide_text_result(
                     message,
                     app_handle,
-                    task_id,
+                    task.id,
                     tool_call.id.clone(),
                     serde_json::from_str(&tool_call.function.arguments).context(
                         "failed to parse tool call arguments for `sfai_provide_text_result`",
                     )?,
                 )
                 .await?
+            }
+            "sfai_code_interpreter" => {
+                sfai_code_interpreter(app_handle, message, task, tool_call.id.clone()).await?
             }
             _ => None,
         } {
@@ -225,6 +228,96 @@ async fn call_tools(
     crate::abilities::execute_for_message(message, app_handle).await?;
 
     Ok(new_status)
+}
+
+async fn sfai_code_interpreter(
+    app_handle: &AppHandle,
+    message: &Message,
+    task: &Task,
+    tool_call_id: String,
+) -> Result<Option<Status>> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    if let Some(result_message) =
+        repo::messages::get_last_non_self_reflection_message(&*pool, message.chat_id).await?
+    {
+        let content = Some(
+            match interpret_code(app_handle, &result_message, task).await {
+                Ok(out_lines) => out_lines.join("\n\n"),
+                Err(err) => format!("Failed to interpret code: {err}"),
+            },
+        );
+
+        let out_message = repo::messages::create(
+            &*pool,
+            CreateParams {
+                content,
+                chat_id: message.chat_id,
+                status: repo::messages::Status::Completed,
+                role: Role::Tool,
+                tool_call_id: Some(tool_call_id),
+                is_internal_tool_output: true,
+                ..Default::default()
+            },
+        )
+        .await?;
+
+        app_handle.emit_all("messages:created", &out_message)?;
+    }
+
+    Ok(None)
+}
+
+async fn interpret_code(
+    app_handle: &AppHandle,
+    message: &Message,
+    task: &Task,
+) -> Result<Vec<String>> {
+    let code_blocks = match parse_code_blocks(match &message.content.as_ref() {
+        Some(content) => content,
+        None => return Ok(vec!["No content in the message to interpret".to_string()]),
+    }) {
+        Ok(code_blocks) => code_blocks,
+        Err(err) => {
+            return Ok(vec![format!(
+                "Failed to parse code blocks in the message: {err}"
+            )])
+        }
+    };
+
+    let mut lines = Vec::with_capacity(code_blocks.len());
+
+    for code_block in code_blocks {
+        if code_block.filename.is_none() {
+            // TODO: implement code execution
+            lines.push("```\nCode execution is not implemented\n```".to_string());
+        } else if let Some(filename) = &code_block.filename {
+            let mut workdir = match task.workdir(app_handle).await {
+                Ok(workdir) => workdir,
+                Err(err) => {
+                    lines.push(format!("```\nFailed to get task workdir: {err}\n```"));
+                    continue;
+                }
+            };
+
+            workdir.push(filename);
+
+            match fs::write(&workdir, code_block.code).await {
+                Ok(()) => {
+                    lines.push(format!("```\nFile `{filename}` has been saved\n```"));
+                }
+                Err(err) => {
+                    lines.push(format!(
+                        "```\nFailed to save file `{filename}`: {err}\n```"
+                    ));
+                }
+            }
+
+            lines.push(format!("```\nFile `{filename}` has been saved\n```"));
+        }
+    }
+
+    Ok(lines)
 }
 
 async fn sfai_done(
@@ -286,7 +379,7 @@ async fn sfai_provide_text_result(
     )
     .await?;
 
-    utils::emit_event(app_handle, "task_results:created", &task_result)?;
+    app_handle.emit_all("task_results:created", &task_result)?;
 
     if args.is_done {
         new_status = Some(Status::Done);
@@ -306,7 +399,7 @@ async fn sfai_provide_text_result(
     )
     .await?;
 
-    utils::emit_event(app_handle, "messages:created", &message)?;
+    app_handle.emit_all("messages:created", &message)?;
 
     Ok(new_status)
 }
@@ -318,7 +411,7 @@ async fn complete_message(message: &Message, app_handle: &AppHandle) -> Result<(
     let mut message = message.clone();
     message.status = repo::messages::Status::Completed;
 
-    utils::emit_event(app_handle, "messages:updated", &message)?;
+    app_handle.emit_all("messages:updated", &message)?;
 
     Ok(())
 }
@@ -330,7 +423,7 @@ async fn fail_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
     let mut message = message.clone();
     message.status = repo::messages::Status::Failed;
 
-    utils::emit_event(app_handle, "messages:updated", &message)?;
+    app_handle.emit_all("messages:updated", &message)?;
 
     Ok(())
 }
@@ -342,11 +435,31 @@ Should you require further information from the user, feel free to request it.";
 
 const SELF_REFLECTION_PROMPT: &str = r"Conduct an internal reflection on your message.
 
-If the response aligns with what the user expects, proceed to use the `sfai_done` tool.
+If the response requires a code interpreter usage (for code execution or code saving), you must utilize the `sfai_code_interpreter` tool.
+
+If the response aligns with what the user expects as a result, proceed to use the `sfai_done` tool.
 In cases where the response appears incorrect or doesn't meet the user's requirements, articulate your reasoning aloud and determine how to enhance the answer.
 
 Should technical or other issues prevent providing a result, designate the task as unsuccessful using the `sfai_fail` tool.
 If further information from the user is required, request it and utilize the `sfai_wait_for_user` tool.";
+
+const CODE_INTERPRETER_TOOL: &str = r"### Code Interpreter Tool
+
+You have access to the `sfai_code_interpreter` tool, which functions as a code interpreter. This tool allows you to:
+
+- Save code snippets as files.
+- Execute code snippets.
+- Run bash commands.
+
+#### Usage
+
+- When your message involves code that needs execution or saving as part of a task, you must utilize the code interpreter for these actions.
+- If user has asked to save a file with a code, you must run the code interpreter tool in order for the code to be saved by it, before calling `sfai_done`.
+- Do not call the code interpreter tool multiple times for the same message.
+
+#### Notes
+
+- `sfai_code_interpreter` does not require any arguments.";
 
 #[instrument(skip(task, app_handle))]
 async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Result<()> {
@@ -371,10 +484,12 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
     let pool: State<'_, DbPool> = app_handle.state();
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
 
+    let content = Some([SELF_REFLECTION_PROMPT, CODE_INTERPRETER_TOOL].join("\n\n"));
+
     let messages_post = vec![Message {
         chat_id,
+        content,
         role: Role::User,
-        content: Some(SELF_REFLECTION_PROMPT.to_string()),
         ..Default::default()
     }];
 
@@ -417,6 +532,12 @@ fn internal_task_abilities() -> Vec<Ability> {
             "Wait for additional user input",
             &json!({
                 "name": "sfai_wait_for_user",
+            }),
+        ),
+        Ability::for_fn(
+            "Pass the previous message to the code interpreter to run or save code",
+            &json!({
+                "name": "sfai_code_interpreter",
             }),
         ),
     ]
@@ -502,4 +623,69 @@ async fn get_task_for_execution(pool: &DbPool, parent: Option<&Task>) -> Result<
     tx.commit().await.context("failed to commit transaction")?;
 
     Ok(Some(task))
+}
+
+#[derive(Default)]
+enum Language {
+    #[default]
+    Unknown,
+    Python,
+    Other,
+}
+
+impl From<String> for Language {
+    fn from(s: String) -> Self {
+        match s.to_lowercase().as_str() {
+            "python" => Language::Python,
+            "" => Language::Unknown,
+            _ => Language::Other,
+        }
+    }
+}
+
+#[derive(Default)]
+struct CodeBlock {
+    pub code: String,
+    pub language: Language,
+    pub filename: Option<String>,
+}
+
+fn parse_code_blocks(text: &str) -> Result<Vec<CodeBlock>> {
+    let ast = markdown::to_mdast(text, &markdown::ParseOptions::default())
+        .map_err(|err| anyhow!("Failed to parse markdown AST: {}", err))?;
+
+    let mut code_blocks = Vec::new();
+    let mut code_block = CodeBlock::default();
+
+    for node in ast
+        .children()
+        .ok_or_else(|| anyhow!("Failed to get AST children"))?
+    {
+        match node {
+            markdown::mdast::Node::Paragraph(paragraph) => {
+                if paragraph.children.len() != 2 {
+                    continue;
+                }
+
+                if let markdown::mdast::Node::Text(text) = &paragraph.children[0] {
+                    if text.value.to_lowercase().trim() != "file:" {
+                        continue;
+                    }
+                }
+
+                if let markdown::mdast::Node::InlineCode(ic) = &paragraph.children[1] {
+                    code_block.filename = Some(ic.value.clone());
+                }
+            }
+            markdown::mdast::Node::Code(code) => {
+                code_block.code = code.value.clone();
+                code_block.language = code.lang.clone().unwrap_or_default().into();
+                code_blocks.push(code_block);
+                code_block = CodeBlock::default();
+            }
+            _ => {}
+        }
+    }
+
+    Ok(code_blocks)
 }

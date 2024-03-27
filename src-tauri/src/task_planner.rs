@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde_json::json;
 use tauri::{AppHandle, Manager, State};
 use tokio::sync::RwLock;
+use tracing::info;
 
 use crate::chats::construct_tools;
 use crate::clients::openai::{
@@ -100,6 +101,8 @@ impl<'a> TaskPlanner<'a> {
             _ => {}
         }
 
+        info!("Planning task: {}", self.task.id);
+
         let pool: State<'_, DbPool> = self.app_handle.state();
         let settings: State<'_, RwLock<Settings>> = self.app_handle.state();
         let settings_guard = settings.read().await;
@@ -140,18 +143,11 @@ impl<'a> TaskPlanner<'a> {
             return Err(Error::EmptyPlan.into());
         }
 
-        let window = self
-            .app_handle
-            .get_window("main")
-            .context("Failed to get `main` window")?;
-
         if plan.tasks.len() == 1 {
             self.task.agent_id = plan.tasks[0].agent_id;
             repo::tasks::assign(&*pool, self.task.id, self.task.agent_id).await?;
 
-            window
-                .emit_all("tasks:updated", &self.task)
-                .context("Failed to emit event")?;
+            self.app_handle.emit_all("tasks:updated", &self.task)?;
 
             return Ok(());
         }
@@ -168,9 +164,7 @@ impl<'a> TaskPlanner<'a> {
             )
             .await?;
 
-            window
-                .emit_all("tasks:created", &task)
-                .context("Failed to emit event")?;
+            self.app_handle.emit_all("tasks:created", &task)?;
         }
 
         Ok(())
@@ -282,7 +276,7 @@ impl<'a> TaskPlanner<'a> {
                         "properties": {
                             "tasks": {
                                 "type": "array",
-                                "description": "List of tasks to plan",
+                                "description": "List of planned sub-tasks",
                                 "items": {
                                     "type": "object",
                                     "properties": {
