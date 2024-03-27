@@ -5,7 +5,7 @@
   import { useAgentsStore } from '~/features/agent'
   import { useTasksNavigation, useTasksStore } from '~/features/task'
   import { AgentSelector } from '~/entities/agents'
-  import { TaskInput, TaskStatus, TaskStatusBadge } from '~/entities/tasks'
+  import { TaskStatus, TaskStatusBadge, TaskSummary, TaskTitle } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, CrossIcon, SaveIcon, StarsIcon } from '~/shared/ui/icons'
@@ -17,7 +17,7 @@
   const taskTitle = ref('')
 
   const taskSummary = ref('')
-  const saveIsEnabled = computed(() => taskSummary.value.length > 0)
+  const saveIsEnabled = computed(() => taskTitle.value.length > 0)
 
   const { open: openFileDialog, onChange: onFileChange } = useFileDialog()
   const selectedFiles = ref<File[]>([])
@@ -40,28 +40,20 @@
       status,
     }
   }
-  const handleSaveTask = async () => {
-    await createTask(getTaskEntity(TaskStatus.DRAFT))
-    finishCreation()
-  }
-  const handleExecuteTask = async () => {
-    const newTask = await createTask(getTaskEntity(TaskStatus.TODO))
-    finishCreation()
-    setSelectedTask(newTask.id)
-  }
 
-  const finishCreation = () => {
+  const handleExecuteTask = async (status: TaskStatus) => {
+    const newTask = await createTask(getTaskEntity(status))
     listRootTasks({
       pagination: {
         page: 1,
         per_page: 14,
       },
     })
-    disableCreateTask()
+    setSelectedTask(newTask.id)
   }
 
   const handleRemoveFile = (file: File) => {
-    selectedFiles.value = selectedFiles.value.filter((f) => f.name !== file.name)
+    selectedFiles.value = selectedFiles.value.filter((selectedFile) => selectedFile.name !== file.name)
   }
 </script>
 
@@ -73,7 +65,7 @@
         <BaseButton
           color="blue"
           :disabled="!saveIsEnabled"
-          @click="handleSaveTask"
+          @click="handleExecuteTask(TaskStatus.DRAFT)"
         >
           <template #icon>
             <SaveIcon />
@@ -82,7 +74,7 @@
         </BaseButton>
         <BaseButton
           :disabled="!saveIsEnabled"
-          @click="handleExecuteTask"
+          @click="handleExecuteTask(TaskStatus.TODO)"
         >
           <template #icon>
             <StarsIcon />
@@ -107,11 +99,11 @@
         />
       </div>
       <div class="task-form__input-container">
-        <TaskInput
+        <TaskTitle
           v-model="taskTitle"
           placeholder="Task Title"
         />
-        <TaskInput
+        <TaskSummary
           v-model="taskSummary"
           placeholder="Summary"
         />
@@ -122,16 +114,17 @@
             width="20px"
             height="20px"
           />
-          Documents
+          Attachments
         </div>
         <div
           class="task-form__files-add"
           @click="openFileDialog()"
         >
-          +Add
+          + Add
         </div>
       </div>
       <FilesList
+        v-if="selectedFiles.length"
         :files="selectedFiles"
         @remove="handleRemoveFile"
       />
@@ -145,14 +138,15 @@
   }
 
   .task-form__header {
+    height: 56px;
     padding: 12px 24px;
-    border-bottom: 1px solid var(--border-3);
+    border-bottom: 0.5px solid var(--border-3);
 
     @include flex(row, space-between, center);
   }
 
   .task-form__title {
-    @include font-inter-700(14px, 20px, var(--text-secondary));
+    @include font-inter-500(14px, 20px, var(--text-secondary));
   }
 
   .task-form__actions {
@@ -160,8 +154,9 @@
   }
 
   .task-form__body {
-    padding: 26px 12px;
-    border-bottom: 1px solid var(--border-3);
+    padding: 24px 12px;
+
+    // border-bottom: 1px solid var(--border-3);
 
     @include flex(column, $gap: 8px);
   }
@@ -173,34 +168,7 @@
   }
 
   .task-form__input-container {
-    margin-top: 8px;
-
     @include flex(column, flex-start, stretch, 8px);
-  }
-
-  .task-form__input {
-    min-height: 41px;
-    max-height: 66px;
-    padding: 8px 12px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background-color: transparent;
-    outline: none;
-    resize: none;
-
-    &.summary {
-      min-height: 20px;
-      max-height: 136px;
-
-      @include font-inter-500(14px, 20px, var(--text-primary));
-    }
-
-    &:focus {
-      background-color: var(--surface-3);
-    }
-
-    @include hide-scrollbar;
-    @include font-inter-500(18px, 25px, var(--text-primary));
   }
 
   .task-form__input-description {
@@ -210,13 +178,14 @@
   }
 
   .task-form__files-container {
-    padding: 0 12px;
+    margin-top: 16px;
+    padding: 0 12px 0 10px;
 
     @include flex(row, space-between, center);
   }
 
   .task-form__files-list {
-    @include font-inter-500(14px, 20px, var(--text-tertiary));
+    @include font-inter-500(14px, 20px, var(--text-secondary));
     @include flex(row, flex-start, center, 8px);
   }
 

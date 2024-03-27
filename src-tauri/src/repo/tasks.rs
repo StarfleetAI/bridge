@@ -151,7 +151,7 @@ pub struct CreateParams<'a> {
     /// Chat from which this task was created.
     pub origin_chat_id: Option<i64>,
     pub title: &'a str,
-    pub summary: &'a str,
+    pub summary: Option<&'a str>,
     pub status: Status,
     /// Task's parent ids in a form of `1/2/3`. `None` for root tasks.
     pub ancestry: Option<&'a str>,

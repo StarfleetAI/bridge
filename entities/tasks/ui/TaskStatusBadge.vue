@@ -21,25 +21,34 @@
     iconOnly?: boolean
   }>()
   const statusComponent = computed(() => {
+    let Component = TaskStatusDraft
     switch (props.status) {
       case TaskStatus.TODO:
-        return TaskStatusToDo
+        Component = TaskStatusToDo
+        break
       case TaskStatus.IN_PROGRESS:
-        return TaskStatusInProgress
+        Component = TaskStatusInProgress
+        break
       case TaskStatus.WAITING_FOR_USER:
-        return TaskStatusWaiting
+        Component = TaskStatusWaiting
+        break
       case TaskStatus.PAUSED:
-        return TaskStatusPaused
+        Component = TaskStatusPaused
+        break
       case TaskStatus.DONE:
-        return TaskStatusDone
+        Component = TaskStatusDone
+        break
       case TaskStatus.FAILED:
-        return TaskStatusFailed
+        Component = TaskStatusFailed
+        break
       case TaskStatus.CANCELED:
-        return TaskStatusFailed
+        Component = TaskStatusFailed
+        break
       case TaskStatus.DRAFT:
       default:
-        return TaskStatusDraft
+        Component = TaskStatusDraft
     }
+    return defineAsyncComponent(Component)
   })
 
   const statusToKebab = computed(() => useChangeCase(props.status, 'paramCase').value)

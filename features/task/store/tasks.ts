@@ -12,7 +12,6 @@ import {
   deleteTask as deleteTaskReq,
   updateTask as updateTaskReq,
   reviseTask as reviseTaskReq,
-  cancelTask as cancelTaskReq,
   pauseTask as pauseTaskReq,
   executeTask as executeTaskReq,
   duplicateTask as duplicateTaskReq,
@@ -90,15 +89,6 @@ export const useTasksStore = defineStore('tasks', () => {
     return updatedTask
   }
 
-  const cancelTask = async (id: number): Promise<Task> => {
-    const updatedTask = await cancelTaskReq(id)
-    const index = tasks.value.findIndex((a) => a.id === id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = updatedTask
-    }
-    return updatedTask
-  }
-
   const pauseTask = async (id: number): Promise<Task> => {
     const updatedTask = await pauseTaskReq(id)
     const index = tasks.value.findIndex((a) => a.id === id)
@@ -145,7 +135,6 @@ export const useTasksStore = defineStore('tasks', () => {
     deleteTask,
     updateTask,
     reviseTask,
-    cancelTask,
     pauseTask,
     executeTask,
     duplicateTask,

@@ -48,6 +48,12 @@
     padding: 12px 16px;
     border-radius: 6px;
     background: var(--surface-2);
+    outline: 2px solid transparent;
+    transition: outline 0.08s ease-in-out;
+
+    &.selected {
+      outline: 2px solid var(--button-primary);
+    }
 
     @include font-inter-400(14px, 20px, var(--text-primary));
     @include flex(row, flex-start, center, 8px);

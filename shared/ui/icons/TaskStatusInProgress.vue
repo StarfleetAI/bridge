@@ -14,9 +14,9 @@
     }>(),
     {
       color: 'currentColor',
-      width: 16,
-      height: 16,
-      viewBoxValue: `0 0 16 16`,
+      width: 21,
+      height: 21,
+      viewBoxValue: `0 0 21 21`,
     },
   )
 </script>
@@ -30,16 +30,16 @@
     :pointer="pointer"
   >
     <rect
-      x="2"
-      y="2"
+      x="4.51074"
+      y="4.125"
       width="12"
       height="12"
       rx="6"
       fill="#62AC55"
     />
     <rect
-      x="1.25"
-      y="1.25"
+      x="3.76074"
+      y="3.375"
       width="13.5"
       height="13.5"
       rx="6.75"

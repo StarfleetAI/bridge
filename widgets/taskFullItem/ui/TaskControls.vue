@@ -13,33 +13,34 @@
   const { executeTask } = useTasksStore()
   const { setSelectedTask } = useTasksNavigation()
 
-  const handleActionClick = (action: () => Promise<Task | void>, isDelete = false, isDuplicate = false) => {
-    action().then((updatedTask) => {
-      if (isDelete) {
-        navigateTo('/tasks')
-      } else if (isDuplicate) {
-        setSelectedTask(updatedTask!.id)
-      }
-    })
-  }
-
   const handleExecuteTask = async () => {
     await executeTask(props.task.id)
   }
 </script>
-
+xw
 <template>
   <div class="task-controls">
     <BaseButton
       v-if="task.status === TaskStatus.DRAFT"
       class="task-details__execute"
-      :disabled="task.summary.length === 0"
+      :disabled="task.title.length === 0"
       @click="handleExecuteTask"
     >
       <template #icon>
         <StarsIcon />
       </template>
       Execute
+    </BaseButton>
+    <BaseButton
+      v-if="task.status === TaskStatus.DONE"
+      class="task-details__execute"
+      :disabled="task.title.length === 0"
+      @click="handleExecuteTask"
+    >
+      <template #icon>
+        <StarsIcon />
+      </template>
+      Re-execute
     </BaseButton>
     <BaseDropdown>
       <KebabIcon
@@ -52,7 +53,7 @@
           :key="label"
           v-close-popper
           :class="['task-controls__action', { delete: label === 'Delete Task' }]"
-          @click="handleActionClick(action, label === 'Delete Task', label === 'Duplicate')"
+          @click="action()"
         >
           <template #icon>
             <component
