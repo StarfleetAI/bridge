@@ -3,9 +3,17 @@
 
 use std::marker::PhantomData;
 
-use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
+use bollard::{
+    container::{Config, RemoveContainerOptions},
+    exec::{CreateExecOptions, StartExecResults},
+    secret::HostConfig,
+};
+use fantoccini::{Client, ClientBuilder, Locator, wd::Capabilities};
+use crate::docker::ContainerManager;
 
 use crate::types::Result;
+
+const DEFAULT_CHROMEDRIVER_IMAGE: &str = "zenika/alpine-chrome:with-chromedriver";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -20,6 +28,7 @@ pub enum Error {
 pub struct Browser {
     pub app_local_data_dir: String,
     pub client: Client,
+    pub container_id: String,
     status: PhantomData<()>,
 }
 
@@ -47,7 +56,23 @@ impl BrowserBuilder {
         });
         caps.insert("goog:chromeOptions".to_string(), opts);
 
-        // TODO: start a unique Docker container with chromedriver
+        // TODO: launch a unique Docker container with chromedriver
+        let docker_client = ContainerManager::new();
+        let container_id = docker_client.launch_container(
+            DEFAULT_CHROMEDRIVER_IMAGE,
+            None,
+            None
+        ).await?;
+
+        let container_info = docker_client.inspect_container(&container_id).await?;
+
+        let ref container_port  = container_info
+            .network_settings.unwrap()
+            .ports.unwrap()
+            .get("9515/tcp").unwrap().unwrap().as_ptr()
+            ;
+            
+        
         let client = ClientBuilder::rustls()
             .capabilities(caps)
             .connect("http://localhost:9515")
@@ -56,6 +81,7 @@ impl BrowserBuilder {
 
         Ok(Browser {
             client,
+            container_id,
             app_local_data_dir: self.app_local_data_dir,
             status: PhantomData,
         })
