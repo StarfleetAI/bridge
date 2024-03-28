@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT \n            id as \"id!\", agent_id, task_id, kind, data, created_at, updated_at\n        FROM task_results WHERE task_id = $1\n        ORDER BY id ASC\n        ",
+  "query": "\n        SELECT\n            id as \"id!\", agent_id, task_id, kind, data, created_at, updated_at\n        FROM task_results WHERE task_id = $1\n        ORDER BY id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -52,5 +52,5 @@
       false
     ]
   },
-  "hash": "47adf7935de4e1f5fcef6e9d69c4df50954e1b010440d3abc4788c466ab2895e"
+  "hash": "97cdde0aa5d22f0529b88b621b99bf1238a3a1342f15eaa4524904f29e8dd43e"
 }

@@ -4,7 +4,7 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_as, Executor, Sqlite};
+use sqlx::{query, query_as, query_scalar, Executor, Sqlite};
 use std::path::PathBuf;
 use tauri::AppHandle;
 use tokio::fs::create_dir_all;
@@ -24,14 +24,10 @@ pub enum Status {
     InProgress,
     /// Task is waiting for a user input.
     WaitingForUser,
-    /// Task is paused by the user.
-    Paused,
     /// Task is completed.
     Done,
     /// Task execution failed.
     Failed,
-    /// Task canceled by the user.
-    Canceled,
 }
 
 impl From<String> for Status {
@@ -40,16 +36,14 @@ impl From<String> for Status {
             "ToDo" => Status::ToDo,
             "InProgress" => Status::InProgress,
             "WaitingForUser" => Status::WaitingForUser,
-            "Paused" => Status::Paused,
             "Done" => Status::Done,
             "Failed" => Status::Failed,
-            "Canceled" => Status::Canceled,
             _ => Status::Draft,
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Task {
     pub id: i64,
     pub agent_id: i64,
@@ -89,6 +83,22 @@ impl Task {
                     })?,
                 )
             }
+            None => None,
+        })
+    }
+
+    pub fn parent_ids(&self) -> Result<Option<Vec<i64>>> {
+        Ok(match self.ancestry {
+            Some(ref ancestry) => Some(
+                ancestry
+                    .split('/')
+                    .map(|segment| {
+                        segment.parse::<i64>().with_context(|| {
+                            "Failed to parse parent id from ancestry segment {segment}"
+                        })
+                    })
+                    .collect::<std::result::Result<Vec<i64>, _>>()?,
+            ),
             None => None,
         })
     }
@@ -206,7 +216,7 @@ pub async fn get_root_for_execution<'a, E: Executor<'a, Database = Sqlite>>(
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn get_children_for_execution<'a, E: Executor<'a, Database = Sqlite>>(
+pub async fn get_child_for_execution<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     ancestry: &'a str,
 ) -> Result<Option<Task>> {
@@ -288,37 +298,16 @@ pub async fn list_roots<'a, E: Executor<'a, Database = Sqlite>>(
     .context("Failed to list tasks")?)
 }
 
-/// List all child tasks for given task.
+/// List all children tasks for given task.
 ///
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn list_children<'a, E: Executor<'a, Database = Sqlite>>(
+pub async fn list_all_children<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
-    id: i64,
-    ancestry: Option<&'a str>,
+    ancestry: &'a str,
 ) -> Result<Vec<Task>> {
-    let current_ancestry_level: i64 = match ancestry {
-        Some(ancestry) => {
-            let count = ancestry.split('/').count();
-
-            match count.try_into() {
-                Ok(ancestry_level) => ancestry_level,
-                Err(_) => return Err(anyhow::anyhow!("Too many ancestors").into()),
-            }
-        }
-        None => 0,
-    };
-
-    let children_ancestry_level = current_ancestry_level
-        .checked_add(1)
-        .ok_or_else(|| anyhow::anyhow!("Maximum ancestry level reached for task with id: {id}"))?;
-
-    let children_ancestry = if let Some(ancestry) = ancestry {
-        format!("{ancestry}/{id}/%")
-    } else {
-        format!("{id}/%")
-    };
+    let like_ancestry = format!("{}/%", ancestry);
 
     Ok(query_as!(
         Task,
@@ -337,12 +326,103 @@ pub async fn list_children<'a, E: Executor<'a, Database = Sqlite>>(
             created_at,
             updated_at
         FROM tasks
-        WHERE ancestry LIKE $1
-        AND ancestry_level = $2
+        WHERE ancestry = $1 OR ancestry LIKE $2
+        ORDER BY created_at ASC
+        "#,
+        ancestry,
+        like_ancestry,
+    )
+    .fetch_all(executor)
+    .await
+    .context("Failed to list tasks")?)
+}
+
+/// Returns count of all children tasks for given task's ancestry.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn get_all_children_count<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    task: &Task,
+) -> Result<i32> {
+    let ancestry = task.children_ancestry();
+    let like_ancestry = format!("{}/%", ancestry);
+
+    let count: i32 = query_scalar!(
+        r#"
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE ancestry = $1 OR ancestry LIKE $2
+        "#,
+        ancestry,
+        like_ancestry,
+    )
+    .fetch_one(executor)
+    .await
+    .context("Failed to count tasks")?;
+
+    Ok(count)
+}
+
+/// Returns true if all sibling tasks are done.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn is_all_siblings_done<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    task: &Task,
+) -> Result<bool> {
+    let count: i32 = query_scalar!(
+        r#"
+        SELECT COUNT(*)
+        FROM tasks
+        WHERE ancestry = $1
+        AND status != $2
+        "#,
+        task.ancestry,
+        Status::Done,
+    )
+    .fetch_one(executor)
+    .await
+    .context("Failed to count tasks")?;
+
+    Ok(count == 0)
+}
+
+/// List direct children tasks for given task.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn list_direct_children<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    task: &Task,
+) -> Result<Vec<Task>> {
+    let ancestry = task.children_ancestry();
+
+    Ok(query_as!(
+        Task,
+        r#"
+        SELECT
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        FROM tasks
+        WHERE ancestry = $1
         ORDER BY created_at DESC
         "#,
-        children_ancestry,
-        children_ancestry_level,
+        ancestry,
     )
     .fetch_all(executor)
     .await
@@ -555,24 +635,6 @@ pub async fn update_execution_chat_id<'a, E: Executor<'a, Database = Sqlite>>(
 /// Returns error if there was a problem while revising task.
 pub async fn revise<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
     update_status(executor, id, Status::Draft).await
-}
-
-/// Cancel task by id.
-///
-/// # Errors
-///
-/// Returns error if there was a problem while canceling task.
-pub async fn cancel<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    update_status(executor, id, Status::Canceled).await
-}
-
-/// Pause task by id.
-///
-/// # Errors
-///
-/// Returns error if there was a problem while pausing task.
-pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    update_status(executor, id, Status::Paused).await
 }
 
 /// Execute task by id.

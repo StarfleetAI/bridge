@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT COUNT(*)\n        FROM tasks\n        WHERE ancestry = $1 OR ancestry LIKE $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7b37451efbde43bb0b66034ce1dc4466063736232ff380a3bf54d5f916e48c69"
+}
