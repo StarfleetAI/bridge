@@ -48,7 +48,7 @@ impl BrowserBuilder {
     /// # Errors
     ///
     /// Returns error if there was a problem while connecting to `WebDriver`.
-    pub async fn connect(self) -> Result<Browser> {
+    pub async fn connect(self) -> anyhow::Result<Browser> {
         let mut caps = Capabilities::new();
         // TODO: support geckodriver
         let opts = serde_json::json!({
@@ -66,16 +66,21 @@ impl BrowserBuilder {
 
         let container_info = docker_client.inspect_container(&container_id).await?;
 
-        let ref container_port  = container_info
-            .network_settings.unwrap()
-            .ports.unwrap()
-            .get("9515/tcp").unwrap().unwrap().as_ptr()
+        let container_port = container_info
+            .network_settings
+            .as_ref()
+            .and_then(|network_settings| network_settings.ports.as_ref())
+            .and_then(|ports| ports.get("9515/tcp"))
+            .and_then(|port_bindings| port_bindings.as_ref())
+            .and_then(|port_bindings| port_bindings.first())
+            .and_then(|port_binding| port_binding.host_port.as_deref())
+            .ok_or_else(|| {anyhow::anyhow!("Can't get external container port.")})?
             ;
-            
-        
+
+
         let client = ClientBuilder::rustls()
             .capabilities(caps)
-            .connect("http://localhost:9515")
+            .connect(&format!("http://localhost:{}", container_port))
             .await
             .map_err(Error::WebDriverConnection)?;
 
