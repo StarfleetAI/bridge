@@ -52,16 +52,6 @@ pub async fn plan_task(app_handle: AppHandle, pool: State<'_, DbPool>, id: i64) 
     TaskPlanner::new(&mut task, &app_handle).plan().await
 }
 
-/// Cancel task by id.
-///
-/// # Errors
-///
-/// Returns error if task with given id does not exist.
-#[tauri::command]
-pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::cancel(&*pool, id).await
-}
-
 /// Create new task.
 ///
 /// # Errors
@@ -136,7 +126,7 @@ pub async fn get_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 #[tauri::command]
 pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksList> {
     let task = repo::tasks::get(&*pool, id).await?;
-    let tasks = repo::tasks::list_children(&*pool, id, task.ancestry.as_deref()).await?;
+    let tasks = repo::tasks::list_direct_children(&*pool, id, task.ancestry.as_deref()).await?;
 
     Ok(TasksList { tasks })
 }
@@ -152,16 +142,6 @@ pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) ->
     let tasks = repo::tasks::list_roots(&*pool, pagination).await?;
 
     Ok(TasksList { tasks })
-}
-
-/// Pause task by id.
-///
-/// # Errors
-///
-/// Returns error if task with given id does not exist.
-#[tauri::command]
-pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::pause(&*pool, id).await
 }
 
 /// Revise task by id.
