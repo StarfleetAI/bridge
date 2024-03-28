@@ -16,7 +16,7 @@ it [installed on your system](https://docs.docker.com/get-docker/).
 After installing Docker, run the following commands:
 
 ```shell
-docker pull python:3.12
+docker pull python:slim
 docker container run -it --rm -p 9515:9515 zenika/alpine-chrome:with-chromedriver
 ```
 
