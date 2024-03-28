@@ -13,7 +13,7 @@ use tracing::trace;
 
 use crate::types::Result;
 
-const DEFAULT_IMAGE: &str = "python:3.12";
+const DEFAULT_IMAGE: &str = "python:slim";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
