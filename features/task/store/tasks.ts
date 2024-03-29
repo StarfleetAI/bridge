@@ -14,7 +14,6 @@ import {
   deleteTask as deleteTaskReq,
   updateTask as updateTaskReq,
   reviseTask as reviseTaskReq,
-  pauseTask as pauseTaskReq,
   executeTask as executeTaskReq,
   duplicateTask as duplicateTaskReq,
 } from '../api'
@@ -47,7 +46,6 @@ export const useTasksStore = defineStore('tasks', () => {
   const tasksGroupsByStatus = ref<GroupedTasks>({
     Draft: [],
     ToDo: [],
-    Paused: [],
     WaitingForUser: [],
     InProgress: [],
     Done: [],
@@ -73,7 +71,6 @@ export const useTasksStore = defineStore('tasks', () => {
     tasksGroupsByStatus.value = {
       Draft: tasksByStatus.filter((task) => task.status === TaskStatus.DRAFT),
       ToDo: tasksByStatus.filter((task) => task.status === TaskStatus.TODO),
-      Paused: tasksByStatus.filter((task) => task.status === TaskStatus.PAUSED),
       WaitingForUser: tasksByStatus.filter((task) => task.status === TaskStatus.WAITING_FOR_USER),
       InProgress: tasksByStatus.filter((task) => task.status === TaskStatus.IN_PROGRESS),
       Done: tasksByStatus.filter((task) => task.status === TaskStatus.DONE),
@@ -156,13 +153,6 @@ export const useTasksStore = defineStore('tasks', () => {
     return updatedTask
   }
 
-  const pauseTask = async (id: number): Promise<Task> => {
-    const updatedTask = await pauseTaskReq(id)
-    updateTaskInGroup(updatedTask)
-
-    return updatedTask
-  }
-
   const executeTask = async (id: number): Promise<Task> => {
     const updatedTask = await executeTaskReq(id)
     console.log(updatedTask)
@@ -187,7 +177,6 @@ export const useTasksStore = defineStore('tasks', () => {
     tasksGroupsByStatus.value = {
       Draft: [],
       ToDo: [],
-      Paused: [],
       WaitingForUser: [],
       InProgress: [],
       Done: [],
@@ -208,7 +197,6 @@ export const useTasksStore = defineStore('tasks', () => {
     deleteTask,
     updateTask,
     reviseTask,
-    pauseTask,
     executeTask,
     duplicateTask,
     listRootTasksByStatus,

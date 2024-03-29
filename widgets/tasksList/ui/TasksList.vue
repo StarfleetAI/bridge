@@ -23,8 +23,6 @@
         return 'Drafts'
       case TaskStatus.TODO:
         return 'To Do'
-      case TaskStatus.PAUSED:
-        return 'Paused'
       case TaskStatus.WAITING_FOR_USER:
         return 'Waiting For User'
       case TaskStatus.IN_PROGRESS:

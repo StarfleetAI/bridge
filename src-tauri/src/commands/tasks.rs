@@ -161,16 +161,6 @@ pub async fn list_root_tasks_by_status(
     Ok(TasksList { tasks })
 }
 
-/// Pause task by id.
-///
-/// # Errors
-///
-/// Returns error if task with given id does not exist.
-#[tauri::command]
-pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::pause(&*pool, id).await
-}
-
 /// Revise task by id.
 ///
 /// # Errors

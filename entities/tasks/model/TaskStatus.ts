@@ -4,7 +4,6 @@
 export enum TaskStatus {
   DRAFT = 'Draft',
   TODO = 'ToDo',
-  PAUSED = 'Paused',
   WAITING_FOR_USER = 'WaitingForUser',
   IN_PROGRESS = 'InProgress',
   DONE = 'Done',

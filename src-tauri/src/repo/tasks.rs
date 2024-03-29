@@ -24,8 +24,6 @@ pub enum Status {
     InProgress,
     /// Task is waiting for a user input.
     WaitingForUser,
-    /// Task is paused by the user.
-    Paused,
     /// Task is completed.
     Done,
     /// Task execution failed.
@@ -38,7 +36,6 @@ impl From<String> for Status {
             "ToDo" => Status::ToDo,
             "InProgress" => Status::InProgress,
             "WaitingForUser" => Status::WaitingForUser,
-            "Paused" => Status::Paused,
             "Done" => Status::Done,
             "Failed" => Status::Failed,
             _ => Status::Draft,
@@ -602,15 +599,6 @@ pub async fn update_execution_chat_id<'a, E: Executor<'a, Database = Sqlite>>(
 /// Returns error if there was a problem while revising task.
 pub async fn revise<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
     update_status(executor, id, Status::Draft).await
-}
-
-/// Pause task by id.
-///
-/// # Errors
-///
-/// Returns error if there was a problem while pausing task.
-pub async fn pause<'a, E: Executor<'a, Database = Sqlite>>(executor: E, id: i64) -> Result<Task> {
-    update_status(executor, id, Status::Paused).await
 }
 
 /// Execute task by id.

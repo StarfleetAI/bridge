@@ -3,6 +3,6 @@
 
 import { type TaskStatus, type Task } from '~/entities/tasks'
 
-export type TasksGroupName = 'Drafts' | 'To Do' | 'Paused' | 'Waiting For User' | 'In Progress' | 'Done' | 'Failed'
+export type TasksGroupName = 'Drafts' | 'To Do' | 'Waiting For User' | 'In Progress' | 'Done' | 'Failed'
 
 export type GroupedTasks = Record<TaskStatus, Task[]>

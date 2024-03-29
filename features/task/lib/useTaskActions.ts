@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Task, TaskStatus } from '~/entities/tasks'
-import { DeleteIcon, DuplicateIcon, PauseIcon, ReviseIcon } from '~/shared/ui/icons'
+import { DeleteIcon, DuplicateIcon, ReviseIcon } from '~/shared/ui/icons'
 import { useTasksStore } from '../store'
 
 export const useTaskActions = (task: Ref<Task>) => {
   const id = computed(() => task.value.id)
   const status = computed(() => task.value.status)
-  const { deleteTask: deleteTaskReq, reviseTask, pauseTask, duplicateTask, selectTask } = useTasksStore()
+  const { deleteTask: deleteTaskReq, reviseTask, duplicateTask, selectTask } = useTasksStore()
 
   const duplicate = computed(() => {
     return {
@@ -42,16 +42,6 @@ export const useTaskActions = (task: Ref<Task>) => {
     }
   })
 
-  const pause = computed(() => {
-    return {
-      label: 'Pause',
-      icon: PauseIcon,
-      action: async () => {
-        await pauseTask(id.value)
-      },
-    }
-  })
-
   const baseActions = computed(() => {
     return [duplicate.value, deleteTask.value]
   })
@@ -61,15 +51,11 @@ export const useTaskActions = (task: Ref<Task>) => {
   })
 
   const inProgressActions = computed(() => {
-    return [pause.value, duplicate.value, deleteTask.value]
-  })
-
-  const pausedActions = computed(() => {
-    return [revise.value, duplicate.value, deleteTask.value]
+    return [duplicate.value, deleteTask.value]
   })
 
   const waitingActions = computed(() => {
-    return [pause.value, revise.value, duplicate.value, deleteTask.value]
+    return [revise.value, duplicate.value, deleteTask.value]
   })
 
   const failedActions = computed(() => {
@@ -82,8 +68,6 @@ export const useTaskActions = (task: Ref<Task>) => {
         return todoActions.value
       case TaskStatus.IN_PROGRESS:
         return inProgressActions.value
-      case TaskStatus.PAUSED:
-        return pausedActions.value
       case TaskStatus.WAITING_FOR_USER:
         return waitingActions.value
       case TaskStatus.FAILED:

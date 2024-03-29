@@ -7,7 +7,6 @@
     TaskStatusToDo,
     TaskStatusInProgress,
     TaskStatusWaiting,
-    TaskStatusPaused,
     TaskStatusDone,
     TaskStatusFailed,
     TaskStatusDraft,
@@ -31,9 +30,6 @@
         break
       case TaskStatus.WAITING_FOR_USER:
         Component = TaskStatusWaiting
-        break
-      case TaskStatus.PAUSED:
-        Component = TaskStatusPaused
         break
       case TaskStatus.DONE:
         Component = TaskStatusDone
@@ -91,10 +87,6 @@
 
     &.waiting-for-user {
       color: var(--status-waiting);
-    }
-
-    &.paused {
-      color: var(--status-paused);
     }
 
     &.done {

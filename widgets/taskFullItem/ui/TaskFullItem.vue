@@ -73,9 +73,7 @@
   const agent = ref<Agent>(getAgentById(task.value!.agent_id!)!)
 
   const taskIsEditable = computed(() => {
-    return [TaskStatus.DRAFT, TaskStatus.PAUSED, TaskStatus.FAILED, TaskStatus.WAITING_FOR_USER].includes(
-      task.value!.status,
-    )
+    return [TaskStatus.DRAFT, TaskStatus.FAILED, TaskStatus.WAITING_FOR_USER].includes(task.value!.status)
   })
 
   const taskTitle = ref(task.value!.title)
