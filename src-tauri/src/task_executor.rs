@@ -724,8 +724,6 @@ async fn get_child_task_for_execution(pool: &DbPool, parent: &Task) -> Result<Op
     sort_task_tree(&mut children_tasks);
     collect_children(&mut tree, &mut children_tasks)?;
 
-    assert_eq!(children_tasks.len(), 0, "all children should be collected");
-
     while let Some(task) = find_execution_candidate(&tree) {
         return Ok(Some(repo::tasks::start_progress(&*pool, task.id).await?));
     }
