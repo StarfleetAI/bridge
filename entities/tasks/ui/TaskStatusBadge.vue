@@ -7,7 +7,6 @@
     TaskStatusToDo,
     TaskStatusInProgress,
     TaskStatusWaiting,
-    TaskStatusPaused,
     TaskStatusDone,
     TaskStatusFailed,
     TaskStatusDraft,
@@ -32,16 +31,10 @@
       case TaskStatus.WAITING_FOR_USER:
         Component = TaskStatusWaiting
         break
-      case TaskStatus.PAUSED:
-        Component = TaskStatusPaused
-        break
       case TaskStatus.DONE:
         Component = TaskStatusDone
         break
       case TaskStatus.FAILED:
-        Component = TaskStatusFailed
-        break
-      case TaskStatus.CANCELED:
         Component = TaskStatusFailed
         break
       case TaskStatus.DRAFT:
@@ -96,20 +89,12 @@
       color: var(--status-waiting);
     }
 
-    &.paused {
-      color: var(--status-paused);
-    }
-
     &.done {
       color: var(--status-done);
     }
 
     &.failed {
       color: var(--status-failed);
-    }
-
-    &.canceled {
-      color: var(--text-tertiary);
     }
 
     .icon {

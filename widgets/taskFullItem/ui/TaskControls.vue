@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useTaskActions, useTasksNavigation, useTasksStore } from '~/features/task'
+  import { useTaskActions, useTasksStore } from '~/features/task'
   import { type Task, TaskStatus } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { BaseDropdown, BaseDropdownItem } from '~/shared/ui/dropdown'
@@ -10,12 +10,7 @@
 
   const props = defineProps<{ task: Task }>()
   const { taskActions } = useTaskActions(toRef(() => props.task))
-  const { executeTask } = useTasksStore()
-  const { setSelectedTask } = useTasksNavigation()
-
-  const handleExecuteTask = async () => {
-    await executeTask(props.task.id)
-  }
+  const { executeTask, selectTask } = useTasksStore()
 </script>
 xw
 <template>
@@ -24,7 +19,7 @@ xw
       v-if="task.status === TaskStatus.DRAFT"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="handleExecuteTask"
+      @click="executeTask(props.task.id)"
     >
       <template #icon>
         <StarsIcon />
@@ -35,7 +30,7 @@ xw
       v-if="task.status === TaskStatus.DONE"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="handleExecuteTask"
+      @click="executeTask(props.task.id)"
     >
       <template #icon>
         <StarsIcon />
@@ -72,7 +67,7 @@ xw
     <CrossIcon
       width="20"
       height="20"
-      @click="setSelectedTask(null)"
+      @click="selectTask(null)"
     />
   </div>
 </template>

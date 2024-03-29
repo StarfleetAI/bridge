@@ -17,14 +17,10 @@
 
   const copyButtonPlugin = new CopyButtonPlugin()
   hljs.addPlugin(copyButtonPlugin)
-  const route = useRoute('chats')
 
   const { listMessages, $reset: resetMessagesStore } = useMessagesStore()
-  const { getById: getTaskById } = useTasksStore()
-  const taskId = computed(() => (route.query.task ? Number(route.query.task) : undefined))
-  const task = computed(() => {
-    return getTaskById(taskId.value!)
-  })
+  const { selectedTask: task } = storeToRefs(useTasksStore())
+
   const chatId = computed(() => task.value?.execution_chat_id)
   if (chatId.value) {
     await listMessages(chatId.value)
