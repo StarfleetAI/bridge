@@ -29,13 +29,26 @@ impl Default for Tasks {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Agents {
+    pub execution_steps_limit: i64,
+}
+
+impl Default for Agents {
+    fn default() -> Self {
+        Self {
+            execution_steps_limit: 12,
+        }
+    }
+}
+
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub default_model: Option<String>,
     #[serde(default)]
     pub api_keys: BTreeMap<Provider, String>,
     #[serde(default)]
-    pub agents: Value,
+    pub agents: Agents,
     #[serde(default)]
     pub tasks: Tasks,
 }
