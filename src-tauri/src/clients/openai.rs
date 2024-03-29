@@ -63,6 +63,12 @@ impl TryFrom<crate::repo::messages::Message> for Message {
                     .with_context(|| "Failed to get message content")?,
                 name: None,
             },
+            crate::repo::messages::Role::CodeInterpreter => Message::User {
+                content: message
+                    .content
+                    .with_context(|| "Failed to get message content")?,
+                name: Some("Code-Interpreter".to_string()),
+            },
             crate::repo::messages::Role::Assistant => Message::Assistant {
                 content: message.content,
                 name: None,
