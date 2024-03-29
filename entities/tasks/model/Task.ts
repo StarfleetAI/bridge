@@ -3,7 +3,7 @@
 
 import { type TaskStatus } from './TaskStatus'
 
-export interface Task {
+export interface Task<T = TaskStatus> {
   id: number
   agent_id: number
   origin_chat_id?: number
@@ -11,7 +11,7 @@ export interface Task {
   execution_chat_id?: number
   title: string
   summary: string
-  status: TaskStatus
+  status: T
   ancestry?: string
   ancestry_level: number
   created_at: string

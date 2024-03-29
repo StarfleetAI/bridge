@@ -52,16 +52,6 @@ pub async fn plan_task(app_handle: AppHandle, pool: State<'_, DbPool>, id: i64) 
     TaskPlanner::new(&mut task, &app_handle).plan().await
 }
 
-/// Cancel task by id.
-///
-/// # Errors
-///
-/// Returns error if task with given id does not exist.
-#[tauri::command]
-pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::cancel(&*pool, id).await
-}
-
 /// Create new task.
 ///
 /// # Errors
@@ -150,6 +140,23 @@ pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksL
 #[tauri::command]
 pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) -> Result<TasksList> {
     let tasks = repo::tasks::list_roots(&*pool, pagination).await?;
+
+    Ok(TasksList { tasks })
+}
+
+/// List root tasks by status.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+#[allow(clippy::module_name_repetitions)]
+#[tauri::command]
+pub async fn list_root_tasks_by_status(
+    status: Status,
+    pool: State<'_, DbPool>,
+    pagination: Pagination,
+) -> Result<TasksList> {
+    let tasks = repo::tasks::list_roots_by_status(&*pool, status, pagination).await?;
 
     Ok(TasksList { tasks })
 }

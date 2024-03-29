@@ -3,15 +3,14 @@
 
 <script lang="ts" setup>
   import { useAgentsStore } from '~/features/agent'
-  import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import { useTasksStore } from '~/features/task'
   import { AgentSelector } from '~/entities/agents'
   import { TaskStatus, TaskStatusBadge, TaskSummary, TaskTitle } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, CrossIcon, SaveIcon, StarsIcon } from '~/shared/ui/icons'
-  const { disableCreateTask, setSelectedTask } = useTasksNavigation()
   const { agents } = storeToRefs(useAgentsStore())
-  const { listRootTasks, createTask } = useTasksStore()
+  const { listRootTasksByStatus, createTask, selectTask, setIsNewTask } = useTasksStore()
   const selectedAgent = ref(agents.value[0])
 
   const taskTitle = ref('')
@@ -43,13 +42,8 @@
 
   const handleExecuteTask = async (status: TaskStatus) => {
     const newTask = await createTask(getTaskEntity(status))
-    listRootTasks({
-      pagination: {
-        page: 1,
-        per_page: 14,
-      },
-    })
-    setSelectedTask(newTask.id)
+    listRootTasksByStatus()
+    selectTask(newTask.id)
   }
 
   const handleRemoveFile = (file: File) => {
@@ -86,7 +80,7 @@
           color="#677383"
           height="20px"
           width="20px"
-          @click="disableCreateTask"
+          @click="setIsNewTask(false)"
         />
       </div>
     </div>

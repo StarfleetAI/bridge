@@ -3,37 +3,42 @@
 
 <script setup lang="ts">
   import { useAgentsStore } from '~/features/agent'
-  import { getTaskResults, useTasksNavigation, useTasksStore } from '~/features/task'
+  import { getTaskResults, useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
   import { AgentSelector } from '~/entities/agents'
-  import { TaskStatusBadge, type Task, TaskTitle, TaskSummary, TaskStatus } from '~/entities/tasks'
+  import { TaskStatusBadge, TaskTitle, TaskSummary, TaskStatus } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
   import ActivityFeed from './ActivityFeed.vue'
   import TaskControls from './TaskControls.vue'
   import TaskResult from './TaskResult.vue'
-  const { selectedTask } = useTasksNavigation()
 
-  const { getById, updateTask } = useTasksStore()
-  if (!getById(selectedTask.value!)) {
-    navigateTo('/tasks')
+  const { updateTask, selectTask } = useTasksStore()
+  const { selectedTask: task } = storeToRefs(useTasksStore())
+  const route = useRoute()
+  if (!task.value) {
+    const taskIdQuery = isNaN(Number(route.query.task)) ? null : Number(route.query.task)
+    if (taskIdQuery) {
+      await selectTask(taskIdQuery)
+    } else {
+      navigateTo('/tasks')
+    }
   }
-  const task = computed(() => getById(selectedTask.value!) as Task)
 
-  const taskResults = ref(await getTaskResults(task.value.id))
+  const taskResults = ref(await getTaskResults(task.value!.id))
 
   const updateResults = async () => {
-    taskResults.value = await getTaskResults(task.value.id)
+    taskResults.value = await getTaskResults(task.value!.id)
   }
 
   watch(
-    () => selectedTask.value,
+    () => task.value,
     (newVal) => {
       if (newVal) {
-        taskTitle.value = task.value.title
-        taskSummary.value = task.value.summary
-        agent.value = getAgentById(task.value.agent_id!)!
+        taskTitle.value = task.value!.title
+        taskSummary.value = task.value!.summary
+        agent.value = getAgentById(task.value!.agent_id!)!
         updateResults()
       }
     },
@@ -65,23 +70,19 @@
   const { getById: getAgentById } = useAgentsStore()
   const { agents } = storeToRefs(useAgentsStore())
 
-  const agent = ref<Agent>(getAgentById(task.value.agent_id!)!)
+  const agent = ref<Agent>(getAgentById(task.value!.agent_id!)!)
 
   const taskIsEditable = computed(() => {
-    return [
-      TaskStatus.DRAFT,
-      TaskStatus.PAUSED,
-      TaskStatus.CANCELED,
-      TaskStatus.FAILED,
-      TaskStatus.WAITING_FOR_USER,
-    ].includes(task.value.status)
+    return [TaskStatus.DRAFT, TaskStatus.PAUSED, TaskStatus.FAILED, TaskStatus.WAITING_FOR_USER].includes(
+      task.value!.status,
+    )
   })
 
-  const taskTitle = ref(task.value.title)
+  const taskTitle = ref(task.value!.title)
 
   const handleUpdate = async () => {
     const { id } = await updateTask({
-      id: task.value.id,
+      id: task.value!.id,
       title: taskTitle.value,
       summary: taskSummary.value,
       agent_id: agent.value.id,
@@ -90,16 +91,16 @@
     return id
   }
 
-  const taskSummary = ref(task.value.summary)
+  const taskSummary = ref(task.value!.summary)
 </script>
 <template>
   <div class="task-details">
     <div class="task-details__head">
       <div class="task-details__title">
-        <b>Task #{{ task.id }}</b> {{ createdAt }}
+        <b>Task #{{ task!.id }}</b> {{ createdAt }}
       </div>
 
-      <TaskControls :task="task" />
+      <TaskControls :task="task!" />
     </div>
     <div class="task-details__body">
       <!-- TODO: back to parent task -->
@@ -108,7 +109,7 @@
       </div> -->
       <div class="task-details__top">
         <div class="task-details__status">
-          <TaskStatusBadge :status="task.status" />
+          <TaskStatusBadge :status="task!.status" />
         </div>
         <AgentSelector
           v-model="agent"
@@ -120,14 +121,14 @@
       <div class="task-details__middle">
         <TaskTitle
           v-model="taskTitle"
-          :current-title="task.title"
-          :task-id="task.id"
+          :current-title="task!.title"
+          :task-id="task!.id"
           @save="handleUpdate"
         />
 
         <TaskSummary
           v-model="taskSummary"
-          :current-summary="task.summary"
+          :current-summary="task!.summary"
           @save="handleUpdate"
         />
 
@@ -169,7 +170,7 @@
       </div>
     </div>
 
-    <ActivityFeed v-if="task.status !== TaskStatus.DRAFT" />
+    <ActivityFeed v-if="task!.status !== TaskStatus.DRAFT" />
   </div>
 </template>
 <style scoped lang="scss">

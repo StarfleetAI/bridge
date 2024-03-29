@@ -41,9 +41,6 @@
       case TaskStatus.FAILED:
         Component = TaskStatusFailed
         break
-      case TaskStatus.CANCELED:
-        Component = TaskStatusFailed
-        break
       case TaskStatus.DRAFT:
       default:
         Component = TaskStatusDraft
@@ -106,10 +103,6 @@
 
     &.failed {
       color: var(--status-failed);
-    }
-
-    &.canceled {
-      color: var(--text-tertiary);
     }
 
     .icon {

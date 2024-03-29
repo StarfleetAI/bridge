@@ -1,12 +1,8 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-import { type Task } from '~/entities/tasks'
-import { type StatusGroup } from './StatusGroup'
+import { type TaskStatus, type Task } from '~/entities/tasks'
 
-export type GroupedTasks = {
-  Drafts: Task[]
-  Active: Task[]
-  Completed: Task[]
-  [Symbol.iterator]: () => Iterator<[StatusGroup, Task[]]>
-}
+export type TasksGroupName = 'Drafts' | 'To Do' | 'Paused' | 'Waiting For User' | 'In Progress' | 'Done' | 'Failed'
+
+export type GroupedTasks = Record<TaskStatus, Task[]>

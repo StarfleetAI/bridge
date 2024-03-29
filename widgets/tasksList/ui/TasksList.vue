@@ -2,25 +2,39 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useTasksNavigation, useTasksStore } from '~/features/task'
-  import { TaskItemLine } from '~/entities/tasks'
-  import { type Pagination } from '~/shared/model'
+  import { useTasksStore } from '~/features/task'
+  import type { TasksGroupName } from '~/features/task/model'
+  import { TaskItemLine, TaskStatus } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { PlusIcon } from '~/shared/ui/icons'
   import type { TasksListView } from '../model'
 
   const view = ref<TasksListView>('list')
-  const { listRootTasks } = useTasksStore()
-  const pagination = ref<Pagination>({
-    page: 1,
-    per_page: 14,
-  })
-  await listRootTasks({ pagination: pagination.value })
-  const { tasksGroupsByStatus } = storeToRefs(useTasksStore())
+  const { listRootTasksByStatus, selectTask, setIsNewTask } = useTasksStore()
+  await listRootTasksByStatus()
+  const { tasksGroupsByStatus, isNewTask } = storeToRefs(useTasksStore())
   // const toggleView = (value: TasksListView) => {
   //   view.value = value
   // }
-  const { enableCreateTask, isCreateTask, setSelectedTask } = useTasksNavigation()
+
+  const getGroupName = (status: TaskStatus): TasksGroupName => {
+    switch (status) {
+      case TaskStatus.DRAFT:
+        return 'Drafts'
+      case TaskStatus.TODO:
+        return 'To Do'
+      case TaskStatus.PAUSED:
+        return 'Paused'
+      case TaskStatus.WAITING_FOR_USER:
+        return 'Waiting For User'
+      case TaskStatus.IN_PROGRESS:
+        return 'In Progress'
+      case TaskStatus.DONE:
+        return 'Done'
+      case TaskStatus.FAILED:
+        return 'Failed'
+    }
+  }
 </script>
 
 <template>
@@ -29,12 +43,12 @@
       <div class="tasks-list__title">
         Tasks
         <BaseButton
-          :disabled="isCreateTask"
+          :disabled="isNewTask"
           size="medium"
           color="blue"
           type="solid"
           class="task-list__create"
-          @click="enableCreateTask"
+          @click="setIsNewTask(true)"
         >
           <template #icon>
             <PlusIcon />
@@ -46,20 +60,20 @@
     </div>
     <div class="tasks-list__groups">
       <div
-        v-for="[status, tasks] in tasksGroupsByStatus"
+        v-for="(tasks, status) in tasksGroupsByStatus"
         :key="status"
         class="tasks-list__group"
       >
         <template v-if="tasks.length">
           <div class="tasks-list__group-name">
-            <b>{{ status }}</b> {{ tasks.length }}
+            <b>{{ getGroupName(status) }}</b> {{ tasks.length }}
           </div>
           <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
             <TaskItemLine
               v-for="task in tasks"
               :key="task.id"
               :task="task"
-              @click="setSelectedTask(task.id)"
+              @click="selectTask(task.id)"
             />
           </div>
         </template>
