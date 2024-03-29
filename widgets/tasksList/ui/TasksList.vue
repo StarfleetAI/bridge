@@ -3,7 +3,7 @@
 
 <script lang="ts" setup>
   import { useTasksStore } from '~/features/task'
-  import type { TasksGroupName } from '~/features/task/model'
+  import type { TasksGroupName } from '~/features/task'
   import { TaskItemLine, TaskStatus } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { PlusIcon } from '~/shared/ui/icons'
