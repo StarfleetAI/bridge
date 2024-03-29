@@ -18,7 +18,7 @@ tauri-build = { version = "1.5.1", features = [] }
 anyhow = "1.0.81"
 askama = "0.12.1"
 async-recursion = "1.1.0"
-bollard = "0.16.0"
+bollard = "0.16.1"
 chrono = { version = "0.4.35", features = ["serde"] }
 dotenvy = "0.15.7"
 fantoccini = { version = "0.19.3", default-features = false, features = ["rustls-tls"] }
