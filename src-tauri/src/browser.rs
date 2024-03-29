@@ -3,17 +3,11 @@
 
 use std::marker::PhantomData;
 
-use bollard::{
-    container::{Config, RemoveContainerOptions},
-    exec::{CreateExecOptions, StartExecResults},
-    secret::HostConfig,
-};
-use fantoccini::{Client, ClientBuilder, Locator, wd::Capabilities};
 use crate::docker::ContainerManager;
 
-use crate::types::Result;
+use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
 
-const DEFAULT_CHROMEDRIVER_IMAGE: &str = "zenika/alpine-chrome:with-chromedriver";
+use crate::types::Result;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -48,7 +42,7 @@ impl BrowserBuilder {
     /// # Errors
     ///
     /// Returns error if there was a problem while connecting to `WebDriver`.
-    pub async fn connect(self) -> anyhow::Result<Browser> {
+    pub async fn connect(self) -> Result<Browser> {
         let mut caps = Capabilities::new();
         // TODO: support geckodriver
         let opts = serde_json::json!({
@@ -56,13 +50,8 @@ impl BrowserBuilder {
         });
         caps.insert("goog:chromeOptions".to_string(), opts);
 
-        // TODO: launch a unique Docker container with chromedriver
-        let docker_client = ContainerManager::new();
-        let container_id = docker_client.launch_container(
-            DEFAULT_CHROMEDRIVER_IMAGE,
-            None,
-            None
-        ).await?;
+        let docker_client = ContainerManager::get().await?;
+        let container_id = docker_client.launch_chromedriver_container().await?;
 
         let container_info = docker_client.inspect_container(&container_id).await?;
 
@@ -74,9 +63,7 @@ impl BrowserBuilder {
             .and_then(|port_bindings| port_bindings.as_ref())
             .and_then(|port_bindings| port_bindings.first())
             .and_then(|port_binding| port_binding.host_port.as_deref())
-            .ok_or_else(|| {anyhow::anyhow!("Can't get external container port.")})?
-            ;
-
+            .ok_or_else(|| anyhow::anyhow!("Can't get external container port."))?;
 
         let client = ClientBuilder::rustls()
             .capabilities(caps)
@@ -149,4 +136,39 @@ impl Browser {
 
         Ok(file_path)
     }
+}
+
+impl Drop for Browser {
+    fn drop(&mut self) {
+        let container_id = self.container_id.clone();
+        tokio::spawn(async move {
+            let docker_client = ContainerManager::get().await.expect("Must be initialized");
+            if let Err(e) = docker_client.kill_container(&container_id).await {
+                tracing::error!("Can't kill container {container_id}: {e}");
+            }
+        });
+    }
+}
+
+#[tokio::test]
+async fn test_create_browser() {
+    let browser_1 = BrowserBuilder::new("br_1".to_string())
+        .connect()
+        .await
+        .expect("Can't create browser_1");
+    let browser_2 = BrowserBuilder::new("br_2".to_string())
+        .connect()
+        .await
+        .expect("Can't create browser_2");
+    let browser_3 = BrowserBuilder::new("br_3".to_string())
+        .connect()
+        .await
+        .expect("Can't create browser_3");
+
+    assert!(!browser_1.container_id.is_empty());
+    assert!(!browser_2.container_id.is_empty());
+    assert!(!browser_3.container_id.is_empty());
+
+    drop((browser_1, browser_2, browser_3));
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 }

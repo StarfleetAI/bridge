@@ -307,9 +307,7 @@ async fn interpret_code(
                     lines.push(format!("```\nFile `{filename}` has been saved\n```"));
                 }
                 Err(err) => {
-                    lines.push(format!(
-                        "```\nFailed to save file `{filename}`: {err}\n```"
-                    ));
+                    lines.push(format!("```\nFailed to save file `{filename}`: {err}\n```"));
                 }
             }
         }
