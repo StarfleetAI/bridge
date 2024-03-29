@@ -25,7 +25,7 @@ use crate::settings::Settings;
 use crate::types::{DbPool, Result};
 use crate::{
     chats::{self, GetCompletionParams},
-    errors,
+    docker, errors,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -74,7 +74,7 @@ pub async fn start_loop(app_handle: &AppHandle) {
 async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
     let pool: State<'_, DbPool> = app_handle.state();
 
-    let mut task = match get_task_for_execution(&pool, None).await {
+    let mut task = match get_root_task_for_execution(&pool).await {
         Ok(Some(task)) => task,
         Ok(None) => return Err(Error::NoRootTasks.into()),
         Err(err) => return Err(err),
@@ -84,49 +84,106 @@ async fn execute_root_task(app_handle: &AppHandle) -> Result<()> {
 
     info!("Root task for execution: #{}. {}", task.id, task.title);
 
+    let children_count = repo::tasks::get_all_children_count(&*pool, &task).await?;
+
+    if children_count > 0 {
+        info!("Executing children tasks for root task #{}.", task.id);
+        execute_children_task_tree(app_handle, &mut task).await?;
+
+        return Ok(());
+    }
+
+    info!("Executing root task #{}", task.id);
+
     match execute_task(app_handle, &mut task).await {
         Ok(status) => {
             debug!(
                 "No errors. Transitioning root task #{} to status: {:?}",
                 task.id, status
             );
-            repo::tasks::update_status(&*pool, task.id, status).await?;
 
-            task.status = status;
+            let task = repo::tasks::update_status(&*pool, task.id, status).await?;
             app_handle.emit_all("tasks:updated", &task)?;
 
             Ok(())
         }
         Err(err) => {
-            repo::tasks::fail(&*pool, task.id).await?;
-
-            task.status = Status::Failed;
+            let task = repo::tasks::fail(&*pool, task.id).await?;
             app_handle.emit_all("tasks:updated", &task)?;
+
+            Err(err)
+        }
+    }
+}
+
+async fn execute_children_task_tree(app_handle: &AppHandle, parent: &mut Task) -> Result<()> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    info!("Executing children tasks tree for task #{}", parent.id);
+
+    while let Some(mut child) = match get_child_task_for_execution(&pool, parent).await {
+        Ok(task) => task,
+        Err(err) => {
+            repo::tasks::fail(&*pool, parent.id).await?;
+            fail_parent_tasks(app_handle, pool, parent).await?;
 
             return Err(err);
         }
+    } {
+        info!("Executing child task #{}: {}", child.id, child.title);
+
+        // TODO: seems counterintuitive to emit the task update here, since it was updated in the
+        //       `get_child_task_for_execution` function. Consider code reorganization.
+        app_handle.emit_all("tasks:updated", &child)?;
+
+        match execute_task(app_handle, &mut child).await {
+            Ok(_) => {
+                info!("Child task #{} is done", child.id);
+                repo::tasks::complete(&*pool, child.id).await?;
+
+                // Complete parent task if all siblings are done
+                if repo::tasks::is_all_siblings_done(&*pool, &child).await? {
+                    info!(
+                        "All siblings are done for the parent task #{}, marking it as `Done` as well",
+                        parent.id
+                    );
+
+                    let task = repo::tasks::complete(
+                        &*pool,
+                        child
+                            .parent_id()?
+                            .context("parent_id is not set for the child task")?,
+                    )
+                    .await?;
+
+                    app_handle.emit_all("tasks:updated", &task)?;
+                }
+            }
+            Err(err) => {
+                repo::tasks::fail(&*pool, child.id).await?;
+                fail_parent_tasks(app_handle, pool, &child).await?;
+
+                return Err(err);
+            }
+        }
     }
 
-    // while let Some(child) = match get_task_for_execution(&*pool, Some(&task)).await {
-    //     Ok(task) => task,
-    //     Err(err) => {
-    //         tasks::fail(&*pool, task.id).await?;
-    //
-    //         bail!(err)
-    //     }
-    // } {
-    //     match execute_task(&app_handle, &child).await {
-    //         Ok(_) => {
-    //             tasks::complete(&*pool, child.id).await?;
-    //         }
-    //         Err(err) => {
-    //             tasks::fail(&*pool, child.id).await?;
-    //             tasks::fail(&*pool, task.id).await?;
-    //
-    //             bail!(err.context("failed to execute child task"))
-    //         }
-    //     };
-    // }
+    Ok(())
+}
+
+async fn fail_parent_tasks(
+    app_handle: &AppHandle,
+    pool: State<'_, DbPool>,
+    child: &Task,
+) -> Result<()> {
+    if let Some(parent_ids) = child.parent_ids()? {
+        for parent_id in parent_ids {
+            let task = repo::tasks::fail(&*pool, parent_id).await?;
+            app_handle.emit_all("tasks:updated", &task)?;
+        }
+    }
+
+    Ok(())
 }
 
 #[instrument(skip(app_handle, task))]
@@ -149,7 +206,6 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
             .unwrap_or(settings.agents.execution_steps_limit)
     };
 
-    // TODO: refactor this loop
     loop {
         let messages_count = repo::messages::get_execution_steps_count(&*pool, chat.id).await?;
         if messages_count >= execution_steps_limit {
@@ -157,7 +213,9 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
         }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
-                Role::Tool | Role::User => send_to_agent(chat.id, app_handle, task).await?,
+                Role::CodeInterpreter | Role::Tool | Role::User => {
+                    send_to_agent(chat.id, app_handle, task).await?;
+                }
                 Role::Assistant => {
                     match &message.tool_calls {
                         Some(tool_calls) => {
@@ -179,7 +237,15 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                         None if message.is_self_reflection => {
                             send_to_agent(chat.id, app_handle, task).await?;
                         }
-                        None => self_reflect(chat.id, app_handle, task).await?,
+                        None => {
+                            let content = message.content.clone().unwrap_or_default();
+                            match parse_code_blocks(&content) {
+                                Ok(code_blocks) if !code_blocks.is_empty() => {
+                                    sfai_code_interpreter(app_handle, &message, task).await?;
+                                }
+                                _ => self_reflect(chat.id, app_handle, task).await?,
+                            }
+                        }
                     }
                 }
                 Role::System => {
@@ -231,9 +297,7 @@ async fn call_tools(
                 )
                 .await?
             }
-            "sfai_code_interpreter" => {
-                sfai_code_interpreter(app_handle, message, task, tool_call.id.clone()).await?
-            }
+            "sfai_code_interpreter" => sfai_code_interpreter(app_handle, message, task).await?,
             _ => None,
         } {
             new_status = Some(status);
@@ -250,7 +314,6 @@ async fn sfai_code_interpreter(
     app_handle: &AppHandle,
     message: &Message,
     task: &Task,
-    tool_call_id: String,
 ) -> Result<Option<Status>> {
     let pool: State<'_, DbPool> = app_handle.state();
 
@@ -270,9 +333,7 @@ async fn sfai_code_interpreter(
                 content,
                 chat_id: message.chat_id,
                 status: repo::messages::Status::Completed,
-                role: Role::Tool,
-                tool_call_id: Some(tool_call_id),
-                is_internal_tool_output: true,
+                role: Role::CodeInterpreter,
                 ..Default::default()
             },
         )
@@ -303,10 +364,19 @@ async fn interpret_code(
 
     let mut lines = Vec::with_capacity(code_blocks.len());
 
+    let workdir = task.workdir(app_handle).await?;
+
     for code_block in code_blocks {
         if code_block.filename.is_none() {
-            // TODO: implement code execution
-            lines.push("```\nCode execution is not implemented\n```".to_string());
+            let result = match code_block.language {
+                Language::Shell => docker::run_cmd(&code_block.code, Some(&workdir)).await?,
+                Language::Python => {
+                    docker::run_python_code(&code_block.code, Some(&workdir)).await?
+                }
+                lang => format!("Error: language `{lang:?}` is not supported for code execution"),
+            };
+
+            lines.push(format!("```\n{result}\n```"));
         } else if let Some(filename) = &code_block.filename {
             let mut workdir = match task.workdir(app_handle).await {
                 Ok(workdir) => workdir,
@@ -447,17 +517,18 @@ Should you require further information from the user, feel free to request it.";
 
 const SELF_REFLECTION_PROMPT: &str = r"Conduct an internal reflection on your message.
 
-If the response requires a code interpreter usage (for code execution or code saving), you must utilize the `sfai_code_interpreter` tool.
-
 If the response aligns with what the user expects as a result, proceed to use the `sfai_done` tool.
 In cases where the response appears incorrect or doesn't meet the user's requirements, articulate your reasoning aloud and determine how to enhance the answer.
 
-Should technical or other issues prevent providing a result, designate the task as unsuccessful using the `sfai_fail` tool.
-If further information from the user is required, request it and utilize the `sfai_wait_for_user` tool.";
+Should technical or other issues prevent providing an exact result to user, designate the task as unsuccessful using the `sfai_fail` tool.
+If further information from the user is required, request it and utilize the `sfai_wait_for_user` tool.
 
-const CODE_INTERPRETER_TOOL: &str = r"### Code Interpreter Tool
+If the message you're reflecting on states that task execution is complete, you must use the `sfai_done` tool to mark the task as done, even if you've did it.
+If the task execution result is not what user was asked for (for example, you weren't able to execute code or access web browser or any other technical issue occured), you must use the `sfai_fail` tool to mark the task as failed.";
 
-You have access to the `sfai_code_interpreter` tool, which functions as a code interpreter. This tool allows you to:
+const CODE_INTERPRETER_TOOL: &str = r#"### Code Interpreter Tool
+
+You have access to a code interpreter. This allows you to:
 
 - Save code snippets as files.
 - Execute code snippets.
@@ -465,13 +536,41 @@ You have access to the `sfai_code_interpreter` tool, which functions as a code i
 
 #### Usage
 
-- When your message involves code that needs execution or saving as part of a task, you must utilize the code interpreter for these actions.
-- If user has asked to save a file with a code, you must run the code interpreter tool in order for the code to be saved by it, before calling `sfai_done`.
-- Do not call the code interpreter tool multiple times for the same message.
+You can prepend code blocks with the blockquote, containing either `Save: <filename>` or `Execute` to save or run the code respectively.
+
+Examples:
+
+> Execute
+```python
+print("This will be executed")
+```
+
+> Save: `my_script.py`
+```python
+print("Hello, World!")
+```
+
+> Save: `hello.sh`
+```bash
+echo "Hello, World!"
+```
+
+> Execute
+```shell
+python my_script.py
+```
+
+> Save: `README.md`
+```markdown
+Hello, World!
+```
 
 #### Notes
 
-- `sfai_code_interpreter` does not require any arguments.";
+- Do not provide any explanations or additional text output while writing the code.
+- You must indent any code blocks inside the generated Markdown documents by 4 spaces.
+- Communicate the results from the code execution back to user, since he can't see the code execution output.
+- If the execution of your code was failed because of the error in your code, you must do your best to fix the error by changing the relevant code."#;
 
 #[instrument(skip(task, app_handle))]
 async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Result<()> {
@@ -482,7 +581,7 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
         app_handle,
         chat_id,
         GetCompletionParams {
-            messages_pre: Some(execution_prelude(chat_id, task, &agent)),
+            messages_pre: Some(execution_prelude(chat_id, task, &agent, false)),
             ..Default::default()
         },
     )
@@ -496,7 +595,7 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
     let pool: State<'_, DbPool> = app_handle.state();
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
 
-    let content = Some([SELF_REFLECTION_PROMPT, CODE_INTERPRETER_TOOL].join("\n\n"));
+    let content = Some(SELF_REFLECTION_PROMPT.to_string());
 
     let messages_post = vec![Message {
         chat_id,
@@ -509,7 +608,7 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
         app_handle,
         chat_id,
         GetCompletionParams {
-            messages_pre: Some(execution_prelude(chat_id, task, &agent)),
+            messages_pre: Some(execution_prelude(chat_id, task, &agent, true)),
             messages_post: Some(messages_post),
             abilities: Some(internal_task_abilities()),
             is_self_reflection: true,
@@ -546,17 +645,22 @@ fn internal_task_abilities() -> Vec<Ability> {
                 "name": "sfai_wait_for_user",
             }),
         ),
-        Ability::for_fn(
-            "Pass the previous message to the code interpreter to run or save code",
-            &json!({
-                "name": "sfai_code_interpreter",
-            }),
-        ),
     ]
 }
 
-fn execution_prelude(chat_id: i64, task: &Task, agent: &Agent) -> Vec<Message> {
-    let system_prompt = format!("{}\n\n---\n\n{}", agent.system_message, BRIDGE_AGENT_PROMPT);
+fn execution_prelude(
+    chat_id: i64,
+    task: &Task,
+    agent: &Agent,
+    is_self_reflection: bool,
+) -> Vec<Message> {
+    let mut system_lines = vec![&agent.system_message, BRIDGE_AGENT_PROMPT];
+
+    if agent.is_code_interpreter_enabled && !is_self_reflection {
+        system_lines.push(CODE_INTERPRETER_TOOL);
+    }
+
+    let system_prompt = system_lines.join("\n\n---\n\n");
 
     vec![
         Message {
@@ -591,42 +695,20 @@ async fn get_task_execution_chat(pool: &DbPool, task: &Task) -> Result<Chat> {
     }
 }
 
-#[instrument(skip(pool, parent))]
-async fn get_task_for_execution(pool: &DbPool, parent: Option<&Task>) -> Result<Option<Task>> {
+#[instrument(skip(pool))]
+async fn get_root_task_for_execution(pool: &DbPool) -> Result<Option<Task>> {
     let mut tx = pool.begin().await.context("failed to begin transaction")?;
 
-    let mut task = match parent {
-        Some(parent) => {
-            if let Some(task) =
-                repo::tasks::get_children_for_execution(&mut *tx, &parent.children_ancestry())
-                    .await?
-            {
-                task
-            } else {
-                tx.commit().await.context("failed to commit transaction")?;
+    let Some(mut task) = repo::tasks::get_root_for_execution(&mut *tx).await? else {
+        tx.commit().await.context("failed to commit transaction")?;
 
-                return Ok(None);
-            }
-        }
-        None => {
-            if let Some(task) = repo::tasks::get_root_for_execution(&mut *tx).await? {
-                task
-            } else {
-                tx.commit().await.context("failed to commit transaction")?;
-
-                return Ok(None);
-            }
-        }
+        return Ok(None);
     };
 
-    // Check if task is ready to be executed.
-    //
-    // Since sub-tasks execution is sequential, we want to catch the cases when there is a sub-task
-    // that is not in `ToDo` status and stop the execution of the parent task.
     if task.status != Status::ToDo {
         tx.commit().await.context("failed to commit transaction")?;
 
-        return Err(anyhow!("Task #{} is not in `ToDo` status", task.id).into());
+        return Ok(None);
     }
 
     repo::tasks::start_progress(&mut *tx, task.id).await?;
@@ -637,10 +719,74 @@ async fn get_task_for_execution(pool: &DbPool, parent: Option<&Task>) -> Result<
     Ok(Some(task))
 }
 
-#[derive(Default)]
+struct TaskTree {
+    pub root: Task,
+    pub children: Vec<TaskTree>,
+}
+
+#[instrument(skip(pool, parent))]
+async fn get_child_task_for_execution(pool: &DbPool, parent: &Task) -> Result<Option<Task>> {
+    let mut children_tasks = repo::tasks::list_all_children(pool, &parent.children_ancestry())
+        .await
+        .context("failed to list children")?;
+
+    let mut tree = TaskTree {
+        root: (*parent).clone(),
+        children: Vec::new(),
+    };
+
+    sort_task_tree(&mut children_tasks);
+    collect_children(&mut tree, &mut children_tasks)?;
+
+    if let Some(task) = find_execution_candidate(&tree) {
+        return Ok(Some(repo::tasks::start_progress(pool, task.id).await?));
+    }
+
+    Ok(None)
+}
+
+fn find_execution_candidate(tree: &TaskTree) -> Option<&Task> {
+    if !tree.children.is_empty() {
+        for child in &tree.children {
+            if let Some(task) = find_execution_candidate(child) {
+                return Some(task);
+            }
+        }
+    }
+
+    match tree.root.status {
+        Status::InProgress | Status::Done => None,
+        Status::Draft | Status::ToDo | Status::WaitingForUser | Status::Failed => Some(&tree.root),
+    }
+}
+
+fn collect_children(tree: &mut TaskTree, tasks: &mut Vec<Task>) -> Result<()> {
+    for task in tasks.clone() {
+        if task.parent_id()? == Some(tree.root.id) {
+            tree.children.push(TaskTree {
+                root: task.clone(),
+                children: Vec::new(),
+            });
+
+            tasks.retain(|t| t.id != task.id);
+
+            collect_children(tree.children.last_mut().unwrap(), tasks)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn sort_task_tree(tasks: &mut [Task]) {
+    tasks.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+}
+
+#[derive(Default, Debug)]
 enum Language {
     #[default]
     Unknown,
+    Shell,
+    Markdown,
     Python,
     Other,
 }
@@ -648,6 +794,8 @@ enum Language {
 impl From<String> for Language {
     fn from(s: String) -> Self {
         match s.to_lowercase().as_str() {
+            "sh" | "shell" => Language::Shell,
+            "markdown" | "md" => Language::Markdown,
             "python" => Language::Python,
             "" => Language::Unknown,
             _ => Language::Other,
@@ -655,11 +803,20 @@ impl From<String> for Language {
     }
 }
 
+#[derive(Default, Debug, PartialEq)]
+enum CodeBlockAction {
+    #[default]
+    DoNothing,
+    Execute,
+    Save,
+}
+
 #[derive(Default)]
 struct CodeBlock {
     pub code: String,
     pub language: Language,
     pub filename: Option<String>,
+    pub action: CodeBlockAction,
 }
 
 fn parse_code_blocks(text: &str) -> Result<Vec<CodeBlock>> {
@@ -674,22 +831,43 @@ fn parse_code_blocks(text: &str) -> Result<Vec<CodeBlock>> {
         .ok_or_else(|| anyhow!("Failed to get AST children"))?
     {
         match node {
-            markdown::mdast::Node::Paragraph(paragraph) => {
-                if paragraph.children.len() != 2 {
+            markdown::mdast::Node::BlockQuote(blockquote) => {
+                if blockquote.children.len() != 1 {
                     continue;
                 }
 
-                if let markdown::mdast::Node::Text(text) = &paragraph.children[0] {
-                    if text.value.to_lowercase().trim() != "file:" {
-                        continue;
-                    }
-                }
+                let markdown::mdast::Node::Paragraph(paragraph) = &blockquote.children[0] else {
+                    continue;
+                };
 
-                if let markdown::mdast::Node::InlineCode(ic) = &paragraph.children[1] {
-                    code_block.filename = Some(ic.value.clone());
+                match paragraph.children.len() {
+                    1 => {
+                        if let markdown::mdast::Node::Text(text) = &paragraph.children[0] {
+                            if text.value.to_lowercase().trim() != "execute" {
+                                continue;
+                            }
+
+                            code_block.action = CodeBlockAction::Execute;
+                        }
+                    }
+                    2 => {
+                        if let markdown::mdast::Node::Text(text) = &paragraph.children[0] {
+                            if text.value.to_lowercase().trim() != "save:" {
+                                continue;
+                            }
+
+                            if let markdown::mdast::Node::InlineCode(ic) = &paragraph.children[1] {
+                                code_block.filename = Some(ic.value.clone());
+                                code_block.action = CodeBlockAction::Save;
+                            }
+                        }
+                    }
+                    _ => continue,
                 }
             }
-            markdown::mdast::Node::Code(code) => {
+            markdown::mdast::Node::Code(code)
+                if code_block.action != CodeBlockAction::DoNothing =>
+            {
                 code_block.code = code.value.clone();
                 code_block.language = code.lang.clone().unwrap_or_default().into();
                 code_blocks.push(code_block);
