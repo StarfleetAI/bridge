@@ -134,8 +134,7 @@ impl<'a> TaskPlanner<'a> {
             .await
             .context("Failed to create chat completion")?;
 
-        let plan = self
-            .plan_from_response(&response, task)
+        let plan = Self::plan_from_response(&response, task)
             .context("Failed to plan a task execution")?
             .context("Empty plan received")?;
 
@@ -185,11 +184,7 @@ impl<'a> TaskPlanner<'a> {
         }
     }
 
-    fn plan_from_response(
-        &self,
-        response: &ChatCompletion,
-        task: &Task,
-    ) -> Result<Option<ExecutionPlan>> {
+    fn plan_from_response(response: &ChatCompletion, task: &Task) -> Result<Option<ExecutionPlan>> {
         let tool_calls = Self::assistant_message_tool_calls(response)?;
         let mut plan = None;
 

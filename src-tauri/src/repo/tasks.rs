@@ -87,6 +87,11 @@ impl Task {
         })
     }
 
+    /// Returns parent ids of the task.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if there was a problem while parsing parent ids.
     pub fn parent_ids(&self) -> Result<Option<Vec<i64>>> {
         Ok(match self.ancestry {
             Some(ref ancestry) => Some(
@@ -307,7 +312,7 @@ pub async fn list_all_children<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     ancestry: &'a str,
 ) -> Result<Vec<Task>> {
-    let like_ancestry = format!("{}/%", ancestry);
+    let like_ancestry = format!("{ancestry}/%");
 
     Ok(query_as!(
         Task,
@@ -347,7 +352,7 @@ pub async fn get_all_children_count<'a, E: Executor<'a, Database = Sqlite>>(
     task: &Task,
 ) -> Result<i32> {
     let ancestry = task.children_ancestry();
-    let like_ancestry = format!("{}/%", ancestry);
+    let like_ancestry = format!("{ancestry}/%");
 
     let count: i32 = query_scalar!(
         r#"

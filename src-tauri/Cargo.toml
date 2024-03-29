@@ -7,7 +7,7 @@ license = "Apache-2.0"
 repository = "https://github.com/StarfleetAI/bridge"
 default-run = "bridge"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

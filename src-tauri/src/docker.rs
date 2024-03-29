@@ -47,6 +47,11 @@ pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<Stri
     run_in_container(DEFAULT_IMAGE, binds, cmd).await
 }
 
+/// Run a shell command in a container.
+///
+/// # Errors
+///
+/// Will return an error if there was a problem while running the command.
 pub async fn run_cmd(cmd: &str, maybe_workdir: Option<&Path>) -> Result<String> {
     let binds = binds_for(maybe_workdir);
     let cmd = vec!["sh", "-c", cmd];
@@ -129,12 +134,5 @@ async fn run_in_container(
 }
 
 fn binds_for(maybe_workdir: Option<&Path>) -> Option<Vec<String>> {
-    if let Some(workdir) = maybe_workdir {
-        Some(vec![format!(
-            "{}:{CONTAINER_WORKDIR}",
-            workdir.to_string_lossy()
-        )])
-    } else {
-        None
-    }
+    maybe_workdir.map(|workdir| vec![format!("{}:{CONTAINER_WORKDIR}", workdir.to_string_lossy())])
 }

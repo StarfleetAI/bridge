@@ -119,11 +119,11 @@ async fn execute_children_task_tree(app_handle: &AppHandle, parent: &mut Task) -
 
     info!("Executing children tasks tree for task #{}", parent.id);
 
-    while let Some(mut child) = match get_child_task_for_execution(&*pool, &parent).await {
+    while let Some(mut child) = match get_child_task_for_execution(&pool, parent).await {
         Ok(task) => task,
         Err(err) => {
             repo::tasks::fail(&*pool, parent.id).await?;
-            fail_parent_tasks(app_handle, pool, &parent).await?;
+            fail_parent_tasks(app_handle, pool, parent).await?;
 
             return Err(err);
         }
@@ -134,7 +134,7 @@ async fn execute_children_task_tree(app_handle: &AppHandle, parent: &mut Task) -
         //       `get_child_task_for_execution` function. Consider code reorganization.
         app_handle.emit_all("tasks:updated", &child)?;
 
-        match execute_task(&app_handle, &mut child).await {
+        match execute_task(app_handle, &mut child).await {
             Ok(_) => {
                 info!("Child task #{} is done", child.id);
                 repo::tasks::complete(&*pool, child.id).await?;
@@ -198,7 +198,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
                 Role::CodeInterpreter | Role::Tool | Role::User => {
-                    send_to_agent(chat.id, app_handle, task).await?
+                    send_to_agent(chat.id, app_handle, task).await?;
                 }
                 Role::Assistant => {
                     match &message.tool_calls {
@@ -224,7 +224,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
                         None => {
                             let content = message.content.clone().unwrap_or_default();
                             match parse_code_blocks(&content) {
-                                Ok(code_blocks) if code_blocks.len() > 0 => {
+                                Ok(code_blocks) if !code_blocks.is_empty() => {
                                     sfai_code_interpreter(app_handle, &message, task).await?;
                                 }
                                 _ => self_reflect(chat.id, app_handle, task).await?,
@@ -357,10 +357,10 @@ async fn interpret_code(
                 Language::Python => {
                     docker::run_python_code(&code_block.code, Some(&workdir)).await?
                 }
-                (lang) => format!("Error: language `{lang}` is not supported for code execution"),
+                lang => format!("Error: language `{lang:?}` is not supported for code execution"),
             };
 
-            lines.push(format!("```\n{}\n```", result));
+            lines.push(format!("```\n{result}\n```"));
         } else if let Some(filename) = &code_block.filename {
             let mut workdir = match task.workdir(app_handle).await {
                 Ok(workdir) => workdir,
@@ -683,9 +683,7 @@ async fn get_task_execution_chat(pool: &DbPool, task: &Task) -> Result<Chat> {
 async fn get_root_task_for_execution(pool: &DbPool) -> Result<Option<Task>> {
     let mut tx = pool.begin().await.context("failed to begin transaction")?;
 
-    let mut task = if let Some(task) = repo::tasks::get_root_for_execution(&mut *tx).await? {
-        task
-    } else {
+    let Some(mut task) = repo::tasks::get_root_for_execution(&mut *tx).await? else {
         tx.commit().await.context("failed to commit transaction")?;
 
         return Ok(None);
@@ -712,7 +710,7 @@ struct TaskTree {
 
 #[instrument(skip(pool, parent))]
 async fn get_child_task_for_execution(pool: &DbPool, parent: &Task) -> Result<Option<Task>> {
-    let mut children_tasks = repo::tasks::list_all_children(&*pool, &parent.children_ancestry())
+    let mut children_tasks = repo::tasks::list_all_children(pool, &parent.children_ancestry())
         .await
         .context("failed to list children")?;
 
@@ -724,8 +722,8 @@ async fn get_child_task_for_execution(pool: &DbPool, parent: &Task) -> Result<Op
     sort_task_tree(&mut children_tasks);
     collect_children(&mut tree, &mut children_tasks)?;
 
-    while let Some(task) = find_execution_candidate(&tree) {
-        return Ok(Some(repo::tasks::start_progress(&*pool, task.id).await?));
+    if let Some(task) = find_execution_candidate(&tree) {
+        return Ok(Some(repo::tasks::start_progress(pool, task.id).await?));
     }
 
     Ok(None)
@@ -741,11 +739,8 @@ fn find_execution_candidate(tree: &TaskTree) -> Option<&Task> {
     }
 
     match tree.root.status {
-        Status::InProgress => None,
-        Status::Done => None,
-        Status::Draft | Status::ToDo | Status::WaitingForUser | Status::Failed => {
-            return Some(&tree.root);
-        }
+        Status::InProgress | Status::Done => None,
+        Status::Draft | Status::ToDo | Status::WaitingForUser | Status::Failed => Some(&tree.root),
     }
 }
 
@@ -759,18 +754,18 @@ fn collect_children(tree: &mut TaskTree, tasks: &mut Vec<Task>) -> Result<()> {
 
             tasks.retain(|t| t.id != task.id);
 
-            collect_children(&mut tree.children.last_mut().unwrap(), tasks)?;
+            collect_children(tree.children.last_mut().unwrap(), tasks)?;
         }
     }
 
     Ok(())
 }
 
-fn sort_task_tree(tasks: &mut Vec<Task>) {
+fn sort_task_tree(tasks: &mut [Task]) {
     tasks.sort_by(|a, b| a.created_at.cmp(&b.created_at));
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 enum Language {
     #[default]
     Unknown,
@@ -825,9 +820,8 @@ fn parse_code_blocks(text: &str) -> Result<Vec<CodeBlock>> {
                     continue;
                 }
 
-                let paragraph = match &blockquote.children[0] {
-                    markdown::mdast::Node::Paragraph(paragraph) => paragraph,
-                    _ => continue,
+                let markdown::mdast::Node::Paragraph(paragraph) = &blockquote.children[0] else {
+                    continue;
                 };
 
                 match paragraph.children.len() {

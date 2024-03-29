@@ -125,6 +125,11 @@ where
     Ok(serialized_data)
 }
 
+/// Delete task results by task id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
 pub async fn delete_for_task<'a, E>(executor: E, task_id: i64) -> Result<()>
 where
     E: Executor<'a, Database = Sqlite>,
