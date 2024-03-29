@@ -18,6 +18,7 @@ pub enum Role {
     User,
     Assistant,
     Tool,
+    CodeInterpreter,
 }
 
 impl From<String> for Role {
@@ -26,6 +27,7 @@ impl From<String> for Role {
             "System" => Role::System,
             "Assistant" => Role::Assistant,
             "Tool" => Role::Tool,
+            "CodeInterpreter" => Role::CodeInterpreter,
             _ => Role::User,
         }
     }

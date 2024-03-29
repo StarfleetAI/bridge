@@ -13,6 +13,7 @@ use tracing::trace;
 
 use crate::types::Result;
 
+const CONTAINER_WORKDIR: &str = "/bridge";
 const DEFAULT_IMAGE: &str = "python:slim";
 
 #[derive(Debug, thiserror::Error)]
@@ -26,10 +27,11 @@ pub enum Error {
 /// # Errors
 ///
 /// Will return an error if there was a problem while running the code.
-pub async fn run_python_code(script: &str) -> Result<String> {
+pub async fn run_python_code(script: &str, maybe_workdir: Option<&Path>) -> Result<String> {
+    let binds = binds_for(maybe_workdir);
     let cmd = vec!["python", "-c", &script];
 
-    run_in_container(DEFAULT_IMAGE, None, cmd).await
+    run_in_container(DEFAULT_IMAGE, binds, cmd).await
 }
 
 /// Run a Python script in a container.
@@ -38,9 +40,21 @@ pub async fn run_python_code(script: &str) -> Result<String> {
 ///
 /// Will return an error if there was a problem while running the script.
 pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<String> {
-    let binds = Some(vec![format!("{}:/app", workdir.to_string_lossy())]);
-    let script_name = format!("/app/{script_name}");
+    let binds = binds_for(Some(workdir));
+    let script_name = format!("{CONTAINER_WORKDIR}/{script_name}");
     let cmd = vec!["python", &script_name];
+
+    run_in_container(DEFAULT_IMAGE, binds, cmd).await
+}
+
+/// Run a shell command in a container.
+///
+/// # Errors
+///
+/// Will return an error if there was a problem while running the command.
+pub async fn run_cmd(cmd: &str, maybe_workdir: Option<&Path>) -> Result<String> {
+    let binds = binds_for(maybe_workdir);
+    let cmd = vec!["sh", "-c", cmd];
 
     run_in_container(DEFAULT_IMAGE, binds, cmd).await
 }
@@ -83,6 +97,7 @@ async fn run_in_container(
                 attach_stdout: Some(true),
                 attach_stderr: Some(true),
                 cmd: Some(cmd),
+                working_dir: Some(CONTAINER_WORKDIR),
                 ..Default::default()
             },
         )
@@ -116,4 +131,8 @@ async fn run_in_container(
     trace!("Script output: {:?}", out);
 
     Ok(out.to_string())
+}
+
+fn binds_for(maybe_workdir: Option<&Path>) -> Option<Vec<String>> {
+    maybe_workdir.map(|workdir| vec![format!("{}:{CONTAINER_WORKDIR}", workdir.to_string_lossy())])
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
+use async_recursion::async_recursion;
 use serde::Deserialize;
 use serde_json::json;
 use tauri::{AppHandle, Manager, State};
@@ -50,7 +51,6 @@ const PROMPT: &str = r#"You are a project manager with the objective of orchestr
 Approach each task methodically and devise a plan to achieve it. Respond with concise task titles and assigned agents only, omitting any additional explanations."#;
 
 pub struct TaskPlanner<'a> {
-    task: &'a mut Task,
     app_handle: &'a AppHandle,
 }
 
@@ -84,8 +84,8 @@ pub enum Error {
 
 impl<'a> TaskPlanner<'a> {
     #[must_use]
-    pub fn new(task: &'a mut Task, app_handle: &'a AppHandle) -> Self {
-        Self { task, app_handle }
+    pub fn new(app_handle: &'a AppHandle) -> Self {
+        Self { app_handle }
     }
 
     /// Plan task execution
@@ -93,21 +93,22 @@ impl<'a> TaskPlanner<'a> {
     /// # Errors
     ///
     /// Returns error if planning is unavailable for the task status, or if there was a problem while planning the task execution.
-    pub async fn plan(&mut self) -> Result<()> {
-        match self.task.status {
+    #[async_recursion]
+    pub async fn plan(&self, task: &mut Task) -> Result<()> {
+        match task.status {
             repo::tasks::Status::ToDo | repo::tasks::Status::InProgress => {
-                return Err(Error::PlanningUnavailable(self.task.status).into())
+                return Err(Error::PlanningUnavailable(task.status).into())
             }
             _ => {}
         }
 
-        info!("Planning task: {}", self.task.id);
+        info!("Planning task: {}", task.id);
 
         let pool: State<'_, DbPool> = self.app_handle.state();
         let settings: State<'_, RwLock<Settings>> = self.app_handle.state();
         let settings_guard = settings.read().await;
 
-        let messages = self.messages().await?;
+        let messages = self.messages(task).await?;
         let tools = construct_tools(Self::abilities()).await?;
 
         let model_full_name = settings_guard.default_model();
@@ -133,8 +134,7 @@ impl<'a> TaskPlanner<'a> {
             .await
             .context("Failed to create chat completion")?;
 
-        let plan = self
-            .plan_from_response(&response)
+        let plan = Self::plan_from_response(&response, task)
             .context("Failed to plan a task execution")?
             .context("Empty plan received")?;
 
@@ -144,27 +144,31 @@ impl<'a> TaskPlanner<'a> {
         }
 
         if plan.tasks.len() == 1 {
-            self.task.agent_id = plan.tasks[0].agent_id;
-            repo::tasks::assign(&*pool, self.task.id, self.task.agent_id).await?;
+            task.agent_id = plan.tasks[0].agent_id;
+            repo::tasks::assign(&*pool, task.id, task.agent_id).await?;
 
-            self.app_handle.emit_all("tasks:updated", &self.task)?;
+            self.app_handle.emit_all("tasks:updated", &task)?;
 
             return Ok(());
         }
 
         for sub_task in plan.tasks {
-            let task = repo::tasks::create(
+            let mut task = repo::tasks::create(
                 &*pool,
                 CreateParams {
                     title: &sub_task.title,
+                    summary: Some(""),
                     agent_id: sub_task.agent_id,
-                    ancestry: Some(&self.task.children_ancestry()),
+                    ancestry: Some(&task.children_ancestry()),
                     ..Default::default()
                 },
             )
             .await?;
 
             self.app_handle.emit_all("tasks:created", &task)?;
+
+            // Plan sub-tasks
+            Self::new(self.app_handle).plan(&mut task).await?;
         }
 
         Ok(())
@@ -180,7 +184,7 @@ impl<'a> TaskPlanner<'a> {
         }
     }
 
-    fn plan_from_response(&self, response: &ChatCompletion) -> Result<Option<ExecutionPlan>> {
+    fn plan_from_response(response: &ChatCompletion, task: &Task) -> Result<Option<ExecutionPlan>> {
         let tool_calls = Self::assistant_message_tool_calls(response)?;
         let mut plan = None;
 
@@ -199,7 +203,7 @@ impl<'a> TaskPlanner<'a> {
 
                     plan = Some(ExecutionPlan {
                         tasks: vec![ExecutionPlanTask {
-                            title: self.task.title.clone(),
+                            title: task.title.clone(),
                             agent_id: args.agent_id,
                         }],
                     });
@@ -211,7 +215,7 @@ impl<'a> TaskPlanner<'a> {
         Ok(plan)
     }
 
-    async fn messages(&self) -> Result<Vec<Message>> {
+    async fn messages(&self, task: &Task) -> Result<Vec<Message>> {
         let pool: State<'_, DbPool> = self.app_handle.state();
 
         let agents = repo::agents::list_enabled(&*pool)
@@ -227,10 +231,10 @@ impl<'a> TaskPlanner<'a> {
             agents.join("\n")
         };
 
-        let summary = if self.task.summary.is_empty() {
+        let summary = if task.summary.is_empty() {
             String::new()
         } else {
-            format!("\n\n{}", self.task.summary)
+            format!("\n\n{}", task.summary)
         };
 
         Ok(vec![
@@ -242,7 +246,7 @@ impl<'a> TaskPlanner<'a> {
                 content: format!(
                     "## Available Agents\n\n{}\n\n## Task: {}{}\n\n## Attachments\n\nNo attachments provided.",
                     agents,
-                    self.task.title,
+                    task.title,
                     summary
                 ),
                 name: None,

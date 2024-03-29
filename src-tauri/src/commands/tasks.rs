@@ -49,7 +49,7 @@ pub struct UpdateTask {
 pub async fn plan_task(app_handle: AppHandle, pool: State<'_, DbPool>, id: i64) -> Result<()> {
     let mut task = repo::tasks::get(&*pool, id).await?;
 
-    TaskPlanner::new(&mut task, &app_handle).plan().await
+    TaskPlanner::new(&app_handle).plan(&mut task).await
 }
 
 /// Create new task.
@@ -87,6 +87,8 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 
     let task = repo::tasks::get(&mut *tx, id).await?;
 
+    // TODO: delete `execution_chat`, `control_chat`, `messages` (for both of them) and `task_results`.
+
     repo::tasks::delete_children(&mut *tx, id, task.ancestry.as_deref()).await?;
     repo::tasks::delete(&mut *tx, id).await?;
 
@@ -104,6 +106,19 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn execute_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let task = repo::tasks::get(&*pool, id).await?;
+
+    // Delete all the task progress and the results if task is being re-executed
+    if task.status == Status::Done {
+        repo::task_results::delete_for_task(&*pool, id).await?;
+        repo::messages::delete_for_chat(
+            &*pool,
+            task.execution_chat_id
+                .context("No execution chat ID for task")?,
+        )
+        .await?;
+    }
+
     repo::tasks::execute(&*pool, id).await
 }
 
@@ -126,7 +141,7 @@ pub async fn get_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 #[tauri::command]
 pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksList> {
     let task = repo::tasks::get(&*pool, id).await?;
-    let tasks = repo::tasks::list_children(&*pool, id, task.ancestry.as_deref()).await?;
+    let tasks = repo::tasks::list_direct_children(&*pool, &task).await?;
 
     Ok(TasksList { tasks })
 }

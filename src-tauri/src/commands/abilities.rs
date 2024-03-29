@@ -64,6 +64,7 @@ pub async fn get_function_definition(code: &str) -> Result<Function> {
         &template
             .render()
             .context("Failed to render `get_function_definition` script")?,
+        None,
     )
     .await?;
 
