@@ -142,6 +142,10 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
         /// TODO: add check here check the number of messages from Assistant role 
         /// (which are not is_internal_tool_output) and if their number == execution_steps_limit, 
         /// we mark the task as defective.
+        let messages_count = repo::messages::get_count_of_failed_messages(&*pool, chat.id).await?;
+        if messages_count == 0 {
+            
+        }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
                 Role::Tool | Role::User => send_to_agent(chat.id, app_handle, task).await?,
