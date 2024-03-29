@@ -15,6 +15,7 @@ pub struct Agent {
     pub is_enabled: bool,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
+    pub execution_steps_limit: Option<i64>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
