@@ -60,21 +60,10 @@ export { default as UnlinkIcon } from './UnlinkIcon.vue'
 export { default as UnpinIcon } from './UnpinIcon.vue'
 
 // Async components
-const TaskStatusCancelled = () => import('./TaskStatusCancelled.vue')
 const TaskStatusDone = () => import('./TaskStatusDone.vue')
 const TaskStatusDraft = () => import('./TaskStatusDraft.vue')
 const TaskStatusFailed = () => import('./TaskStatusFailed.vue')
 const TaskStatusInProgress = () => import('./TaskStatusInProgress.vue')
-const TaskStatusPaused = () => import('./TaskStatusPaused.vue')
 const TaskStatusToDo = () => import('./TaskStatusToDo.vue')
 const TaskStatusWaiting = () => import('./TaskStatusWaiting.vue')
-export {
-  TaskStatusCancelled,
-  TaskStatusDone,
-  TaskStatusDraft,
-  TaskStatusFailed,
-  TaskStatusInProgress,
-  TaskStatusPaused,
-  TaskStatusToDo,
-  TaskStatusWaiting,
-}
+export { TaskStatusDone, TaskStatusDraft, TaskStatusFailed, TaskStatusInProgress, TaskStatusToDo, TaskStatusWaiting }

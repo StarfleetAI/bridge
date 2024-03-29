@@ -4,34 +4,53 @@
 import { listen } from '@tauri-apps/api/event'
 // eslint-disable-next-line boundaries/element-types
 import { useChatsStore } from '~/features/chats'
-import { type Task } from '~/entities/tasks'
+import { TaskStatus, type Task } from '~/entities/tasks'
 import {
   listRootTasks as listRootTasksReq,
   listChildTasks as listChildTasksReq,
+  listRootTasksByStatus as listRootTasksByStatusReq,
+  getTask,
   createTask as createTaskReq,
   deleteTask as deleteTaskReq,
   updateTask as updateTaskReq,
   reviseTask as reviseTaskReq,
-  pauseTask as pauseTaskReq,
   executeTask as executeTaskReq,
   duplicateTask as duplicateTaskReq,
 } from '../api'
-import { groupTasks } from '../lib'
-import { type CreateTask, type ListTasksParams, type UpdateTask } from '../model'
+import { type CreateTask, type GroupedTasks, type ListTasksParams, type UpdateTask } from '../model'
 
 export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>([])
-  const getById = (id: number | string): Task | undefined => {
-    if (typeof id === 'string') {
-      id = parseInt(id, 10)
+  const selectedTask = ref<Nullable<Task>>(null)
+
+  const isNewTask = ref(false)
+  const setIsNewTask = (val: boolean) => {
+    selectedTask.value = null
+    isNewTask.value = val
+    if (val) {
+      navigateTo({ path: '/tasks', query: { create: 'true', task: null } })
+    } else {
+      navigateTo({ path: '/tasks', query: {} })
     }
-
-    return tasks.value.find((a) => a.id === id)
   }
-  const tasksGroupsByStatus = computed(() => {
-    return groupTasks(tasks.value)
+  const selectTask = async (id: Nullable<number>) => {
+    isNewTask.value = false
+    if (id) {
+      navigateTo({ path: '/tasks', query: { task: id } })
+      selectedTask.value = await getTask(id)
+    } else {
+      await navigateTo({ path: '/tasks', query: {} })
+      selectedTask.value = null
+    }
+  }
+  const tasksGroupsByStatus = ref<GroupedTasks>({
+    Draft: [],
+    ToDo: [],
+    WaitingForUser: [],
+    InProgress: [],
+    Done: [],
+    Failed: [],
   })
-
   const listRootTasks = async (params: ListTasksParams): Promise<void> => {
     const rootTasks = await listRootTasksReq(params)
     rootTasks.forEach((task) => {
@@ -41,77 +60,112 @@ export const useTasksStore = defineStore('tasks', () => {
     })
   }
 
+  const listRootTasksByStatus = async (): Promise<void> => {
+    const statuses = Object.values(TaskStatus) as TaskStatus[]
+    const tasksByStatus = (
+      await Promise.all(
+        statuses.map((status) => listRootTasksByStatusReq({ status, pagination: { page: 1, per_page: 16 } })),
+      )
+    ).flat()
+
+    tasksGroupsByStatus.value = {
+      Draft: tasksByStatus.filter((task) => task.status === TaskStatus.DRAFT),
+      ToDo: tasksByStatus.filter((task) => task.status === TaskStatus.TODO),
+      WaitingForUser: tasksByStatus.filter((task) => task.status === TaskStatus.WAITING_FOR_USER),
+      InProgress: tasksByStatus.filter((task) => task.status === TaskStatus.IN_PROGRESS),
+      Done: tasksByStatus.filter((task) => task.status === TaskStatus.DONE),
+      Failed: tasksByStatus.filter((task) => task.status === TaskStatus.FAILED),
+    }
+  }
+
   const listChildTasks = async (id: number): Promise<void> => {
-    const childTasks = await listChildTasksReq(id)
-    childTasks.forEach((task) => {
-      if (!tasks.value.find((a) => a.id === task.id)) {
-        tasks.value.push(task)
+    await listChildTasksReq(id)
+    // childTasks.forEach((task) => {
+    //   if (!tasks.value.find((a) => a.id === task.id)) {
+    //     tasks.value.push(task)
+    //   }
+    // })
+  }
+
+  const updateTaskInGroup = (task: Task) => {
+    const taskGroup = tasksGroupsByStatus.value[task.status]
+
+    // Check if task is already in the group
+    const oldTask = Object.values(tasksGroupsByStatus.value)
+      .flat()
+      .find((a) => a.id === task.id)
+    // If the task is already in the group, update it
+    if (oldTask) {
+      const oldGroup = tasksGroupsByStatus.value[oldTask.status]
+      const index = oldGroup.findIndex((a) => a.id === oldTask.id)
+
+      // If the task status didn't change, just update the task
+      if (oldTask.status === task.status) {
+        oldGroup[index] = task
+      } else {
+        // If the task status changed, remove the old task and add the new one
+        if (index !== undefined && index !== -1) {
+          oldGroup.splice(index, 1)
+        }
+        if (taskGroup.length === 16) {
+          taskGroup.pop()
+        }
+        taskGroup.unshift(task)
       }
-    })
+    } else {
+      // If the task is not in the group, add it
+      if (taskGroup.length === 16) {
+        taskGroup.pop()
+      }
+      taskGroup.unshift(task)
+    }
   }
 
   const createTask = async (task: CreateTask): Promise<Task> => {
     const newTask = await createTaskReq(task)
-    tasks.value.unshift(newTask)
+    updateTaskInGroup(newTask)
+
     return newTask
   }
 
   const duplicateTask = async (id: number): Promise<Task> => {
-    const newTask = await duplicateTaskReq(id)
-    tasks.value.unshift(newTask)
-    return newTask
+    const task = await duplicateTaskReq(id)
+    updateTaskInGroup(task)
+
+    return task
   }
 
-  const deleteTask = async (id: number): Promise<void> => {
-    await deleteTaskReq(id)
-    const index = tasks.value.findIndex((a) => a.id === id)
-    if (index !== undefined && index !== -1) {
-      tasks.value.splice(index, 1)
-    }
+  const deleteTask = async (task: Task): Promise<void> => {
+    await deleteTaskReq(task.id)
+    await listRootTasksByStatus()
   }
-
   const updateTask = async (task: UpdateTask): Promise<Task> => {
     const updatedTask = await updateTaskReq(task)
+    updateTaskInGroup(updatedTask)
 
-    const index = tasks.value.findIndex((a) => a.id === task.id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = updatedTask
-    }
     return updatedTask
   }
 
   const reviseTask = async (id: number): Promise<Task> => {
     const updatedTask = await reviseTaskReq(id)
-    const index = tasks.value.findIndex((a) => a.id === id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = updatedTask
-    }
-    return updatedTask
-  }
+    updateTaskInGroup(updatedTask)
 
-  const pauseTask = async (id: number): Promise<Task> => {
-    const updatedTask = await pauseTaskReq(id)
-    const index = tasks.value.findIndex((a) => a.id === id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = updatedTask
-    }
     return updatedTask
   }
 
   const executeTask = async (id: number): Promise<Task> => {
     const updatedTask = await executeTaskReq(id)
-    const index = tasks.value.findIndex((a) => a.id === id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = updatedTask
-    }
+    console.log(updatedTask)
+    updateTaskInGroup(updatedTask)
+
     return updatedTask
   }
 
   const taskUpdatedUnlisten = listen<Task>('tasks:updated', (event) => {
-    const task = event.payload as Task
-    const index = tasks.value.findIndex((a) => a.id === task.id)
-    if (index !== undefined && index !== -1) {
-      tasks.value[index] = task
+    const task = event.payload
+    updateTaskInGroup(task)
+    if (task.id === selectedTask.value?.id) {
+      selectedTask.value = task
     }
     const { listChats, getById: getChatById } = useChatsStore()
     if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
@@ -120,7 +174,14 @@ export const useTasksStore = defineStore('tasks', () => {
   })
 
   const $reset = async () => {
-    tasks.value = []
+    tasksGroupsByStatus.value = {
+      Draft: [],
+      ToDo: [],
+      WaitingForUser: [],
+      InProgress: [],
+      Done: [],
+      Failed: [],
+    }
     taskUpdatedUnlisten
   }
 
@@ -128,15 +189,18 @@ export const useTasksStore = defineStore('tasks', () => {
     $reset,
     tasks,
     tasksGroupsByStatus,
-    getById,
+    selectedTask: readonly(selectedTask),
+    selectTask,
     listRootTasks,
     listChildTasks,
     createTask,
     deleteTask,
     updateTask,
     reviseTask,
-    pauseTask,
     executeTask,
     duplicateTask,
+    listRootTasksByStatus,
+    isNewTask,
+    setIsNewTask,
   }
 })

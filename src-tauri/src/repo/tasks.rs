@@ -303,6 +303,56 @@ pub async fn list_roots<'a, E: Executor<'a, Database = Sqlite>>(
     .context("Failed to list tasks")?)
 }
 
+/// List root tasks by status
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn list_roots_by_status<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    status: Status,
+    pagination: Pagination,
+) -> Result<Vec<Task>> {
+    if pagination.page < 1 {
+        return Err(anyhow::anyhow!("`page` number must be greater than 0").into());
+    }
+
+    if pagination.per_page < 1 {
+        return Err(anyhow::anyhow!("`per_page` number must be greater than 0").into());
+    }
+
+    let offset = (pagination.page - 1) * pagination.per_page;
+
+    Ok(query_as!(
+        Task,
+        r#"
+        SELECT
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        FROM tasks
+        WHERE ancestry IS NULL AND status = $1
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+        status,
+        pagination.per_page,
+        offset,
+    )
+    .fetch_all(executor)
+    .await
+    .context("Failed to list tasks")?)
+}
+
 /// List all children tasks for given task.
 ///
 /// # Errors

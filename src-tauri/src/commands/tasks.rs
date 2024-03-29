@@ -159,6 +159,23 @@ pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) ->
     Ok(TasksList { tasks })
 }
 
+/// List root tasks by status.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+#[allow(clippy::module_name_repetitions)]
+#[tauri::command]
+pub async fn list_root_tasks_by_status(
+    status: Status,
+    pool: State<'_, DbPool>,
+    pagination: Pagination,
+) -> Result<TasksList> {
+    let tasks = repo::tasks::list_roots_by_status(&*pool, status, pagination).await?;
+
+    Ok(TasksList { tasks })
+}
+
 /// Revise task by id.
 ///
 /// # Errors
