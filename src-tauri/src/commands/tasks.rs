@@ -87,7 +87,9 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 
     let task = repo::tasks::get(&mut *tx, id).await?;
 
-    // TODO: delete `execution_chat`, `control_chat`, `messages` (for both of them) and `task_results`.
+    // TODO: delete `execution` and `control` chats; `messages` (for both of them); `task_results`.
+    //       As well as the working directory (for the root task).
+    //       Also, delete all of these for the children tasks.
 
     repo::tasks::delete_children(&mut *tx, id, task.ancestry.as_deref()).await?;
     repo::tasks::delete(&mut *tx, id).await?;

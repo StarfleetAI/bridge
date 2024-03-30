@@ -3,12 +3,14 @@
 
 use std::path::Path;
 
+use anyhow::Context;
 use bollard::{
     container::{Config, RemoveContainerOptions},
     exec::{CreateExecOptions, StartExecResults},
+    image::CreateImageOptions,
     secret::HostConfig,
 };
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryStreamExt};
 use tracing::trace;
 
 use crate::types::Result;
@@ -65,6 +67,19 @@ async fn run_in_container(
     cmd: Vec<&str>,
 ) -> Result<String> {
     let docker = bollard::Docker::connect_with_local_defaults().map_err(Error::Bollard)?;
+
+    docker
+        .create_image(
+            Some(CreateImageOptions {
+                from_image: image,
+                ..Default::default()
+            }),
+            None,
+            None,
+        )
+        .try_collect::<Vec<_>>()
+        .await
+        .context("Failed to create image")?;
 
     let config = Config {
         image: Some(image),
