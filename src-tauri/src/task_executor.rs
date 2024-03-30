@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 use anyhow::{anyhow, Context};
+use askama::Template;
 use serde::Deserialize;
 use serde_json::json;
 use tauri::{AppHandle, Manager, State};
@@ -34,6 +35,8 @@ pub enum Error {
     NoRootTasks,
     #[error("chat #{0} is not an execution chat")]
     NotAnExecutionChat(i64),
+    #[error("failed to render template: {0}")]
+    TemplateRender(#[from] askama::Error),
     #[error("task execution steps limit ({0}) exceeded")]
     StepsLimitExceeded(i64),
 }
@@ -283,20 +286,8 @@ async fn call_tools(
     for tool_call in tool_calls {
         if let Some(status) = match tool_call.function.name.as_str() {
             "sfai_done" => sfai_done(message, app_handle, task.id, &tool_call).await?,
-            "sfai_fail" => Some(Status::Failed),
-            "sfai_wait_for_user" => Some(Status::WaitingForUser),
-            "sfai_provide_text_result" => {
-                sfai_provide_text_result(
-                    message,
-                    app_handle,
-                    task.id,
-                    tool_call.id.clone(),
-                    serde_json::from_str(&tool_call.function.arguments).context(
-                        "failed to parse tool call arguments for `sfai_provide_text_result`",
-                    )?,
-                )
-                .await?
-            }
+            "sfai_fail" => sfai_fail(message, app_handle, &tool_call).await?,
+            "sfai_wait_for_user" => sfai_wait_for_user(message, app_handle, &tool_call).await?,
             "sfai_code_interpreter" => sfai_code_interpreter(app_handle, message, task).await?,
             _ => None,
         } {
@@ -308,6 +299,54 @@ async fn call_tools(
     crate::abilities::execute_for_message(message, app_handle).await?;
 
     Ok(new_status)
+}
+
+async fn sfai_wait_for_user(
+    message: &Message,
+    app_handle: &AppHandle,
+    tool_call: &ToolCall,
+) -> Result<Option<Status>> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    repo::messages::create(
+        &*pool,
+        CreateParams {
+            content: Some("```\nWaiting for user input\n```".to_string()),
+            chat_id: message.chat_id,
+            status: repo::messages::Status::Completed,
+            role: Role::Tool,
+            tool_call_id: Some(tool_call.id.clone()),
+            is_internal_tool_output: true,
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    Ok(Some(Status::WaitingForUser))
+}
+
+async fn sfai_fail(
+    message: &Message,
+    app_handle: &AppHandle,
+    tool_call: &ToolCall,
+) -> Result<Option<Status>> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    repo::messages::create(
+        &*pool,
+        CreateParams {
+            content: Some("```\nTask has been marked as failed\n```".to_string()),
+            chat_id: message.chat_id,
+            status: repo::messages::Status::Completed,
+            role: Role::Tool,
+            tool_call_id: Some(tool_call.id.clone()),
+            is_internal_tool_output: true,
+            ..Default::default()
+        },
+    )
+    .await?;
+
+    Ok(Some(Status::Failed))
 }
 
 async fn sfai_code_interpreter(
@@ -410,6 +449,20 @@ async fn sfai_done(
 ) -> Result<Option<Status>> {
     let pool: State<'_, DbPool> = app_handle.state();
 
+    repo::messages::create(
+        &*pool,
+        CreateParams {
+            content: Some("```\nTask has been marked as done\n```".to_string()),
+            chat_id: message.chat_id,
+            status: repo::messages::Status::Completed,
+            role: Role::Tool,
+            tool_call_id: Some(tool_call.id.clone()),
+            is_internal_tool_output: true,
+            ..Default::default()
+        },
+    )
+    .await?;
+
     if let Some(result_message) =
         repo::messages::get_last_non_self_reflection_message(&*pool, message.chat_id).await?
     {
@@ -419,7 +472,6 @@ async fn sfai_done(
             &result_message,
             app_handle,
             task_id,
-            tool_call.id.clone(),
             ProvideTextResultArgs {
                 text,
                 ..Default::default()
@@ -437,12 +489,11 @@ async fn sfai_done(
 ///
 /// Returns an error if the tool call arguments cannot be parsed or the task result cannot be
 /// created.
-#[instrument(skip(message, app_handle, task_id, tool_call_id, args))]
+#[instrument(skip(message, app_handle, task_id, args))]
 async fn sfai_provide_text_result(
     message: &Message,
     app_handle: &AppHandle,
     task_id: i64,
-    tool_call_id: String,
     args: ProvideTextResultArgs,
 ) -> Result<Option<Status>> {
     let mut new_status = None;
@@ -466,20 +517,6 @@ async fn sfai_provide_text_result(
     if args.is_done {
         new_status = Some(Status::Done);
     }
-
-    let message = repo::messages::create(
-        &*pool,
-        CreateParams {
-            chat_id: message.chat_id,
-            status: repo::messages::Status::Completed,
-            role: Role::Tool,
-            content: Some("Text result has been created".to_string()),
-            tool_call_id: Some(tool_call_id),
-            is_internal_tool_output: true,
-            ..Default::default()
-        },
-    )
-    .await?;
 
     app_handle.emit_all("messages:created", &message)?;
 
@@ -510,68 +547,6 @@ async fn fail_message(message: &Message, app_handle: &AppHandle) -> Result<()> {
     Ok(())
 }
 
-const BRIDGE_AGENT_PROMPT: &str = r"As you work on a task assigned by a user, strive to complete it with your best effort and deliver the outcome to the user.
-
-If, due to technical issues or other reasons, you are unable to provide the result, you have the option to mark the task as failed.
-Should you require further information from the user, feel free to request it.";
-
-const SELF_REFLECTION_PROMPT: &str = r"Conduct an internal reflection on your message.
-
-If the response aligns with what the user expects as a result, proceed to use the `sfai_done` tool.
-In cases where the response appears incorrect or doesn't meet the user's requirements, articulate your reasoning aloud and determine how to enhance the answer.
-
-Should technical or other issues prevent providing an exact result to user, designate the task as unsuccessful using the `sfai_fail` tool.
-If further information from the user is required, request it and utilize the `sfai_wait_for_user` tool.
-
-If the message you're reflecting on states that task execution is complete, you must use the `sfai_done` tool to mark the task as done, even if you've did it.
-If the task execution result is not what user was asked for (for example, you weren't able to execute code or access web browser or any other technical issue occured), you must use the `sfai_fail` tool to mark the task as failed.";
-
-const CODE_INTERPRETER_TOOL: &str = r#"### Code Interpreter Tool
-
-You have access to a code interpreter. This allows you to:
-
-- Save code snippets as files.
-- Execute code snippets.
-- Run bash commands.
-
-#### Usage
-
-You can prepend code blocks with the blockquote, containing either `Save: <filename>` or `Execute` to save or run the code respectively.
-
-Examples:
-
-> Execute
-```python
-print("This will be executed")
-```
-
-> Save: `my_script.py`
-```python
-print("Hello, World!")
-```
-
-> Save: `hello.sh`
-```bash
-echo "Hello, World!"
-```
-
-> Execute
-```shell
-python my_script.py
-```
-
-> Save: `README.md`
-```markdown
-Hello, World!
-```
-
-#### Notes
-
-- Do not provide any explanations or additional text output while writing the code.
-- You must indent any code blocks inside the generated Markdown documents by 4 spaces.
-- Communicate the results from the code execution back to user, since he can't see the code execution output.
-- If the execution of your code was failed because of the error in your code, you must do your best to fix the error by changing the relevant code."#;
-
 #[instrument(skip(task, app_handle))]
 async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Result<()> {
     let pool: State<'_, DbPool> = app_handle.state();
@@ -581,7 +556,7 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
         app_handle,
         chat_id,
         GetCompletionParams {
-            messages_pre: Some(execution_prelude(chat_id, task, &agent, false)),
+            messages_pre: Some(execution_prelude(chat_id, task, &agent, false)?),
             ..Default::default()
         },
     )
@@ -595,7 +570,8 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
     let pool: State<'_, DbPool> = app_handle.state();
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
 
-    let content = Some(SELF_REFLECTION_PROMPT.to_string());
+    let message = SelfReflectionMessageTemplate {};
+    let content = Some(message.render().map_err(Error::TemplateRender)?);
 
     let messages_post = vec![Message {
         chat_id,
@@ -608,7 +584,7 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
         app_handle,
         chat_id,
         GetCompletionParams {
-            messages_pre: Some(execution_prelude(chat_id, task, &agent, true)),
+            messages_pre: Some(execution_prelude(chat_id, task, &agent, true)?),
             messages_post: Some(messages_post),
             abilities: Some(internal_task_abilities()),
             is_self_reflection: true,
@@ -648,34 +624,49 @@ fn internal_task_abilities() -> Vec<Ability> {
     ]
 }
 
+#[derive(Template)]
+#[template(path = "task_executor/task_message.md", escape = "none")]
+struct TaskMessageTemplate<'a> {
+    task: &'a Task,
+}
+
+#[derive(Template)]
+#[template(path = "task_executor/system_message.md", escape = "none")]
+struct SystemMessageTemplate<'a> {
+    agent: &'a Agent,
+    is_self_reflection: bool,
+}
+
+#[derive(Template)]
+#[template(path = "task_executor/self_reflection_message.md", escape = "none")]
+struct SelfReflectionMessageTemplate {}
+
 fn execution_prelude(
     chat_id: i64,
     task: &Task,
     agent: &Agent,
     is_self_reflection: bool,
-) -> Vec<Message> {
-    let mut system_lines = vec![&agent.system_message, BRIDGE_AGENT_PROMPT];
+) -> Result<Vec<Message>> {
+    let system_message = SystemMessageTemplate {
+        agent,
+        is_self_reflection,
+    };
+    let task_message = TaskMessageTemplate { task };
 
-    if agent.is_code_interpreter_enabled && !is_self_reflection {
-        system_lines.push(CODE_INTERPRETER_TOOL);
-    }
-
-    let system_prompt = system_lines.join("\n\n---\n\n");
-
-    vec![
+    Ok(vec![
         Message {
             chat_id,
             role: Role::System,
-            content: Some(system_prompt),
+            content: Some(system_message.render().map_err(Error::TemplateRender)?),
             ..Default::default()
         },
         Message {
             chat_id,
             role: Role::User,
-            content: Some(format!("# Task: {}\n\n{}", task.title, task.summary)),
+            content: Some(task_message.render().map_err(Error::TemplateRender)?),
             ..Default::default()
         },
-    ]
+    ])
 }
 
 #[instrument(skip(pool, task))]

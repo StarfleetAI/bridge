@@ -340,6 +340,38 @@ where
     Ok(())
 }
 
+/// Update message tool call id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while updating message tool call id.
+pub async fn update_tool_call_id<'a, E>(executor: E, id: i64, tool_call_id: &str) -> Result<Message>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let now = Utc::now();
+    let message = query_as!(
+        Message,
+        r#"
+        UPDATE messages
+        SET tool_call_id = $2, updated_at = $3
+        WHERE id = $1
+        RETURNING
+            id as "id!", chat_id, agent_id, status, role, content, prompt_tokens,
+            completion_tokens, tool_calls, tool_call_id, created_at, updated_at,
+            is_self_reflection, is_internal_tool_output
+        "#,
+        id,
+        tool_call_id,
+        now
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to update tool call id")?;
+
+    Ok(message)
+}
+
 /// Update assistant message with completion result.
 ///
 /// # Errors
