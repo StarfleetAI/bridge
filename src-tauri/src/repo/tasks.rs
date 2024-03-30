@@ -653,6 +653,43 @@ pub async fn update_status<'a, E: Executor<'a, Database = Sqlite>>(
     Ok(task)
 }
 
+/// Get task by execution chat id.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while fetching task.
+pub async fn get_by_execution_chat_id<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    execution_chat_id: i64,
+) -> Result<Task> {
+    let task = query_as!(
+        Task,
+        r#"
+        SELECT
+            id as "id!",
+            agent_id,
+            origin_chat_id,
+            control_chat_id,
+            execution_chat_id,
+            title,
+            summary,
+            status,
+            ancestry,
+            ancestry_level,
+            created_at,
+            updated_at
+        FROM tasks
+        WHERE execution_chat_id = $1
+        "#,
+        execution_chat_id,
+    )
+    .fetch_one(executor)
+    .await
+    .context("Failed to get task by execution chat id")?;
+
+    Ok(task)
+}
+
 /// Update task execution chat id by id.
 ///
 /// # Errors
