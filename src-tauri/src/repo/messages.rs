@@ -277,8 +277,6 @@ where
         WHERE chat_id = $1
         AND role = "Assistant"
         AND is_internal_tool_output IS FALSE
-        ORDER BY id DESC
-        LIMIT 1
         "#,
         chat_id,
     )

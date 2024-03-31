@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT count(*) as msg_count\n        FROM messages\n        WHERE chat_id = $1\n        AND role = \"Assistant\"\n        AND is_internal_tool_output IS FALSE\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "msg_count",
+        "ordinal": 0,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ee756351eabad0c3e23cca9946c2b138ff401722e014403b0f03d525f719d9b3"
+}
