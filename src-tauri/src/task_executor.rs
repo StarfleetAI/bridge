@@ -34,6 +34,8 @@ pub enum Error {
     NoRootTasks,
     #[error("chat #{0} is not an execution chat")]
     NotAnExecutionChat(i64),
+    #[error("task attempt limit has expired")]
+    LimitExpired,
 }
 
 // TODO: implement graceful shutdown
@@ -137,14 +139,26 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
     task.execution_chat_id = Some(chat.id);
     app_handle.emit_all("tasks:updated", &task)?;
 
+    let execution_steps_limit = {
+        let agent = repo::agents::get_for_chat(&*pool, chat.id).await?;
+        let settings_state: State<'_, RwLock<Settings>> = app_handle.state();
+        let settings = settings_state.read().await;
+
+        agent
+            .execution_steps_limit
+            .unwrap_or(settings.agents.execution_steps_limit)
+    };
+
     // TODO: refactor this loop
     loop {
-        /// TODO: add check here check the number of messages from Assistant role 
-        /// (which are not is_internal_tool_output) and if their number == execution_steps_limit, 
-        /// we mark the task as defective.
         let messages_count = repo::messages::get_count_of_failed_messages(&*pool, chat.id).await?;
-        if messages_count == 0 {
-            
+        if messages_count >= execution_steps_limit {
+            repo::tasks::fail(&*pool, task.id).await?;
+
+            task.status = Status::Failed;
+            app_handle.emit_all("tasks:updated", &task)?;
+
+            return Err(Error::LimitExpired.into());
         }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
@@ -288,7 +302,7 @@ async fn interpret_code(
         Err(err) => {
             return Ok(vec![format!(
                 "Failed to parse code blocks in the message: {err}"
-            )])
+            )]);
         }
     };
 
@@ -314,9 +328,7 @@ async fn interpret_code(
                     lines.push(format!("```\nFile `{filename}` has been saved\n```"));
                 }
                 Err(err) => {
-                    lines.push(format!(
-                        "```\nFailed to save file `{filename}`: {err}\n```"
-                    ));
+                    lines.push(format!("```\nFailed to save file `{filename}`: {err}\n```"));
                 }
             }
         }

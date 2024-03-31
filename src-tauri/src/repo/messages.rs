@@ -266,26 +266,27 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while checking count of messages.
-pub async fn get_count_of_failed_messages<'a, E>(executor: E, chat_id: i64) -> Result<Option<Message>>
-    where
-        E: Executor<'a, Database = Sqlite>,
+pub async fn get_count_of_failed_messages<'a, E>(executor: E, chat_id: i64) -> Result<i64>
+where
+    E: Executor<'a, Database = Sqlite>,
 {
-    Ok(query_as!(
-        Message,
+    let result = query!(
         r#"
-        SELECT count(1)
+        SELECT count(*) as msg_count
         FROM messages
         WHERE chat_id = $1
         AND role = "Assistant"
-        AND is_internal_tool_output IS NOT TRUE
+        AND is_internal_tool_output IS FALSE
         ORDER BY id DESC
         LIMIT 1
         "#,
         chat_id,
     )
-        .fetch_optional(executor)
-        .await
-        .with_context(|| "Failed to get last message")?)
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to get last message")?;
+
+    Ok(result.msg_count.into())
 }
 
 /// Get last non self-reflection agent message for chat.

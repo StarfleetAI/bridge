@@ -47,6 +47,11 @@
         "name": "is_web_browser_enabled",
         "ordinal": 8,
         "type_info": "Bool"
+      },
+      {
+        "name": "execution_steps_limit",
+        "ordinal": 9,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -61,7 +66,8 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
   "hash": "96e478cec9c43587eb8864d3ac47021ace309978f9088e74ab702a17ca787022"
