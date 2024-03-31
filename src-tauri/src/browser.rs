@@ -3,10 +3,9 @@
 
 use std::marker::PhantomData;
 
-use crate::docker::ContainerManager;
-
 use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
 
+use crate::docker::ContainerManager;
 use crate::types::Result;
 
 #[derive(Debug, thiserror::Error)]

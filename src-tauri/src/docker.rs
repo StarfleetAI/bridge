@@ -1,9 +1,6 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
-
 use std::collections::HashMap;
-use tokio::sync::OnceCell;
-
 use std::path::Path;
 
 use bollard::models::{ContainerInspectResponse, PortBinding};
@@ -13,11 +10,13 @@ use bollard::{
     secret::HostConfig,
 };
 use futures_util::StreamExt;
+use tokio::sync::OnceCell;
 use tracing::trace;
 
 use crate::types::Result;
 
-const DEFAULT_IMAGE: &str = "python:3.12";
+const DEFAULT_PYTHON_IMAGE: &str = "python:3.12";
+const DEFAULT_CHROMEDRIVER_IMAGE: &str = "zenika/alpine-chrome:with-chromedriver";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -33,7 +32,7 @@ pub enum Error {
 pub async fn run_python_code(script: &str) -> Result<String> {
     let cmd = vec!["python", "-c", &script];
 
-    run_in_container(DEFAULT_IMAGE, None, cmd).await
+    run_in_container(DEFAULT_PYTHON_IMAGE, None, cmd).await
 }
 
 /// Run a Python script in a container.
@@ -46,7 +45,7 @@ pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<Stri
     let script_name = format!("/app/{script_name}");
     let cmd = vec!["python", &script_name];
 
-    run_in_container(DEFAULT_IMAGE, binds, cmd).await
+    run_in_container(DEFAULT_PYTHON_IMAGE, binds, cmd).await
 }
 
 async fn run_in_container(
@@ -146,10 +145,8 @@ impl ContainerManager {
     ///
     /// Will return an error if there was a problem while starting the chromedriver container.
     pub async fn launch_chromedriver_container(&self) -> Result<String> {
-        const CHROMEDRIVER_IMAGE: &str = "zenika/alpine-chrome:with-chromedriver";
-
         let container_config = Config {
-            image: Some(CHROMEDRIVER_IMAGE),
+            image: Some(DEFAULT_CHROMEDRIVER_IMAGE),
             tty: Some(true),
             host_config: Some(HostConfig {
                 auto_remove: Some(true),
