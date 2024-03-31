@@ -4,6 +4,7 @@
 use std::marker::PhantomData;
 
 use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
+use tracing::error;
 
 use crate::docker::ContainerManager;
 use crate::types::Result;
@@ -143,7 +144,7 @@ impl Drop for Browser {
         tokio::spawn(async move {
             let docker_client = ContainerManager::get().await.expect("Must be initialized");
             if let Err(e) = docker_client.kill_container(&container_id).await {
-                tracing::error!("Can't kill container {container_id}: {e}");
+                error!("Can't kill container {container_id}: {e}");
             }
         });
     }
