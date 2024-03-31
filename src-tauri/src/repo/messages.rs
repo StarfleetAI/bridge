@@ -261,11 +261,11 @@ where
     .with_context(|| "Failed to get last message")?)
 }
 
-/// Check count of not is_internal_tool_output messages .
+/// Counting messages from Assistant role that are not is_internal_tool_output.
 ///
 /// # Errors
 ///
-/// Returns error if there was a problem while checking count of messages.
+/// Returns error if there was a problem while counting of messages.
 pub async fn get_count_of_failed_messages<'a, E>(executor: E, chat_id: i64) -> Result<i64>
 where
     E: Executor<'a, Database = Sqlite>,
@@ -282,7 +282,7 @@ where
     )
     .fetch_one(executor)
     .await
-    .with_context(|| "Failed to get last message")?;
+    .with_context(|| "Failed to count messages from Assistant role that are not is_internal_tool_output")?;
 
     Ok(result.msg_count.into())
 }
