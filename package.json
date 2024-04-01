@@ -71,7 +71,7 @@
     "nuxt-typed-router": "^3.5.1",
     "pinia": "^2.1.7",
     "prismjs": "^1.29.0",
-    "vite": "^5.1.4",
+    "vite": "^5.2.7",
     "vue-devtools": "^5.1.4",
     "vue-prism-editor": "alpha"
   }
