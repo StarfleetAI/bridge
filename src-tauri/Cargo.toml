@@ -32,7 +32,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "sqlite", "
 tauri = { version = "1.6.1", features = ["shell-open"] }
 tauri-plugin-deep-link = "0.1.2"
 thiserror = "1.0.58"
-tokio = { version = "1.36.0", features = ["full"] }
+tokio = { version = "1.37.0", features = ["full"] }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 
