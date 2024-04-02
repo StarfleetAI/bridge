@@ -100,7 +100,7 @@
     align-self: center;
     width: 100%;
 
-    @include flex($justify-content: center);
+    @include flex($justify: center);
   }
 
   .chat-input {

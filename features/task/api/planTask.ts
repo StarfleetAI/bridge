@@ -3,6 +3,6 @@
 
 import type { Task } from '~/entities/tasks'
 
-export const pauseTask = (id: number) => {
-  return invoke<Task>('pause_task', { id })
+export const planTask = (id: number) => {
+  return invoke<Task>('plan_task', { id })
 }

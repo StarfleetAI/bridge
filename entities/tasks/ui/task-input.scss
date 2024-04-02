@@ -3,18 +3,13 @@
 .task-input__container {
   position: relative;
   display: flex;
-
-  //   flex: 1;
   border-radius: 6px;
-
-  //   background-color: var(--surface-3);
 
   &--editing {
     background-color: var(--surface-3);
 
     & .task-input.summary {
       overflow: auto;
-      white-space: initial;
     }
   }
 

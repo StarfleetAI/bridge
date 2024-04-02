@@ -57,23 +57,9 @@ export const useChatsStore = defineStore('chats', () => {
     updateChat(chat)
   })
 
-  const toggleIsPinned = async (id: number, isPinned: boolean) => {
+  const toggleIsPinned = async (id: number) => {
     await toggleIsPinnedReq(id)
-    if (isPinned) {
-      const index = pinnedChats.value.findIndex((a) => a.id === id)
-      if (index !== undefined && index !== -1) {
-        pinnedChats.value[index].is_pinned = false
-        chats.value.unshift(pinnedChats.value[index])
-        pinnedChats.value.splice(index, 1)
-      }
-    } else {
-      const index = chats.value.findIndex((a) => a.id === id)
-      if (index !== undefined && index !== -1) {
-        chats.value[index].is_pinned = true
-        pinnedChats.value.unshift(chats.value[index])
-        chats.value.splice(index, 1)
-      }
-    }
+    listChats()
   }
 
   const updateChatModelFullName = async (id: number, modelFullName: Nullable<string>) => {

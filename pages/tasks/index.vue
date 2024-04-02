@@ -5,20 +5,21 @@
   import { TaskForm } from '~/widgets/taskForm'
   import { TaskFullItem } from '~/widgets/taskFullItem'
   import { TasksList } from '~/widgets/tasksList'
-  import { useTasksNavigation, useTasksStore } from '~/features/task'
+  import { useTasksStore } from '~/features/task'
   import { BaseContainer } from '~/shared/ui/base'
   definePageMeta({
     title: 'Tasks',
   })
 
-  const { isCreateTask, selectedTask } = useTasksNavigation()
-  const { tasks } = storeToRefs(useTasksStore())
-
+  const { isNewTask, selectedTask } = storeToRefs(useTasksStore())
+  const route = useRoute()
+  const taskIdQuery = computed(() => (isNaN(Number(route.query.task)) ? null : Number(route.query.task)))
+  const createTaskQuery = computed(() => route.query.create === 'true')
   const sideContentComponent = computed(() => {
-    if (isCreateTask.value) {
+    if (isNewTask.value || createTaskQuery.value) {
       return TaskForm
     }
-    if (selectedTask.value && tasks.value.length) {
+    if (selectedTask.value || taskIdQuery.value) {
       return TaskFullItem
     }
     return null

@@ -50,7 +50,7 @@ pub async fn new_pool(app_local_data_dir: &str) -> Result<Pool<Sqlite>> {
     info!("Connecting to a database");
 
     Ok(SqlitePoolOptions::new()
-        .max_connections(10)
+        .max_connections(1)
         .connect(&database_url)
         .await
         .with_context(|| "Failed to connect to sqlite")?)

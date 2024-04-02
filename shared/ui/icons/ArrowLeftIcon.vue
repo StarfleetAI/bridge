@@ -14,9 +14,9 @@
     }>(),
     {
       color: 'currentColor',
+      width: 20,
       height: 20,
-      viewBoxValue: `0 0 21 20`,
-      width: 21,
+      viewBoxValue: `0 0 20 20`,
     },
   )
 </script>
@@ -30,8 +30,8 @@
     :pointer="pointer"
   >
     <path
-      d="M15.8337 9.99984H4.16699M4.16699 9.99984L10.0003 15.8332M4.16699 9.99984L10.0003 4.1665"
-      stroke="#B0B5C0"
+      d="M15.8337 10.0003H4.16699M4.16699 10.0003L10.0003 15.8337M4.16699 10.0003L10.0003 4.16699"
+      stroke="currentColor"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"

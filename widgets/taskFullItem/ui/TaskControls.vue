@@ -2,47 +2,69 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
-  import { useTaskActions, useTasksNavigation, useTasksStore } from '~/features/task'
+  import { useTaskActions, useTasksStore } from '~/features/task'
   import { type Task, TaskStatus } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { BaseDropdown, BaseDropdownItem } from '~/shared/ui/dropdown'
-  import { KebabIcon, CrossIcon, StarsIcon } from '~/shared/ui/icons'
-
+  import { KebabIcon, CrossIcon, StarsIcon, ReviseIcon /**ResumeIcon*/ } from '~/shared/ui/icons'
+  const StarsIconAsync = defineAsyncComponent(StarsIcon)
+  // const ResumeIconAsync = defineAsyncComponent(ResumeIcon)
   const props = defineProps<{ task: Task }>()
   const { taskActions } = useTaskActions(toRef(() => props.task))
-  const { executeTask } = useTasksStore()
-  const { setSelectedTask } = useTasksNavigation()
+  const { executeTask, selectTask, reviseTask } = useTasksStore()
 
-  const handleExecuteTask = async () => {
-    await executeTask(props.task.id)
-  }
+  const showReviseButton = computed(() => {
+    return [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.FAILED, TaskStatus.WAITING_FOR_USER].includes(
+      props.task.status,
+    )
+  })
+  const showReExecuteButton = computed(() => {
+    return [TaskStatus.FAILED, TaskStatus.DONE].includes(props.task.status)
+  })
 </script>
 xw
 <template>
   <div class="task-controls">
     <BaseButton
+      v-if="showReviseButton"
+      color="gray"
+      size="medium"
+      @click="reviseTask"
+    >
+      <template #icon>
+        <ReviseIcon />
+      </template>
+      Revise
+    </BaseButton>
+    <!-- <BaseButton v-if="task.status === TaskStatus.WAITING_FOR_USER">
+      <template #icon>
+        <ResumeIconAsync />
+        Continue
+      </template>
+    </BaseButton> -->
+    <BaseButton
       v-if="task.status === TaskStatus.DRAFT"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="handleExecuteTask"
+      @click="executeTask(props.task.id)"
     >
       <template #icon>
-        <StarsIcon />
+        <StarsIconAsync />
       </template>
       Execute
     </BaseButton>
     <BaseButton
-      v-if="task.status === TaskStatus.DONE"
+      v-if="showReExecuteButton"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="handleExecuteTask"
+      @click="executeTask(props.task.id)"
     >
       <template #icon>
-        <StarsIcon />
+        <StarsIconAsync />
       </template>
       Re-execute
     </BaseButton>
-    <BaseDropdown>
+    <BaseDropdown :distance="20">
       <KebabIcon
         height="20"
         width="20"
@@ -72,7 +94,7 @@ xw
     <CrossIcon
       width="20"
       height="20"
-      @click="setSelectedTask(null)"
+      @click="selectTask(null)"
     />
   </div>
 </template>
@@ -81,7 +103,7 @@ xw
   .task-controls {
     color: var(--text-tertiary);
 
-    @include flex($gap: 16px, $align-items: center);
+    @include flex($gap: 16px, $align: center);
   }
 
   .task-controls__action {

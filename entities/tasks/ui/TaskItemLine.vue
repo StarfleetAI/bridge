@@ -2,21 +2,24 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { useRouteQuery } from '@vueuse/router'
+  // eslint-disable-next-line boundaries/element-types
+  import { useTasksStore } from '~/features/task'
   import { AvatarsList } from '~/shared/ui/avatars'
   import type { Task } from '../model'
   import TaskStatusBadge from './TaskStatusBadge.vue'
 
   const props = defineProps<{
     task: Task
+    isChild?: boolean
   }>()
 
-  const selectedTask = useRouteQuery('task', '', {
-    transform: (value: string) => (isNaN(Number(value)) ? null : Number(value)),
-  })
+  const tasksStore = useTasksStore()
+  const selectedTask = computed(() => tasksStore.selectedTask)
 
   const isSelected = computed(() => {
-    return props.task.id === selectedTask.value
+    return (
+      props.task.id === selectedTask.value?.id || selectedTask.value?.ancestry?.split('/').includes(`${props.task.id}`)
+    )
   })
 
   const taskTitlePlaceholder = computed(() => {
@@ -24,7 +27,7 @@
   })
 </script>
 <template>
-  <div :class="['task-item', { selected: isSelected }]">
+  <div :class="['task-item', { selected: isSelected, 'is-child': isChild }]">
     <TaskStatusBadge
       icon-only
       :status="task.status"
@@ -47,9 +50,13 @@
     margin-bottom: 15px;
     padding: 12px 16px;
     border-radius: 6px;
-    background: var(--surface-2);
+    background-color: var(--surface-2);
     outline: 2px solid transparent;
     transition: outline 0.08s ease-in-out;
+
+    &.is-child {
+      background-color: var(--surface-3);
+    }
 
     &.selected {
       outline: 2px solid var(--button-primary);

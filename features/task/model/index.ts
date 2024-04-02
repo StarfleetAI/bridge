@@ -3,6 +3,7 @@
 
 export * from './CreateTask'
 export * from './GroupedTasks'
+export * from './ListTasksByStatusParams'
 export * from './ListTasksParams'
 export * from './StatusGroup'
 export * from './TasksList'

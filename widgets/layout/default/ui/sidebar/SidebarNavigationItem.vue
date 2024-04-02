@@ -12,7 +12,9 @@
     return route.name === props.name
   })
   const handleClick = () => {
-    navigateTo(props.to as TypedRouteLocationFromName<TabRoute>)
+    if (!isActiveItem.value) {
+      navigateTo(props.to as TypedRouteLocationFromName<TabRoute>)
+    }
   }
 </script>
 

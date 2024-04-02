@@ -36,7 +36,7 @@
     width: 182px;
     text-align: end;
 
-    @include flex(column, $align-items: flex-end, $gap: 4px);
+    @include flex(column, $align: flex-end, $gap: 4px);
   }
 
   .settings-field__name {

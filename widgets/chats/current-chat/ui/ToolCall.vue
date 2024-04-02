@@ -3,7 +3,6 @@
 
 <script lang="ts" setup>
   import { useAbilitiesStore } from '~/features/ability'
-
   import { type Ability } from '~/entities/abilities'
   import type { Agent } from '~/entities/agents'
   import { Status, type ToolCall } from '~/entities/chat'
@@ -227,6 +226,7 @@
 
   .tool__content {
     flex: 1 0;
+    width: 100%;
   }
 
   .tool__loading {
@@ -292,14 +292,17 @@
   }
 
   .tool__parameters-item-value {
+    overflow: auto;
     font-weight: 500;
     font-size: 12px;
     line-height: 17px;
-    white-space: pre-wrap;
+
+    // white-space: pre-wrap;
+    word-break: initial;
     cursor: auto;
     user-select: initial;
 
-    @include line-clamp(3);
+    // @include line-clamp(3);
     @include font-mono;
   }
 

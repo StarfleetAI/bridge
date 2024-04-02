@@ -7,19 +7,16 @@ use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tokio::sync::RwLock;
-use tracing::instrument;
 use tracing::{debug, trace};
+use tracing::{error, instrument};
 
 use crate::abilities::{self};
-use crate::chats;
 use crate::chats::GetCompletionParams;
 use crate::repo::models;
+use crate::{chats, repo};
 use crate::{
     clients::openai::{Client, CreateChatCompletionRequest},
-    repo::{
-        self,
-        messages::{CreateParams, ListParams, Message, Role, Status},
-    },
+    repo::messages::{CreateParams, ListParams, Message, Role, Status},
     settings::Settings,
     types::{DbPool, Result},
 };
@@ -120,11 +117,35 @@ pub async fn create_message(
 
     app_handle.emit_all("messages:created", &message)?;
 
-    chats::get_completion(&app_handle, request.chat_id, GetCompletionParams::default())
-        .await
-        .context("Failed to get chat completion")?;
+    let chat = repo::chats::get(&*pool, message.chat_id).await?;
 
-    generate_chat_title(request.chat_id, &app_handle, pool, settings).await?;
+    match chat.kind {
+        repo::chats::Kind::Direct => {
+            chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
+                .await
+                .context("Failed to get chat completion")?;
+            chats::get_completion(&app_handle, request.chat_id, GetCompletionParams::default())
+                .await
+                .context("Failed to get chat completion")?;
+
+            generate_chat_title(request.chat_id, &app_handle, pool, settings).await?;
+        }
+        repo::chats::Kind::Execution => {
+            let task = repo::tasks::get_by_execution_chat_id(&*pool, chat.id)
+                .await
+                .context("Failed to `get_by_execution_chat_id`")?;
+
+            if task.status != repo::tasks::Status::InProgress
+                || task.status != repo::tasks::Status::ToDo
+            {
+                let task = repo::tasks::execute(&*pool, task.id).await?;
+                app_handle.emit_all("tasks:updated", &task)?;
+            }
+        }
+        repo::chats::Kind::Control => {
+            error!("Control chats are not yet supported");
+        }
+    }
 
     Ok(())
 }

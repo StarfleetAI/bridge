@@ -49,17 +49,7 @@ pub struct UpdateTask {
 pub async fn plan_task(app_handle: AppHandle, pool: State<'_, DbPool>, id: i64) -> Result<()> {
     let mut task = repo::tasks::get(&*pool, id).await?;
 
-    TaskPlanner::new(&mut task, &app_handle).plan().await
-}
-
-/// Cancel task by id.
-///
-/// # Errors
-///
-/// Returns error if task with given id does not exist.
-#[tauri::command]
-pub async fn cancel_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::cancel(&*pool, id).await
+    TaskPlanner::new(&app_handle).plan(&mut task).await
 }
 
 /// Create new task.
@@ -97,6 +87,10 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 
     let task = repo::tasks::get(&mut *tx, id).await?;
 
+    // TODO: delete `execution` and `control` chats; `messages` (for both of them); `task_results`.
+    //       As well as the working directory (for the root task).
+    //       Also, delete all of these for the children tasks.
+
     repo::tasks::delete_children(&mut *tx, id, task.ancestry.as_deref()).await?;
     repo::tasks::delete(&mut *tx, id).await?;
 
@@ -114,6 +108,19 @@ pub async fn delete_task(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// Returns error if task with given id does not exist.
 #[tauri::command]
 pub async fn execute_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
+    let task = repo::tasks::get(&*pool, id).await?;
+
+    // Delete all the task progress and the results if task is being re-executed
+    if task.status == Status::Done {
+        repo::task_results::delete_for_task(&*pool, id).await?;
+        repo::messages::delete_for_chat(
+            &*pool,
+            task.execution_chat_id
+                .context("No execution chat ID for task")?,
+        )
+        .await?;
+    }
+
     repo::tasks::execute(&*pool, id).await
 }
 
@@ -136,7 +143,7 @@ pub async fn get_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
 #[tauri::command]
 pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksList> {
     let task = repo::tasks::get(&*pool, id).await?;
-    let tasks = repo::tasks::list_children(&*pool, id, task.ancestry.as_deref()).await?;
+    let tasks = repo::tasks::list_direct_children(&*pool, &task).await?;
 
     Ok(TasksList { tasks })
 }
@@ -154,14 +161,21 @@ pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) ->
     Ok(TasksList { tasks })
 }
 
-/// Pause task by id.
+/// List root tasks by status.
 ///
 /// # Errors
 ///
-/// Returns error if task with given id does not exist.
+/// Returns error if there was a problem while accessing database.
+#[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn pause_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
-    repo::tasks::pause(&*pool, id).await
+pub async fn list_root_tasks_by_status(
+    status: Status,
+    pool: State<'_, DbPool>,
+    pagination: Pagination,
+) -> Result<TasksList> {
+    let tasks = repo::tasks::list_roots_by_status(&*pool, status, pagination).await?;
+
+    Ok(TasksList { tasks })
 }
 
 /// Revise task by id.

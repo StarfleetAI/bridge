@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export enum TaskStatus {
+  DRAFT = 'Draft',
   TODO = 'ToDo',
-  IN_PROGRESS = 'InProgress',
   WAITING_FOR_USER = 'WaitingForUser',
-  PAUSED = 'Paused',
+  IN_PROGRESS = 'InProgress',
   DONE = 'Done',
   FAILED = 'Failed',
-  CANCELED = 'Canceled',
-  DRAFT = 'Draft',
 }

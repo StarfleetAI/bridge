@@ -86,7 +86,7 @@ where
     let task_results = sqlx::query_as!(
         TaskResult,
         r#"
-        SELECT 
+        SELECT
             id as "id!", agent_id, task_id, kind, data, created_at, updated_at
         FROM task_results WHERE task_id = $1
         ORDER BY id ASC
@@ -123,4 +123,21 @@ where
     // Safely render markdown in a result as an untrusted input.
     let serialized_data = to_html(task_result.data.as_str());
     Ok(serialized_data)
+}
+
+/// Delete task results by task id
+///
+/// # Errors
+///
+/// Returns error if there was a problem while accessing database.
+pub async fn delete_for_task<'a, E>(executor: E, task_id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    sqlx::query!("DELETE FROM task_results WHERE task_id = $1", task_id)
+        .execute(executor)
+        .await
+        .with_context(|| "Failed to delete task results")?;
+
+    Ok(())
 }
