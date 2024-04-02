@@ -21,7 +21,6 @@ pub enum Error {
     ScreenshotSave(#[from] std::io::Error),
 }
 
-
 /// Stores virtual browser data.
 pub struct Browser {
     /// Folder where screenshots will be stored.
@@ -81,7 +80,7 @@ impl BrowserBuilder {
 
         let client = ClientBuilder::rustls()
             .capabilities(caps)
-            .connect(&format!("http://localhost:{}", container_port))
+            .connect(&format!("http://localhost:{container_port}"))
             .await
             .map_err(Error::WebDriverConnection)?;
 
@@ -95,7 +94,6 @@ impl BrowserBuilder {
 }
 
 impl Browser {
-
     /// Navigate to the given URL.
     ///
     /// # Errors
@@ -162,7 +160,7 @@ impl Drop for Browser {
                 if let Err(e) = docker_client.kill_container(&container_id).await {
                     error!("Can't kill container {container_id}: {e}");
                 }
-            })
+            });
         });
     }
 }

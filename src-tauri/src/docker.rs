@@ -32,7 +32,7 @@ pub enum Error {
 /// # Errors
 ///
 /// Will return an error if there was a problem while running the code.
-/// TODO move to ContainerManager
+/// TODO move to `ContainerManager`
 pub async fn run_python_code(script: &str, maybe_workdir: Option<&Path>) -> Result<String> {
     let binds = binds_for(maybe_workdir);
     let cmd = vec!["python", "-c", &script];
@@ -45,7 +45,7 @@ pub async fn run_python_code(script: &str, maybe_workdir: Option<&Path>) -> Resu
 /// # Errors
 ///
 /// Will return an error if there was a problem while running the script.
-/// TODO move to ContainerManager
+/// TODO move to `ContainerManager`
 pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<String> {
     let binds = binds_for(Some(workdir));
     let script_name = format!("{CONTAINER_WORKDIR}/{script_name}");
@@ -63,10 +63,10 @@ pub async fn run_cmd(cmd: &str, maybe_workdir: Option<&Path>) -> Result<String> 
     let binds = binds_for(maybe_workdir);
     let cmd = vec!["sh", "-c", cmd];
 
-    run_in_container(DEFAULT_IMAGE, binds, cmd).await
+    run_in_container(DEFAULT_PYTHON_IMAGE, binds, cmd).await
 }
 
-/// TODO move to ContainerManager
+/// TODO move to `ContainerManager`
 async fn run_in_container(
     image: &str,
     binds: Option<Vec<String>>,
@@ -165,7 +165,6 @@ pub struct ContainerManager {
 }
 
 static CONTAINER_MANAGER: OnceCell<ContainerManager> = OnceCell::const_new();
-
 
 impl ContainerManager {
     /// Initialises the docker client.
