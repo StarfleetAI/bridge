@@ -29,6 +29,7 @@ pub enum Error {
 /// # Errors
 ///
 /// Will return an error if there was a problem while running the code.
+/// TODO move to ContainerManager
 pub async fn run_python_code(script: &str) -> Result<String> {
     let cmd = vec!["python", "-c", &script];
 
@@ -40,6 +41,7 @@ pub async fn run_python_code(script: &str) -> Result<String> {
 /// # Errors
 ///
 /// Will return an error if there was a problem while running the script.
+/// TODO move to ContainerManager
 pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<String> {
     let binds = Some(vec![format!("{}:/app", workdir.to_string_lossy())]);
     let script_name = format!("/app/{script_name}");
@@ -48,6 +50,7 @@ pub async fn run_python_script(workdir: &Path, script_name: &str) -> Result<Stri
     run_in_container(DEFAULT_PYTHON_IMAGE, binds, cmd).await
 }
 
+/// TODO move to ContainerManager
 async fn run_in_container(
     image: &str,
     binds: Option<Vec<String>>,
@@ -121,13 +124,21 @@ async fn run_in_container(
     Ok(out.to_string())
 }
 
+/// Сentrally manages containers.
 pub struct ContainerManager {
+    /// The docker client
     client: bollard::Docker,
 }
 
 static CONTAINER_MANAGER: OnceCell<ContainerManager> = OnceCell::const_new();
 
+
 impl ContainerManager {
+    /// Initialises the docker client.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if there was a problem while initialising the docker client.
     pub async fn get() -> Result<&'static Self> {
         CONTAINER_MANAGER
             .get_or_try_init(|| async {
@@ -181,6 +192,11 @@ impl ContainerManager {
         Ok(container_id)
     }
 
+    /// Get container information.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if there was a problem while getting the container information.
     pub async fn inspect_container(&self, container_id: &str) -> Result<ContainerInspectResponse> {
         let container_info = self
             .client
@@ -190,6 +206,11 @@ impl ContainerManager {
         Ok(container_info)
     }
 
+    /// Destroys the container.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if there was a problem while destroying the container.
     pub async fn kill_container(&self, container_name: &str) -> Result<()> {
         self.client
             .kill_container::<String>(container_name, None)

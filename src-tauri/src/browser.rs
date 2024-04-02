@@ -21,26 +21,38 @@ pub enum Error {
     ScreenshotSave(#[from] std::io::Error),
 }
 
+
+/// Stores virtual browser data.
 pub struct Browser {
+    /// Folder where screenshots will be stored.
     pub app_local_data_dir: String,
+    /// WebDriver Client instance.
     pub client: Client,
+    /// identifier of dedicated chromdriver container.
     pub container_id: String,
+    /// Browser status.
     status: PhantomData<()>,
 }
 
+/// Constructs browser instances.
+///
+/// This type itself is not particularly useful. It only creates browser instances.
 #[allow(clippy::module_name_repetitions)]
 pub struct BrowserBuilder {
+    /// Folder where screenshots will be stored.
     app_local_data_dir: String,
 }
 
 impl BrowserBuilder {
+    /// Create a new instance of itself.
     #[must_use]
     pub fn new(app_local_data_dir: String) -> Self {
         Self { app_local_data_dir }
     }
 
-    /// Connect to `WebDriver`.
+    /// The Browser instance initialisation.
     ///
+    /// Creates the personal chromedriver container, connects to it, saves the necessary data into Browser attributes.
     /// # Errors
     ///
     /// Returns error if there was a problem while connecting to `WebDriver`.
@@ -83,6 +95,7 @@ impl BrowserBuilder {
 }
 
 impl Browser {
+
     /// Navigate to the given URL.
     ///
     /// # Errors
