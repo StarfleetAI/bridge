@@ -3,19 +3,19 @@
 
 <script setup lang="ts">
   import { useAgentsStore } from '~/features/agent'
-  import { getTaskResults, useTasksStore } from '~/features/task'
+  import { getTask, getTaskResults, useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
   import { AgentSelector } from '~/entities/agents'
-  import { TaskStatusBadge, TaskTitle, TaskSummary, TaskStatus } from '~/entities/tasks'
+  import { TaskStatusBadge, TaskTitle, TaskSummary, TaskStatus, TaskItemLine, type Task } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { FilesList } from '~/shared/ui/files'
-  import { AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
+  import { ArrowLeftIcon, AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
   import ActivityFeed from './ActivityFeed.vue'
   import TaskControls from './TaskControls.vue'
   import TaskResult from './TaskResult.vue'
 
   const { updateTask, selectTask } = useTasksStore()
-  const { selectedTask: task } = storeToRefs(useTasksStore())
+  const { selectedTask: task, selectedTaskParentId } = storeToRefs(useTasksStore())
   const route = useRoute()
   if (!task.value) {
     const taskIdQuery = isNaN(Number(route.query.task)) ? null : Number(route.query.task)
@@ -34,24 +34,17 @@
 
   watch(
     () => task.value,
-    (newVal) => {
+    async (newVal) => {
       if (newVal) {
         taskTitle.value = task.value!.title
         taskSummary.value = task.value!.summary
         agent.value = getAgentById(task.value!.agent_id!)!
         updateResults()
-      }
-    },
-    {
-      deep: true,
-    },
-  )
-
-  watch(
-    () => task.value,
-    (newVal) => {
-      if (newVal) {
-        updateResults()
+        if (selectedTaskParentId.value) {
+          taskAncestor.value = await getTask(selectedTaskParentId.value)
+        } else {
+          taskAncestor.value = null
+        }
       }
     },
     {
@@ -90,6 +83,11 @@
   }
 
   const taskSummary = ref(task.value!.summary)
+
+  const taskAncestor = ref<Nullable<Task>>(null)
+  if (selectedTaskParentId.value) {
+    taskAncestor.value = await getTask(selectedTaskParentId.value)
+  }
 </script>
 <template>
   <div class="task-details">
@@ -99,6 +97,16 @@
       </div>
 
       <TaskControls :task="task!" />
+    </div>
+    <div
+      v-if="taskAncestor"
+      class="task-details__ancestor"
+      @click="selectTask(taskAncestor.id)"
+    >
+      <ArrowLeftIcon />
+      <div class="task-details__ancestor-title">
+        {{ taskAncestor.title }}
+      </div>
     </div>
     <div class="task-details__body">
       <!-- TODO: back to parent task -->
@@ -166,15 +174,51 @@
         ]"
       /> -->
       </div>
+      <div
+        v-if="task?.children.length"
+        class="task-details__children"
+      >
+        <TaskItemLine
+          v-for="childTask in task.children"
+          :key="childTask.id"
+          :task="childTask"
+          is-child
+          @click="selectTask(childTask.id)"
+        />
+      </div>
     </div>
 
-    <ActivityFeed v-if="task!.status !== TaskStatus.DRAFT" />
+    <ActivityFeed v-if="task?.status !== TaskStatus.DRAFT" />
   </div>
 </template>
 <style scoped lang="scss">
   .task-details {
     overflow: hidden;
     height: 100%;
+
+    &__ancestor {
+      margin: 24px 16px 0;
+      padding: 8px;
+      border-radius: 6px;
+      background-color: var(--surface-3);
+      color: var(--text-secondary);
+      text-decoration: none;
+
+      & svg {
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        background-color: var(--surface-4);
+        color: var(--text-primary);
+      }
+
+      &-title {
+        @include text-ellipsis;
+      }
+
+      @include flex($align: center, $gap: 8px);
+    }
 
     &__head {
       height: 56px;
@@ -230,16 +274,6 @@
 
     &__text {
       position: relative;
-
-      // &:after {
-      //   content: '';
-      //   position: absolute;
-      //   right: 0;
-      //   bottom: 0;
-      //   left: 0;
-      //   height: 50px;
-      //   background: linear-gradient(to bottom, rgba(36, 39, 49, 0), rgba(36, 39, 49, 1));
-      // }
 
       @include font-inter-400(14px, 19px, var(--text-secondary));
     }
