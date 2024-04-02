@@ -4,6 +4,8 @@
 use std::marker::PhantomData;
 
 use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
+use tokio::runtime::Handle;
+use tokio::task;
 use tracing::error;
 
 use crate::docker::ContainerManager;
@@ -141,16 +143,18 @@ impl Browser {
 impl Drop for Browser {
     fn drop(&mut self) {
         let container_id = self.container_id.clone();
-        tokio::spawn(async move {
-            let docker_client = ContainerManager::get().await.expect("Must be initialized");
-            if let Err(e) = docker_client.kill_container(&container_id).await {
-                error!("Can't kill container {container_id}: {e}");
-            }
+        task::block_in_place(move || {
+            Handle::current().block_on(async move {
+                let docker_client = ContainerManager::get().await.expect("Must be initialized");
+                if let Err(e) = docker_client.kill_container(&container_id).await {
+                    error!("Can't kill container {container_id}: {e}");
+                }
+            })
         });
     }
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn test_create_browser() {
     let browser_1 = BrowserBuilder::new("br_1".to_string())
         .connect()
