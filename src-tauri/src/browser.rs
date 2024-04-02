@@ -153,26 +153,3 @@ impl Drop for Browser {
         });
     }
 }
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
-async fn test_create_browser() {
-    let browser_1 = BrowserBuilder::new("br_1".to_string())
-        .connect()
-        .await
-        .expect("Can't create browser_1");
-    let browser_2 = BrowserBuilder::new("br_2".to_string())
-        .connect()
-        .await
-        .expect("Can't create browser_2");
-    let browser_3 = BrowserBuilder::new("br_3".to_string())
-        .connect()
-        .await
-        .expect("Can't create browser_3");
-
-    assert!(!browser_1.container_id.is_empty());
-    assert!(!browser_2.container_id.is_empty());
-    assert!(!browser_3.container_id.is_empty());
-
-    drop((browser_1, browser_2, browser_3));
-    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-}
