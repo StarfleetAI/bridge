@@ -28,7 +28,7 @@
   --text-blind: #495463;
   --text-on-button: #fcfcfd;
   --text-primary: #eaecf0;
-  --text-secondary: #c7ccd9;
+  --text-secondary: #afb4bf;
   --text-tertiary: #677383;
 }
 
@@ -38,6 +38,15 @@
   padding: 0;
   word-break: break-word;
   overscroll-behavior: none;
+}
+
+ul,
+ol {
+  padding-left: 16px;
+
+  li:not(:last-child) {
+    margin-bottom: 8px;
+  }
 }
 
 ul {
@@ -54,9 +63,52 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: initial;
-  font-size: initial;
-  line-height: initial;
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h5 {
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 36px;
+  line-height: 43px;
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 29px;
+}
+
+h3 {
+  font-size: 18px;
+  line-height: 25px;
+}
+
+h4 {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+h5 {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+h6 {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+p,
+div,
+span {
+  font-size: 14px;
+  line-height: 20px;
 }
 
 html {

@@ -16,7 +16,7 @@
 
   const handleClick = () => {
     if (props.chat) {
-      chatsStore.toggleIsPinned(props.chat.id, props.chat.is_pinned)
+      chatsStore.toggleIsPinned(props.chat.id)
     }
   }
   const CurrentIcon = computed(() => (props.chat?.is_pinned ? UnpinIcon : PinIcon))

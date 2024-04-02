@@ -160,6 +160,10 @@
   const showGreeting = computed(() => {
     return isLoading.value === false && currentChatMessages.value?.length === 0
   })
+
+  const messagesListItemsRef = ref<HTMLDivElement[]>([])
+  // TODO add vue-virtual-scroller
+  // useVirtualList(messagesListItemsRef, { itemHeight: 0 })
 </script>
 
 <template>
@@ -172,7 +176,10 @@
       ref="messagesListRef"
       class="current-chat__messages-wrapper"
     >
-      <div :class="['current-chat__messages', { 'is-greeting': currentChatMessages?.length === 0 }]">
+      <div
+        ref="messagesListItemsRef"
+        :class="['current-chat__messages', { 'is-greeting': currentChatMessages?.length === 0 }]"
+      >
         <template v-if="currentChatMessages?.length">
           <ChatMessage
             v-for="message in currentChatMessages"

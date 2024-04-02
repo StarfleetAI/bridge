@@ -54,7 +54,7 @@
 
 <style lang="scss" scoped>
   .current-chat__input-container {
-    @include flex($justify-content: center);
+    @include flex($justify: center);
   }
 
   .current-chat__input-text {

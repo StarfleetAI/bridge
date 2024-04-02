@@ -1,18 +1,10 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
 
-@mixin flex($flex-direction: null, $justify-content: null, $align-items: null, $gap: null) {
+@mixin flex($dir: null, $justify: null, $align: null, $gap: null) {
   display: flex;
-  flex-direction: if(
-    $flex-direction == 'start' or $flex-direction == 'end',
-    'flex-#{$flex-direction}',
-    $flex-direction
-  );
+  flex-direction: if($dir == 'start' or $dir == 'end', 'flex-#{$dir}', $dir);
   gap: $gap;
-  justify-content: if(
-    $justify-content == 'start' or $justify-content == 'end',
-    'flex-#{$justify-content}',
-    $justify-content
-  );
-  align-items: if($align-items == 'start' or $align-items == 'end', 'flex-#{$align-items}', $align-items);
+  justify-content: if($justify == 'start' or $justify == 'end', 'flex-#{$justify}', $justify);
+  align-items: if($align == 'start' or $align == 'end', 'flex-#{$align}', $align);
 }

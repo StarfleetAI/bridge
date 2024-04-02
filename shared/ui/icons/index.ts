@@ -51,7 +51,6 @@ export { default as SaveIcon } from './SaveIcon.vue'
 export { default as SearchIcon } from './SearchIcon.vue'
 export { default as SendIcon } from './SendIcon.vue'
 export { default as SettingsIcon } from './SettingsIcon.vue'
-export { default as StarsIcon } from './StarsIcon.vue'
 export { default as StoreIcon } from './StoreIcon.vue'
 export { default as SystemIcon } from './SystemIcon.vue'
 export { default as TaskHeaderIcon } from './TaskHeaderIcon.vue'
@@ -60,10 +59,21 @@ export { default as UnlinkIcon } from './UnlinkIcon.vue'
 export { default as UnpinIcon } from './UnpinIcon.vue'
 
 // Async components
+const ResumeIcon = () => import('./ResumeIcon.vue')
+const StarsIcon = () => import('./StarsIcon.vue')
 const TaskStatusDone = () => import('./TaskStatusDone.vue')
 const TaskStatusDraft = () => import('./TaskStatusDraft.vue')
 const TaskStatusFailed = () => import('./TaskStatusFailed.vue')
 const TaskStatusInProgress = () => import('./TaskStatusInProgress.vue')
 const TaskStatusToDo = () => import('./TaskStatusToDo.vue')
 const TaskStatusWaiting = () => import('./TaskStatusWaiting.vue')
-export { TaskStatusDone, TaskStatusDraft, TaskStatusFailed, TaskStatusInProgress, TaskStatusToDo, TaskStatusWaiting }
+export {
+  ResumeIcon,
+  StarsIcon,
+  TaskStatusDone,
+  TaskStatusDraft,
+  TaskStatusFailed,
+  TaskStatusInProgress,
+  TaskStatusToDo,
+  TaskStatusWaiting,
+}

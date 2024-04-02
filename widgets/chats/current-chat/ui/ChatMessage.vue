@@ -225,20 +225,22 @@
             v-if="showActions"
             class="tool__actions"
           >
-            <div
-              class="tool__btn approve"
+            <BaseButton
+              class="tool__btn"
+              color="green"
               @click="approveToolCall(Number(message.id))"
             >
               <CheckIcon />
               Approve
-            </div>
-            <div
-              class="tool__btn deny"
+            </BaseButton>
+            <BaseButton
+              class="tool__btn"
+              color="red"
               @click="denyToolCall(Number(message.id))"
             >
               <CrossIcon />
               Deny
-            </div>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -336,7 +338,7 @@
     padding: 8px 12px;
     background-color: var(--surface-5);
 
-    @include flex($justify-content: flex-end);
+    @include flex($justify: flex-end);
   }
 
   .tool__content {

@@ -9,6 +9,8 @@
   import { BaseButton } from '~/shared/ui/base'
   import { FilesList } from '~/shared/ui/files'
   import { AttachmentIcon, CrossIcon, SaveIcon, StarsIcon } from '~/shared/ui/icons'
+
+  const StarsIconAsync = defineAsyncComponent(StarsIcon)
   const { agents } = storeToRefs(useAgentsStore())
   const { listRootTasksByStatus, createTask, selectTask, setIsNewTask } = useTasksStore()
   const selectedAgent = ref(agents.value[0])
@@ -71,7 +73,7 @@
           @click="handleExecuteTask(TaskStatus.TODO)"
         >
           <template #icon>
-            <StarsIcon />
+            <StarsIconAsync />
           </template>
           Execute
         </BaseButton>

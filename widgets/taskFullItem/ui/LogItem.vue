@@ -260,7 +260,7 @@
     padding: 8px 12px;
     background-color: var(--surface-5);
 
-    @include flex($justify-content: flex-end);
+    @include flex($justify: flex-end);
   }
 
   .tool__content {
