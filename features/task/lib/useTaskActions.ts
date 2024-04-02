@@ -8,7 +8,7 @@ import { useTasksStore } from '../store'
 export const useTaskActions = (task: Ref<Task>) => {
   const id = computed(() => task.value.id)
   const status = computed(() => task.value.status)
-  const { deleteTask: deleteTaskReq, reviseTask, duplicateTask, selectTask } = useTasksStore()
+  const { deleteTask: deleteTaskReq, duplicateTask, planTask, selectTask } = useTasksStore()
 
   const duplicate = computed(() => {
     return {
@@ -25,55 +25,34 @@ export const useTaskActions = (task: Ref<Task>) => {
     return {
       label: 'Delete Task',
       icon: DeleteIcon,
-      action: async () => {
+      action: () => {
         selectTask(null)
-        await deleteTaskReq(task.value)
+        deleteTaskReq(task.value)
       },
     }
   })
 
-  const revise = computed(() => {
+  const plan = computed(() => {
     return {
-      label: 'Revise',
+      label: 'Plan',
       icon: ReviseIcon,
-      action: async () => {
-        await reviseTask(id.value)
-      },
+      action: () => planTask(id.value),
     }
   })
-
-  const baseActions = computed(() => {
+  const defaultActions = computed(() => {
     return [duplicate.value, deleteTask.value]
   })
-
-  const todoActions = computed(() => {
-    return [revise.value, deleteTask.value]
-  })
-
-  const inProgressActions = computed(() => {
-    return [duplicate.value, deleteTask.value]
-  })
-
-  const waitingActions = computed(() => {
-    return [revise.value, duplicate.value, deleteTask.value]
-  })
-
-  const failedActions = computed(() => {
-    return [revise.value, duplicate.value, deleteTask.value]
+  const extendedActions = computed(() => {
+    return [plan.value, duplicate.value, deleteTask.value]
   })
 
   const taskActions = computed(() => {
     switch (status.value) {
       case TaskStatus.TODO:
-        return todoActions.value
       case TaskStatus.IN_PROGRESS:
-        return inProgressActions.value
-      case TaskStatus.WAITING_FOR_USER:
-        return waitingActions.value
-      case TaskStatus.FAILED:
-        return failedActions.value
+        return defaultActions.value
       default:
-        return baseActions.value
+        return extendedActions.value
     }
   })
 

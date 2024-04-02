@@ -52,7 +52,7 @@
   .chat-controls {
     color: var(--text-tertiary);
 
-    @include flex($gap: 16px, $align-items: center);
+    @include flex($gap: 16px, $align: center);
   }
 
   .chat-controls__delete {

@@ -4,7 +4,7 @@
 import { listen } from '@tauri-apps/api/event'
 // eslint-disable-next-line boundaries/element-types
 import { useChatsStore } from '~/features/chats'
-import { TaskStatus, type Task } from '~/entities/tasks'
+import { TaskStatus, type Task, type SelectedTask } from '~/entities/tasks'
 import {
   listRootTasks as listRootTasksReq,
   listChildTasks as listChildTasksReq,
@@ -16,12 +16,20 @@ import {
   reviseTask as reviseTaskReq,
   executeTask as executeTaskReq,
   duplicateTask as duplicateTaskReq,
+  planTask as planTaskReq,
 } from '../api'
 import { type CreateTask, type GroupedTasks, type ListTasksParams, type UpdateTask } from '../model'
 
 export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>([])
-  const selectedTask = ref<Nullable<Task>>(null)
+  const selectedTask = ref<Nullable<SelectedTask>>(null)
+  const selectedTaskParentId = computed(() => {
+    const lastAncestor = selectedTask.value?.ancestry?.split('/').at(-1)
+    if (lastAncestor) {
+      return isNaN(Number(lastAncestor)) ? null : Number(lastAncestor)
+    }
+    return null
+  })
 
   const isNewTask = ref(false)
   const setIsNewTask = (val: boolean) => {
@@ -37,7 +45,8 @@ export const useTasksStore = defineStore('tasks', () => {
     isNewTask.value = false
     if (id) {
       navigateTo({ path: '/tasks', query: { task: id } })
-      selectedTask.value = await getTask(id)
+      const [task, children] = await Promise.all([getTask(id), listChildTasksReq(id)])
+      selectedTask.value = { ...task, children }
     } else {
       await navigateTo({ path: '/tasks', query: {} })
       selectedTask.value = null
@@ -161,11 +170,21 @@ export const useTasksStore = defineStore('tasks', () => {
     return updatedTask
   }
 
+  const planTask = async (id: number): Promise<Task> => {
+    const updatedTask = await planTaskReq(id)
+    updateTaskInGroup(updatedTask)
+
+    return updatedTask
+  }
+
   const taskUpdatedUnlisten = listen<Task>('tasks:updated', (event) => {
     const task = event.payload
     updateTaskInGroup(task)
     if (task.id === selectedTask.value?.id) {
-      selectedTask.value = task
+      selectedTask.value = {
+        ...task,
+        children: selectedTask.value?.children || [],
+      }
     }
     const { listChats, getById: getChatById } = useChatsStore()
     if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
@@ -190,6 +209,7 @@ export const useTasksStore = defineStore('tasks', () => {
     tasks,
     tasksGroupsByStatus,
     selectedTask: readonly(selectedTask),
+    selectedTaskParentId,
     selectTask,
     listRootTasks,
     listChildTasks,
@@ -198,6 +218,7 @@ export const useTasksStore = defineStore('tasks', () => {
     updateTask,
     reviseTask,
     executeTask,
+    planTask,
     duplicateTask,
     listRootTasksByStatus,
     isNewTask,

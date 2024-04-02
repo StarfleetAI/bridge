@@ -16,8 +16,9 @@
 <template>
   <ResizableContainer
     direction="top"
+    max-height="80%"
     min-height="216px"
-    max-height="50%"
+    initial-height="30%"
     class="activity-feed__container"
   >
     <div class="activity-feed">
@@ -52,7 +53,7 @@
 
   .activity-feed {
     height: 100%;
-    border-top: 0.5px solid var(--border-2);
+    border-top: 1px solid var(--border-2);
     background-color: var(--surface-3);
     box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.5);
 
@@ -73,7 +74,7 @@
     }
 
     @include font-inter-500(14px, 20px, var(--text-tertiary));
-    @include flex(row, $align-items: center, $gap: 8px);
+    @include flex(row, $align: center, $gap: 8px);
   }
 
   .activity-feed__tabs {

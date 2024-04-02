@@ -54,7 +54,7 @@
 
 <style lang="scss" scoped>
   .selected-agent {
-    @include flex($gap: 8px, $align-items: center);
+    @include flex($gap: 8px, $align: center);
   }
 
   .selected-agent__name {

@@ -92,7 +92,7 @@
   }
 
   .settings-form__title {
-    @include flex($align-items: center, $gap: 8px);
+    @include flex($align: center, $gap: 8px);
   }
 
   .settings-form__buttons {
@@ -113,7 +113,7 @@
     width: 182px;
     text-align: end;
 
-    @include flex(column, $align-items: flex-end, $gap: 4px);
+    @include flex(column, $align: flex-end, $gap: 4px);
   }
 
   .select-field__name {

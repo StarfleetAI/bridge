@@ -77,7 +77,7 @@
       background-color: var(--surface-3);
     }
 
-    @include flex(row, $align-items: center, $gap: 8px);
+    @include flex(row, $align: center, $gap: 8px);
   }
 
   .agents-item__name {
