@@ -1,6 +1,10 @@
 {
   "db_name": "SQLite",
+<<<<<<<< HEAD:src-tauri/.sqlx/query-47897a164195c53fe4e45b1377e940668cd9b6e4d9dc93d9dab5601c53d0891f.json
+  "query": "\n        SELECT count(*) as msg_count\n        FROM messages\n        WHERE chat_id = $1\n        AND role = \"Assistant\"\n        AND is_internal_tool_output IS FALSE\n        ORDER BY id DESC\n        LIMIT 1\n        ",
+========
   "query": "\n        SELECT count(*) as msg_count\n        FROM messages\n        WHERE chat_id = $1\n        AND role = $2\n        AND is_internal_tool_output IS FALSE\n        ",
+>>>>>>>> ece7a55 (fix: edits have been made in response to review remarks):src-tauri/.sqlx/query-ffca9bbe0508c80a1098f997e57bdf1a7a06555ec2e3f9d94841ca986003ce3a.json
   "describe": {
     "columns": [
       {
@@ -16,5 +20,9 @@
       false
     ]
   },
+<<<<<<<< HEAD:src-tauri/.sqlx/query-47897a164195c53fe4e45b1377e940668cd9b6e4d9dc93d9dab5601c53d0891f.json
+  "hash": "47897a164195c53fe4e45b1377e940668cd9b6e4d9dc93d9dab5601c53d0891f"
+========
   "hash": "ffca9bbe0508c80a1098f997e57bdf1a7a06555ec2e3f9d94841ca986003ce3a"
+>>>>>>>> ece7a55 (fix: edits have been made in response to review remarks):src-tauri/.sqlx/query-ffca9bbe0508c80a1098f997e57bdf1a7a06555ec2e3f9d94841ca986003ce3a.json
 }
