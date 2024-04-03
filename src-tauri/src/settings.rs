@@ -7,14 +7,33 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use tokio::fs;
 use tracing::debug;
 
 use crate::{repo::models::Provider, types::Result};
 
+const DEFAULT_EMBEDDINGS_MODEL: &str = "sentence-transformers/all-MiniLM-L6-v2";
 const DEFAULT_MODEL: &str = "OpenAI/gpt-3.5-turbo";
 const SETTINGS_FILE: &str = "settings.json";
+const DEFAULT_EXECUTION_STEPS_LIMIT: i64 = 12;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Embeddings {
+    #[serde(default = "default_embeddings_model")]
+    pub model: String,
+}
+
+fn default_embeddings_model() -> String {
+    DEFAULT_EMBEDDINGS_MODEL.to_string()
+}
+
+impl Default for Embeddings {
+    fn default() -> Self {
+        Self {
+            model: DEFAULT_EMBEDDINGS_MODEL.to_string(),
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tasks {
@@ -29,15 +48,52 @@ impl Default for Tasks {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Agents {
+    #[serde(default = "default_execution_steps_limit")]
+    pub execution_steps_limit: i64,
+}
+
+fn default_execution_steps_limit() -> i64 {
+    DEFAULT_EXECUTION_STEPS_LIMIT
+}
+
+impl Default for Agents {
+    fn default() -> Self {
+        Self {
+            execution_steps_limit: DEFAULT_EXECUTION_STEPS_LIMIT,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
-    pub default_model: Option<String>,
+    #[serde(default = "default_model")]
+    pub default_model: String,
     #[serde(default)]
     pub api_keys: BTreeMap<Provider, String>,
     #[serde(default)]
-    pub agents: Value,
+    pub agents: Agents,
+    #[serde(default)]
+    pub embeddings: Embeddings,
     #[serde(default)]
     pub tasks: Tasks,
+}
+
+fn default_model() -> String {
+    DEFAULT_MODEL.to_string()
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            default_model: DEFAULT_MODEL.to_string(),
+            api_keys: BTreeMap::new(),
+            agents: Agents::default(),
+            embeddings: Embeddings::default(),
+            tasks: Tasks::default(),
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -104,11 +160,5 @@ impl Settings {
         path.into_os_string()
             .into_string()
             .map_err(|_| Error::Path.into())
-    }
-
-    /// Returns `default_model` if it's set, otherwise returns `DEFAULT_MODEL`.
-    #[must_use]
-    pub fn default_model(&self) -> &str {
-        self.default_model.as_deref().unwrap_or(DEFAULT_MODEL)
     }
 }

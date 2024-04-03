@@ -13,7 +13,7 @@
     <ResizableContainer
       v-if="$slots.additional"
       min-width="480px"
-      max-width="590px"
+      max-width="890px"
       direction="left"
       initial-width="590px"
     >

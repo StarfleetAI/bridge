@@ -90,10 +90,6 @@
     height: v-bind('props.initialHeight');
     min-height: v-bind('props.minHeight');
     max-height: v-bind('props.maxHeight');
-
-    &:hover .resizer {
-      border-color: var(--border-3);
-    }
   }
 
   .resizer {
@@ -127,6 +123,10 @@
       height: 4px;
       border-top: 1px solid transparent;
       cursor: ns-resize;
+    }
+
+    &:hover {
+      border-color: var(--border-3);
     }
   }
 </style>

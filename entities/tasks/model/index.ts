@@ -4,3 +4,4 @@
 export * from './Task'
 export * from './TaskStatus'
 export * from './TaskResults'
+export * from './SelectedTask'

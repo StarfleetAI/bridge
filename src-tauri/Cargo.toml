@@ -18,21 +18,27 @@ tauri-build = { version = "1.5.1", features = [] }
 anyhow = "1.0.81"
 askama = "0.12.1"
 async-recursion = "1.1.0"
-bollard = "0.16.0"
+bollard = "0.16.1"
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.4.2" }
+candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.4.2" }
+candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.4.2" }
 chrono = { version = "0.4.35", features = ["serde"] }
 dotenvy = "0.15.7"
 fantoccini = { version = "0.19.3", default-features = false, features = ["rustls-tls"] }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 futures-util = "0.3.30"
+hf-hub = { version = "0.3.2", features = ["tokio"] }
 markdown = "1.0.0-alpha.16"
-reqwest = { version = "0.12.0", default-features = false, features = ["rustls-tls", "json", "http2"] }
+reqwest = { version = "0.12.2", default-features = false, features = ["rustls-tls", "json", "http2"] }
+regex = "1.10.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "sqlite", "migrate", "chrono"] }
 tauri = { version = "1.6.1", features = ["shell-open"] }
 tauri-plugin-deep-link = "0.1.2"
 thiserror = "1.0.58"
-tokio = { version = "1.36.0", features = ["full"] }
+tokio = { version = "1.37.0", features = ["full"] }
+tokenizers = "0.15.2"
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 
@@ -41,3 +47,5 @@ tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]

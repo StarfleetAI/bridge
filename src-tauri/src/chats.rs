@@ -107,7 +107,7 @@ pub async fn get_completion(
 
     debug!("Tools: {:?}", tools);
 
-    let model = models::get(&*pool, settings_guard.default_model())
+    let model = models::get(&*pool, &settings_guard.default_model)
         .await
         .context("Failed to get model")?;
 

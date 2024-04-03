@@ -28,6 +28,7 @@ pub struct Agent {
     pub is_enabled: bool,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
+    pub execution_steps_limit: Option<i64>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -46,6 +47,7 @@ pub struct CreateAgent {
     pub ability_ids: Vec<i64>,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
+    pub execution_steps_limit: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -57,6 +59,7 @@ pub struct UpdateAgent {
     pub ability_ids: Vec<i64>,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
+    pub execution_steps_limit: Option<i64>,
 }
 
 /// List all agents.
@@ -90,6 +93,7 @@ pub async fn list_agents(pool: State<'_, DbPool>) -> Result<AgentsList> {
             is_enabled: row.is_enabled,
             is_code_interpreter_enabled: row.is_code_interpreter_enabled,
             is_web_browser_enabled: row.is_web_browser_enabled,
+            execution_steps_limit: row.execution_steps_limit,
             created_at: row.created_at,
             updated_at: row.updated_at,
         })
@@ -139,6 +143,7 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
         is_enabled: agent.is_enabled,
         is_code_interpreter_enabled: request.is_code_interpreter_enabled,
         is_web_browser_enabled: request.is_web_browser_enabled,
+        execution_steps_limit: request.execution_steps_limit,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })
@@ -203,6 +208,7 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
         is_enabled: agent.is_enabled,
         is_code_interpreter_enabled: agent.is_code_interpreter_enabled,
         is_web_browser_enabled: agent.is_web_browser_enabled,
+        execution_steps_limit: agent.execution_steps_limit,
         created_at: agent.created_at,
         updated_at: agent.updated_at,
     })

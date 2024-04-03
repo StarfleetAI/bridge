@@ -20,6 +20,8 @@ pub enum Error {
     Browser(#[from] crate::browser::Error),
     #[error(transparent)]
     Docker(#[from] crate::docker::Error),
+    #[error("embeddings error: {0}")]
+    Embeddings(#[from] crate::embeddings::Error),
     #[error(transparent)]
     Executor(#[from] crate::task_executor::Error),
     #[error(transparent)]

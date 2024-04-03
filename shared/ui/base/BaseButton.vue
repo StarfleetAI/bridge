@@ -30,7 +30,6 @@
 <style lang="scss">
   .base-button {
     position: relative;
-    display: inline-block;
     overflow: hidden;
     border: none;
     border-radius: 6px;

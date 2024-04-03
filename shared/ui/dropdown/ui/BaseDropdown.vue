@@ -9,6 +9,7 @@
     defineProps<{
       placement?: Placement
       disabled?: boolean
+      distance?: number
     }>(),
     {
       placement: 'bottom-end',
@@ -22,6 +23,7 @@
     class="dropdown-wrapper"
     auto-hide
     :disabled="disabled"
+    :distance="distance"
   >
     <slot />
     <template #popper>

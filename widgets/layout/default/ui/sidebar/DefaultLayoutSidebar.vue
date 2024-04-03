@@ -105,13 +105,13 @@
     width: 100%;
     height: 100svh;
 
-    @include flex(column, $align-items: center);
+    @include flex(column, $align: center);
   }
 
   .default-layout__header-control {
     padding-bottom: 24px;
 
-    @include flex(column, $align-items: center, $gap: 24px);
+    @include flex(column, $align: center, $gap: 24px);
   }
 
   .default-layout__header-search {

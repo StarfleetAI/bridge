@@ -15,6 +15,7 @@ pub struct Agent {
     pub is_enabled: bool,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
+    pub execution_steps_limit: Option<i64>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -192,7 +193,7 @@ where
         WHERE id = $1
         RETURNING
             id as "id!", name, description, system_message, created_at, updated_at,
-            is_enabled, is_code_interpreter_enabled, is_web_browser_enabled
+            is_enabled, is_code_interpreter_enabled, is_web_browser_enabled, execution_steps_limit
         "#,
         params.id,
         params.name,
