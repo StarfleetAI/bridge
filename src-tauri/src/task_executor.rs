@@ -34,8 +34,8 @@ pub enum Error {
     NoRootTasks,
     #[error("chat #{0} is not an execution chat")]
     NotAnExecutionChat(i64),
-    #[error("task attempt limit has expired")]
-    LimitExpired,
+    #[error("task execution steps limit ({0}) exceeded")]
+    StepsLimitExceeded(i64),
 }
 
 // TODO: implement graceful shutdown
@@ -151,14 +151,9 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
 
     // TODO: refactor this loop
     loop {
-        let messages_count = repo::messages::get_count_of_failed_messages(&*pool, chat.id).await?;
+        let messages_count = repo::messages::get_execution_steps_count(&*pool, chat.id).await?;
         if messages_count >= execution_steps_limit {
-            repo::tasks::fail(&*pool, task.id).await?;
-
-            task.status = Status::Failed;
-            app_handle.emit_all("tasks:updated", &task)?;
-
-            return Err(Error::LimitExpired.into());
+            return Err(Error::StepsLimitExceeded(execution_steps_limit).into());
         }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
