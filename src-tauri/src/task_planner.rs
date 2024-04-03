@@ -111,9 +111,7 @@ impl<'a> TaskPlanner<'a> {
         let messages = self.messages(task).await?;
         let tools = construct_tools(Self::abilities()).await?;
 
-        let model_full_name = settings_guard.default_model();
-
-        let model = models::get(&*pool, model_full_name)
+        let model = models::get(&*pool, &settings_guard.default_model)
             .await
             .context("Failed to get model")?;
 
