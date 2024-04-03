@@ -88,7 +88,7 @@ impl Default for Settings {
         Self {
             default_model: DEFAULT_MODEL.to_string(),
             api_keys: BTreeMap::new(),
-            agents: json!({}),
+            agents: Agents::default(),
             embeddings: Embeddings::default(),
             tasks: Tasks::default(),
         }
