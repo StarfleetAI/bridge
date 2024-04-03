@@ -26,7 +26,8 @@ export const useTasksStore = defineStore('tasks', () => {
 
   const getLastAncestor = (ancestry: string | undefined) => {
     if (ancestry) {
-      return isNaN(Number(ancestry.split('/').at(-1))) ? null : Number(ancestry.split('/').at(-1))
+      const parts = ancestry.split('/')
+      return isNaN(Number(parts.at(-1))) ? null : Number(parts.at(-1))
     }
     return null
   }
