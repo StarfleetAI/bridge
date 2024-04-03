@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use tokio::fs;
 use tracing::debug;
 
@@ -72,12 +72,21 @@ pub struct Settings {
     pub default_model: String,
     #[serde(default)]
     pub api_keys: BTreeMap<Provider, String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub agents: Agents,
     #[serde(default)]
     pub embeddings: Embeddings,
     #[serde(default)]
     pub tasks: Tasks,
+}
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> std::result::Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
 }
 
 fn default_model() -> String {
