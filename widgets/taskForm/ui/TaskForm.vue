@@ -18,7 +18,7 @@
   const taskTitle = ref('')
 
   const taskSummary = ref('')
-  const saveIsEnabled = computed(() => taskTitle.value.length > 0)
+  const saveIsEnabled = computed(() => taskTitle.value?.length > 0)
 
   const { open: openFileDialog, onChange: onFileChange } = useFileDialog()
   const selectedFiles = ref<File[]>([])
