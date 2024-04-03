@@ -475,7 +475,7 @@ pub async fn list_direct_children<'a, E: Executor<'a, Database = Sqlite>>(
             updated_at
         FROM tasks
         WHERE ancestry = $1
-        ORDER BY created_at DESC
+        ORDER BY created_at ASC
         "#,
         ancestry,
     )
