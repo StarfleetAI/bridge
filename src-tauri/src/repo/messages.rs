@@ -263,6 +263,34 @@ where
     .with_context(|| "Failed to get last message")?)
 }
 
+/// Get the number of messages from the Assistant role that are not `is_internal_tool_output`..
+///
+/// # Errors
+///
+/// Returns error if there was a problem while counting of messages.
+pub async fn get_execution_steps_count<'a, E>(executor: E, chat_id: i64) -> Result<i64>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    Ok(query_scalar!(
+        r#"
+        SELECT count(*) as msg_count
+        FROM messages
+        WHERE chat_id = $1
+        AND role = $2
+        AND is_internal_tool_output IS FALSE
+        "#,
+        chat_id,
+        Role::Assistant,
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| {
+        "Failed to count messages from Assistant role that are not is_internal_tool_output"
+    })?
+    .into())
+}
+
 /// Get last non self-reflection agent message for chat.
 ///
 /// # Errors
