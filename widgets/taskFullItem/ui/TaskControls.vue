@@ -22,14 +22,13 @@
     return [TaskStatus.FAILED, TaskStatus.DONE].includes(props.task.status)
   })
 </script>
-xw
 <template>
   <div class="task-controls">
     <BaseButton
       v-if="showReviseButton"
       color="gray"
       size="medium"
-      @click="reviseTask"
+      @click="reviseTask(task.id)"
     >
       <template #icon>
         <ReviseIcon />
@@ -46,7 +45,7 @@ xw
       v-if="task.status === TaskStatus.DRAFT"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="executeTask(props.task.id)"
+      @click="executeTask(task.id)"
     >
       <template #icon>
         <StarsIconAsync />
@@ -57,7 +56,7 @@ xw
       v-if="showReExecuteButton"
       class="task-details__execute"
       :disabled="task.title.length === 0"
-      @click="executeTask(props.task.id)"
+      @click="executeTask(task.id)"
     >
       <template #icon>
         <StarsIconAsync />
