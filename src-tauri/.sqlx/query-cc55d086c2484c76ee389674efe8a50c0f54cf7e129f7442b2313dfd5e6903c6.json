@@ -39,13 +39,18 @@
         "type_info": "Bool"
       },
       {
-        "name": "is_code_interpreter_enabled",
+        "name": "execution_steps_limit",
         "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "is_code_interpreter_enabled",
+        "ordinal": 8,
         "type_info": "Bool"
       },
       {
         "name": "is_web_browser_enabled",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Bool"
       }
     ],
@@ -60,6 +65,7 @@
       false,
       false,
       false,
+      true,
       false,
       false
     ]

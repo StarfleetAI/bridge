@@ -37,6 +37,8 @@ pub enum Error {
     NotAnExecutionChat(i64),
     #[error("failed to render template: {0}")]
     TemplateRender(#[from] askama::Error),
+    #[error("task execution steps limit ({0}) exceeded")]
+    StepsLimitExceeded(i64),
 }
 
 // TODO: implement graceful shutdown
@@ -197,7 +199,21 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
     task.execution_chat_id = Some(chat.id);
     app_handle.emit_all("tasks:updated", &task)?;
 
+    let execution_steps_limit = {
+        let agent = repo::agents::get_for_chat(&*pool, chat.id).await?;
+        let settings_state: State<'_, RwLock<Settings>> = app_handle.state();
+        let settings = settings_state.read().await;
+
+        agent
+            .execution_steps_limit
+            .unwrap_or(settings.agents.execution_steps_limit)
+    };
+
     loop {
+        let messages_count = repo::messages::get_execution_steps_count(&*pool, chat.id).await?;
+        if messages_count >= execution_steps_limit {
+            return Err(Error::StepsLimitExceeded(execution_steps_limit).into());
+        }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
                 Role::CodeInterpreter | Role::Tool | Role::User => {
@@ -381,7 +397,7 @@ async fn interpret_code(
         Err(err) => {
             return Ok(vec![format!(
                 "Failed to parse code blocks in the message: {err}"
-            )])
+            )]);
         }
     };
 

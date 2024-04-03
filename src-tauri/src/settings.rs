@@ -7,7 +7,6 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 use tokio::fs;
 use tracing::debug;
 
@@ -16,6 +15,7 @@ use crate::{repo::models::Provider, types::Result};
 const DEFAULT_EMBEDDINGS_MODEL: &str = "sentence-transformers/all-MiniLM-L6-v2";
 const DEFAULT_MODEL: &str = "OpenAI/gpt-3.5-turbo";
 const SETTINGS_FILE: &str = "settings.json";
+const DEFAULT_EXECUTION_STEPS_LIMIT: i64 = 12;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Embeddings {
@@ -49,13 +49,31 @@ impl Default for Tasks {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Agents {
+    #[serde(default = "default_execution_steps_limit")]
+    pub execution_steps_limit: i64,
+}
+
+fn default_execution_steps_limit() -> i64 {
+    DEFAULT_EXECUTION_STEPS_LIMIT
+}
+
+impl Default for Agents {
+    fn default() -> Self {
+        Self {
+            execution_steps_limit: DEFAULT_EXECUTION_STEPS_LIMIT,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     #[serde(default = "default_model")]
     pub default_model: String,
     #[serde(default)]
     pub api_keys: BTreeMap<Provider, String>,
     #[serde(default)]
-    pub agents: Value,
+    pub agents: Agents,
     #[serde(default)]
     pub embeddings: Embeddings,
     #[serde(default)]
@@ -71,7 +89,7 @@ impl Default for Settings {
         Self {
             default_model: DEFAULT_MODEL.to_string(),
             api_keys: BTreeMap::new(),
-            agents: json!({}),
+            agents: Agents::default(),
             embeddings: Embeddings::default(),
             tasks: Tasks::default(),
         }
