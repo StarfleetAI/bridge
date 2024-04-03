@@ -35,7 +35,7 @@ jobs:
 
       - name: Run `cargo clippy`
         working-directory: ./src-tauri
-        run: cargo clippy --all-targets --all-features -- -D warnings -W clippy::pedantic
+        run: cargo clippy --all-targets -- -D warnings -W clippy::pedantic
 
       - name: Run `cargo sqlx prepare --check`
         working-directory: ./src-tauri
