@@ -124,9 +124,6 @@ pub async fn create_message(
             chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
                 .await
                 .context("Failed to get chat completion")?;
-            chats::get_completion(&app_handle, request.chat_id, GetCompletionParams::default())
-                .await
-                .context("Failed to get chat completion")?;
 
             generate_chat_title(request.chat_id, &app_handle, pool, settings).await?;
         }
@@ -221,7 +218,7 @@ async fn generate_chat_title(
 
     let model_full_name = match chat.model_full_name {
         Some(ref name) => name,
-        None => settings_guard.default_model(),
+        None => &settings_guard.default_model,
     };
 
     let model = models::get(&*pool, model_full_name)
