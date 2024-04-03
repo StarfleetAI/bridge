@@ -28,7 +28,7 @@
     "@commitlint/config-conventional": "^19.1.0",
     "@types/highlightjs": "^9.12.6",
     "@types/html-to-text": "^9.0.4",
-    "@types/node": "^20.11.30",
+    "@types/node": "^20.12.3",
     "@types/prismjs": "^1.26.3",
     "clipboard-polyfill": "^4.0.2",
     "eslint": "^8.56.0",
