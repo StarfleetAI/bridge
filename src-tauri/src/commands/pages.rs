@@ -3,24 +3,23 @@
 
 #![allow(clippy::used_underscore_binding)]
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
-use tokio::sync::RwLock;
-use tracing::{debug, trace};
-use tracing::{error, instrument};
+use tauri::{State};
 
-use crate::abilities::{self};
-use crate::chats::GetCompletionParams;
-use crate::repo::models;
-use crate::{chats, repo};
+use tracing::{debug};
+use tracing::{instrument};
+
+
+
+
+
+use crate::repo::pages::ListPageDTO;
+use crate::{repo};
 use crate::{
-    clients::openai::{Client, CreateChatCompletionRequest},
-    repo::pages::{Page, CreatePageDTO, UpdatePageDTO},
-    settings::Settings,
+    repo::pages::{CreatePageDTO, Page},
     types::{DbPool, Result},
 };
-use crate::repo::pages::ListPageDTO;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -56,7 +55,7 @@ pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<ListPageDTO>> {
 ///
 /// Returns error if page with given id does not exist.
 #[tauri::command]
-pub async fn get_raw_page_content(id: i64, pool: State<'_, DbPool>) -> Result<String> {
+pub async fn get_page_by_id(id: i64, pool: State<'_, DbPool>) -> Result<String> {
     let page = repo::pages::get(&*pool, id)
         .await
         .with_context(|| "Failed to get page")?;
@@ -70,20 +69,15 @@ pub async fn get_raw_page_content(id: i64, pool: State<'_, DbPool>) -> Result<St
 ///
 /// Returns error if there was a problem while creating new page.
 #[tauri::command]
-#[instrument(skip(app_handle, pool, settings))]
-pub async fn create_page(
-    request: CreatePage,
-    pool: State<'_, DbPool>,
-) -> Result<()> {
+#[instrument(skip(pool))]
+pub async fn create_page(request: CreatePage, pool: State<'_, DbPool>) -> Result<()> {
     debug!("Creating page");
 
-    let page = repo::pages::create(
+    let _page = repo::pages::create(
         &*pool,
         CreatePageDTO {
             title: request.title,
             text: request.text,
-
-            ..Default::default()
         },
     )
     .await?;
@@ -96,16 +90,21 @@ pub async fn create_page(
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page content.
-#[instrument(skip(content, pool))]
+#[instrument(skip(title, text, pool))]
 #[tauri::command]
-pub async fn update_page_content(
+pub async fn update_page(
     id: i64,
-    content: String,
+    title: Option<String>,
+    text: Option<String>,
     pool: State<'_, DbPool>,
 ) -> Result<Page> {
     debug!("Updating page content");
 
-    let updated_page = repo::pages::update_page_text(&*pool, id, &content).await?;
+    // if title.is_none() & text.is_none() {
+    //     return EmptyDataForUpdate
+    // }
+
+    let updated_page = repo::pages::update_page(&*pool, id, title, text).await?;
 
     Ok(updated_page)
 }

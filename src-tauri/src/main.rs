@@ -70,8 +70,8 @@ fn main() -> Result<()> {
             commands::tasks::update_task,
             commands::pages::create_page,
             commands::pages::list_pages,
-            commands::pages::get_raw_page_content,
-            commands::pages::update_page_content,
+            commands::pages::get_page_by_id,
+            commands::pages::update_page,
             commands::pages::delete_page,
         ])
         .setup(setup_handler)

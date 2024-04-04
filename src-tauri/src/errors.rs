@@ -30,6 +30,8 @@ pub enum Error {
     Settings(#[from] crate::settings::Error),
     #[error(transparent)]
     Planner(#[from] crate::task_planner::Error),
+    #[error(transparent)]
+    Pages(#[from] crate::pages::Error),
 
     #[error("ability is used by agents")]
     AbilityIsUsedByAgents,

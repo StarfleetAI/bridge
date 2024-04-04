@@ -5,18 +5,14 @@ use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use markdown::to_html;
 use serde::{Deserialize, Serialize, Serializer};
-use serde_json::Value;
-use sqlx::{query, query_as, query_scalar, Executor, Sqlite, SqliteConnection};
 
-use crate::pages::Error;
+use sqlx::{query, query_as, Executor, Sqlite};
+
+
 use crate::types::Result;
 
-
 /// Safely render markdown in a page as an untrusted user input.
-fn serialize_text<S>(
-    text: &Option<String>,
-    serializer: S,
-) -> std::result::Result<S::Ok, S::Error>
+fn serialize_text<S>(text: &Option<String>, serializer: S) -> std::result::Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -88,8 +84,8 @@ where
 ///
 /// Returns error if there was a problem while accessing database.
 pub async fn list<'a, E>(executor: E) -> Result<Vec<ListPageDTO>>
-    where
-        E: Executor<'a, Database = Sqlite>,
+where
+    E: Executor<'a, Database = Sqlite>,
 {
     let pages = query_as!(
         ListPageDTO,
@@ -99,9 +95,9 @@ pub async fn list<'a, E>(executor: E) -> Result<Vec<ListPageDTO>>
         ORDER BY id ASC
         "#,
     )
-        .fetch_all(executor)
-        .await
-        .with_context(|| "Failed to list pages")?;
+    .fetch_all(executor)
+    .await
+    .with_context(|| "Failed to list pages")?;
 
     Ok(pages)
 }
@@ -136,10 +132,41 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page text.
-pub async fn update_page_text<'a, E>(executor: E, id: i64, text: &str) -> Result<Page>
-    where
-        E: Executor<'a, Database = Sqlite>,
+pub async fn update_page<'a, E>(
+    executor: E,
+    id: i64,
+    _title: Option<String>,
+    text: Option<String>,
+) -> Result<Page>
+where
+    E: Executor<'a, Database = Sqlite>,
 {
+    // let current_datetime = Utc::now();
+    // let mut query = QueryBuilder::new("UPDATE pages SET ");
+    //
+    // if let Some(title) = title {
+    //     query.push(" title = ");
+    //     query.push_bind(title);
+    // }
+    //
+    // if let Some(text) = text {
+    //     if title {
+    //
+    //     }
+    //     query.push(" text = ");
+    //     query.push_bind(text);
+    // }
+    //
+    // query.push(", updated_at = ");
+    // query.push_bind(id);
+    //
+    // query.push(" WHERE id = ");
+    // query.push_bind(id);
+    //
+    // query.push(" RETURNING *");
+    //
+    // query.build().sql().into()
+
     let current_datetime = Utc::now();
     let page = query_as!(
         Page,
@@ -147,16 +174,16 @@ pub async fn update_page_text<'a, E>(executor: E, id: i64, text: &str) -> Result
         UPDATE pages
         SET text = $2, updated_at = $3
         WHERE id = $1
-        RETURNING *
+        RETURNING id as "id!", title, text, created_at, updated_at
         "#,
         id,
         text,
         current_datetime
     )
-        .fetch_one(executor)
-        .await
-        .with_context(|| "Failed to update page text")?;
-    
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to update page text")?;
+
     Ok(page)
 }
 
