@@ -6,4 +6,6 @@ export interface CreateAgent {
   description: string
   system_message: string
   ability_ids: number[]
+  is_code_interpreter_enabled: boolean
+  is_web_browser_enabled: boolean
 }

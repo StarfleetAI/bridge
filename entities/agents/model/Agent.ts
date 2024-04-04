@@ -10,4 +10,6 @@ export interface Agent {
   ability_ids: number[]
   created_at: Date
   updated_at: Date
+  is_code_interpreter_enabled: boolean
+  is_web_browser_enabled: boolean
 }
