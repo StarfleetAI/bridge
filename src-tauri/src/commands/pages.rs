@@ -20,17 +20,12 @@ use crate::{
     settings::Settings,
     types::{DbPool, Result},
 };
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(clippy::module_name_repetitions)]
-pub struct ListPages {
-    pub chat_id: i64,
-}
+use crate::repo::pages::ListPageDTO;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PagesList {
-    pub pages: Vec<Page>,
+    pub pages: Vec<ListPageDTO>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -47,12 +42,12 @@ pub struct CreatePage {
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
 #[instrument(skip(pool))]
-pub async fn list_pages(request: ListPages, pool: State<'_, DbPool>) -> Result<PagesList> {
+pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<ListPageDTO>> {
     debug!("Listing pages");
 
     let pages = repo::pages::list(&*pool).await?;
 
-    Ok(PagesList { pages })
+    Ok(pages)
 }
 
 /// Get raw page content by id.
@@ -77,10 +72,8 @@ pub async fn get_raw_page_content(id: i64, pool: State<'_, DbPool>) -> Result<St
 #[tauri::command]
 #[instrument(skip(app_handle, pool, settings))]
 pub async fn create_page(
-    app_handle: AppHandle,
     request: CreatePage,
     pool: State<'_, DbPool>,
-    settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
     debug!("Creating page");
 

@@ -39,6 +39,14 @@ pub struct CreatePageDTO {
     pub text: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct ListPageDTO {
+    pub id: i64,
+    pub title: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
 #[derive(Debug, Default)]
 pub struct UpdatePageDTO {
     pub id: i64,
@@ -79,12 +87,12 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn list<'a, E>(executor: E) -> Result<Vec<Page>>
+pub async fn list<'a, E>(executor: E) -> Result<Vec<ListPageDTO>>
     where
         E: Executor<'a, Database = Sqlite>,
 {
     let pages = query_as!(
-        Page,
+        ListPageDTO,
         r#"
         SELECT id, title, created_at, updated_at
         FROM pages
