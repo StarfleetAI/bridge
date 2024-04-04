@@ -3,7 +3,5 @@
 
 export type Person = {
   name: string
-  avatar?: string
-  link?: string
-  id?: number
+  id: number
 }

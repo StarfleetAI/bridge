@@ -2,25 +2,16 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  // eslint-disable-next-line boundaries/element-types
-  import { useTasksStore } from '~/features/task'
-  import { AvatarsList } from '~/shared/ui/avatars'
+  import { AvatarsList, type Person } from '~/shared/ui/avatars'
   import type { Task } from '../model'
   import TaskStatusBadge from './TaskStatusBadge.vue'
 
   const props = defineProps<{
     task: Task
+    isSelected: boolean
+    taskAgent?: Person
     isChild?: boolean
   }>()
-
-  const tasksStore = useTasksStore()
-  const selectedTask = computed(() => tasksStore.selectedTask)
-
-  const isSelected = computed(() => {
-    return (
-      props.task.id === selectedTask.value?.id || selectedTask.value?.ancestry?.split('/').includes(`${props.task.id}`)
-    )
-  })
 
   const taskTitlePlaceholder = computed(() => {
     return props.task.title || `Task #${props.task.id}`
@@ -36,11 +27,9 @@
       {{ taskTitlePlaceholder }}
     </div>
     <AvatarsList
+      v-if="taskAgent"
       class="task-item__avatars"
-      :persons="[
-        { name: 'Alex', avatar: '', link: '' },
-        { name: 'Robert', avatar: '', link: '' },
-      ]"
+      :agents="[taskAgent]"
     />
   </div>
 </template>

@@ -61,7 +61,8 @@
   })
 
   const { getById: getAgentById } = useAgentsStore()
-  const { agents } = storeToRefs(useAgentsStore())
+  const agentsStore = useAgentsStore()
+  const agents = computed(() => agentsStore.agents)
 
   const agent = ref<Agent>(getAgentById(task.value!.agent_id!)!)
 
@@ -182,7 +183,9 @@
           v-for="childTask in task.children"
           :key="childTask.id"
           :task="childTask"
+          :is-selected="false"
           is-child
+          :task-agent="agentsStore.getById(childTask.agent_id)"
           @click="selectTask(childTask.id)"
         />
       </div>

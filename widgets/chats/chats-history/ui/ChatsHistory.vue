@@ -5,8 +5,9 @@
   import { type ChatsGroups, chatsToGroupsByDate, useChatsStore } from '~/features/chats'
   import { updateChatTitle } from '~/features/chats'
   import type { Chat } from '~/entities/chat'
+  import { BRIDGE_AGENT_ID } from '~/shared/lib'
   import { ResizableContainer } from '~/shared/ui/base'
-  import { BridgeSmallIcon } from '~/shared/ui/icons'
+  import { BridgeSmallIcon, NoAvatarIcon } from '~/shared/ui/icons'
   import NewChatButton from './NewChatButton.vue'
 
   const { chats, pinnedChats } = storeToRefs(useChatsStore())
@@ -105,7 +106,16 @@
             :class="['history-item', { active: currentChatId === chat.id }]"
             @click="handleClick(chat.id)"
           >
-            <BridgeSmallIcon />
+            <BridgeSmallIcon
+              v-if="chat.agents_ids[0] === BRIDGE_AGENT_ID"
+              class="history-item__avatar"
+            />
+            <NoAvatarIcon
+              v-else
+              class="history-item__avatar"
+              width="24px"
+              height="24px"
+            />
             <component
               :is="getItemComponent(chat.id)"
               :ref="getItemComponent(chat.id) === 'input' ? 'inputRef' : null"
@@ -209,6 +219,10 @@
     }
 
     @include flex(row, flex-start, center, 8px);
+  }
+
+  .history-item__avatar {
+    flex-shrink: 0;
   }
 
   .history-item__name {
