@@ -23,8 +23,16 @@ import { type CreateTask, type GroupedTasks, type ListTasksParams, type UpdateTa
 export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>([])
   const selectedTask = ref<Nullable<SelectedTask>>(null)
+
+  const getLastAncestor = (ancestry: string | undefined) => {
+    if (ancestry) {
+      const parts = ancestry.split('/')
+      return isNaN(Number(parts.at(-1))) ? null : Number(parts.at(-1))
+    }
+    return null
+  }
   const selectedTaskParentId = computed(() => {
-    const lastAncestor = selectedTask.value?.ancestry?.split('/').at(-1)
+    const lastAncestor = getLastAncestor(selectedTask.value?.ancestry)
     if (lastAncestor) {
       return isNaN(Number(lastAncestor)) ? null : Number(lastAncestor)
     }
@@ -177,18 +185,32 @@ export const useTasksStore = defineStore('tasks', () => {
     return updatedTask
   }
 
-  const taskUpdatedUnlisten = listen<Task>('tasks:updated', (event) => {
+  const taskUpdatedUnlisten = listen<Task>('tasks:updated', async (event) => {
     const task = event.payload
-    updateTaskInGroup(task)
+    if (!task.ancestry) {
+      updateTaskInGroup(task)
+    }
     if (task.id === selectedTask.value?.id) {
       selectedTask.value = {
         ...task,
         children: selectedTask.value?.children || [],
       }
     }
+    if (getLastAncestor(task.ancestry) === selectedTask.value?.id) {
+      const children = await listChildTasksReq(selectedTask.value.id)
+      selectedTask.value.children = children || []
+    }
     const { listChats, getById: getChatById } = useChatsStore()
     if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
       listChats()
+    }
+  })
+  const tasksCreatedUnlisten = listen<Task>('tasks:created', async (event) => {
+    const task = event.payload
+
+    if (getLastAncestor(task.ancestry) === selectedTask.value?.id) {
+      const children = await listChildTasksReq(selectedTask.value.id)
+      selectedTask.value.children = children || []
     }
   })
 
@@ -202,6 +224,7 @@ export const useTasksStore = defineStore('tasks', () => {
       Failed: [],
     }
     taskUpdatedUnlisten
+    tasksCreatedUnlisten
   }
 
   return {

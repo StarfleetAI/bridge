@@ -34,7 +34,7 @@ export const useTaskActions = (task: Ref<Task>) => {
 
   const plan = computed(() => {
     return {
-      label: 'Plan',
+      label: 'Plan Execution',
       icon: ReviseIcon,
       action: () => planTask(id.value),
     }

@@ -36,8 +36,8 @@
     () => task.value,
     async (newVal) => {
       if (newVal) {
-        taskTitle.value = task.value!.title
-        taskSummary.value = task.value!.summary
+        taskTitle.value = task.value?.title || ''
+        taskSummary.value = task.value?.summary || ''
         agent.value = getAgentById(task.value!.agent_id!)!
         updateResults()
         if (selectedTaskParentId.value) {
