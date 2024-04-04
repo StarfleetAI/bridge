@@ -39,19 +39,19 @@
         "type_info": "Bool"
       },
       {
-        "name": "execution_steps_limit",
-        "ordinal": 7,
-        "type_info": "Int64"
-      },
-      {
         "name": "is_code_interpreter_enabled",
-        "ordinal": 8,
+        "ordinal": 7,
         "type_info": "Bool"
       },
       {
         "name": "is_web_browser_enabled",
-        "ordinal": 9,
+        "ordinal": 8,
         "type_info": "Bool"
+      },
+      {
+        "name": "execution_steps_limit",
+        "ordinal": 9,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -65,9 +65,9 @@
       false,
       false,
       false,
-      true,
       false,
-      false
+      false,
+      true
     ]
   },
   "hash": "502c6662e80b8dd95f046336381ab446f420dc413ee7a21125b66c48adfce8dd"
