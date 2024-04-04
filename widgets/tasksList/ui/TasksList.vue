@@ -2,9 +2,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useAgentsStore } from '~/features/agent'
   import { useTasksStore } from '~/features/task'
   import type { TasksGroupName } from '~/features/task'
-  import { TaskItemLine, TaskStatus } from '~/entities/tasks'
+  import { TaskItemLine, TaskStatus, type Task } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
   import { PlusIcon } from '~/shared/ui/icons'
   import type { TasksListView } from '../model'
@@ -12,7 +13,7 @@
   const view = ref<TasksListView>('list')
   const { listRootTasksByStatus, selectTask, setIsNewTask } = useTasksStore()
   await listRootTasksByStatus()
-  const { tasksGroupsByStatus, isNewTask } = storeToRefs(useTasksStore())
+  const { tasksGroupsByStatus, isNewTask, selectedTask } = storeToRefs(useTasksStore())
   // const toggleView = (value: TasksListView) => {
   //   view.value = value
   // }
@@ -33,6 +34,12 @@
         return 'Failed'
     }
   }
+  const isSelected = (task: Task) => {
+    return (
+      task.id === selectedTask.value?.id || selectedTask.value?.ancestry?.split('/').includes(`${task.id}`) || false
+    )
+  }
+  const agentsStore = useAgentsStore()
 </script>
 
 <template>
@@ -71,6 +78,8 @@
               v-for="task in tasks"
               :key="task.id"
               :task="task"
+              :is-selected="isSelected(task)"
+              :task-agent="agentsStore.getById(task.agent_id)"
               @click="selectTask(task.id)"
             />
           </div>

@@ -6,7 +6,8 @@
   import { useChatsNavigation, useChatsStore } from '~/features/chats'
   import type { Agent } from '~/entities/agents'
   import type { Chat } from '~/entities/chat'
-  import { PinIcon, UnpinIcon, BridgeSmallIcon, SettingsIcon } from '~/shared/ui/icons'
+  import { BRIDGE_AGENT_ID } from '~/shared/lib'
+  import { PinIcon, UnpinIcon, BridgeSmallIcon, SettingsIcon, NoAvatarIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{
     agent: Agent
@@ -49,7 +50,12 @@
     >
       {{ agent.name }}
 
-      <BridgeSmallIcon />
+      <BridgeSmallIcon v-if="agent.id === BRIDGE_AGENT_ID" />
+      <NoAvatarIcon
+        v-else
+        width="24px"
+        height="24px"
+      />
     </div>
     <SettingsIcon
       class="chat-header__settigns"

@@ -2,13 +2,16 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { AvatarsList } from '~/shared/ui/avatars'
+  import { AvatarsList, type Person } from '~/shared/ui/avatars'
   import { InlineFiles } from '~/shared/ui/files'
   import type { Task } from '../model'
   import TaskStatusBadge from './TaskStatusBadge.vue'
 
   defineProps<{
     task: Task
+    isSelected: boolean
+    taskAgent?: Person
+    isChild?: boolean
   }>()
 </script>
 <template>
@@ -20,10 +23,9 @@
         :total="2"
       />
       <AvatarsList
-        :persons="[
-          { name: 'Alex', avatar: '', link: '' },
-          { name: 'Robert', avatar: '', link: '' },
-        ]"
+        v-if="taskAgent"
+        class="task-item__avatars"
+        :agents="[taskAgent]"
       />
     </div>
     <div class="task-list-item__body">

@@ -5,7 +5,7 @@
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall, getRawMessageContent, useMessagesStore } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
-  import { utcToLocalTime, getTimeAgo, highlightCode } from '~/shared/lib'
+  import { utcToLocalTime, getTimeAgo, highlightCode, BRIDGE_AGENT_ID } from '~/shared/lib'
   import { BaseButton, CopyButton } from '~/shared/ui/base'
   import {
     SystemIcon,
@@ -16,6 +16,7 @@
     EditIcon,
     CopyIcon,
     RetryIcon,
+    BridgeSmallIcon,
   } from '~/shared/ui/icons'
   import ContentEditInput from './ContentEditInput.vue'
   import ToolCall from './ToolCall.vue'
@@ -52,6 +53,9 @@
   const getAuthorAvatar = (message: Message) => {
     if (message.role === 'System') {
       return SystemIcon
+    }
+    if (message.agent_id === BRIDGE_AGENT_ID) {
+      return BridgeSmallIcon
     }
     return NoAvatarIcon
   }
