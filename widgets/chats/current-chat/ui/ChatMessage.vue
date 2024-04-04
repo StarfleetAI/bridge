@@ -230,7 +230,9 @@
               color="green"
               @click="approveToolCall(Number(message.id))"
             >
-              <CheckIcon />
+              <template #icon>
+                <CheckIcon />
+              </template>
               Approve
             </BaseButton>
             <BaseButton
@@ -238,7 +240,9 @@
               color="red"
               @click="denyToolCall(Number(message.id))"
             >
-              <CrossIcon />
+              <template #icon>
+                <CrossIcon />
+              </template>
               Deny
             </BaseButton>
           </div>
