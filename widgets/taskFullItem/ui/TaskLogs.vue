@@ -55,7 +55,8 @@
     () => messages.value,
     async () => {
       if (messagesListRef.value && !isScrolling.value && arrivedState.bottom) {
-        await nextTick()
+        await nextTick() // await for new message to be rendered
+        await nextTick() // await for new message to be highlighted
         scrollMessagesListToBottom()
       }
     },
