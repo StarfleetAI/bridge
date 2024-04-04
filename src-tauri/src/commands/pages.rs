@@ -3,19 +3,18 @@
 
 #![allow(clippy::used_underscore_binding)]
 
-use anyhow::{Context};
+use anyhow::Context;
+use chrono::NaiveDateTime;
+use markdown::to_html;
 use serde::{Deserialize, Serialize};
-use tauri::{State};
+use tauri::State;
 
-use tracing::{debug};
-use tracing::{instrument};
+use tracing::debug;
+use tracing::instrument;
 
-
-
-
-
-use crate::repo::pages::ListPageDTO;
-use crate::{repo};
+use crate::pages::Error;
+use crate::repo;
+use crate::repo::pages::{ListPageDTO, UpdatePageDTO};
 use crate::{
     repo::pages::{CreatePageDTO, Page},
     types::{DbPool, Result},
@@ -23,14 +22,44 @@ use crate::{
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PagesList {
-    pub pages: Vec<ListPageDTO>,
+pub struct PagesListResponse {
+    pages: Vec<ListPageDTO>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CreatePage {
-    pub title: String,
-    pub text: String,
+pub struct CreatePageRequest {
+    title: String,
+    text: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UpdatePageRequest {
+    id: i64,
+    title: Option<String>,
+    text: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PageResponse {
+    id: i64,
+    title: String,
+    text_markdown: String,
+    text_html: String,
+    created_at: NaiveDateTime,
+    updated_at: Option<NaiveDateTime>,
+}
+
+impl From<Page> for PageResponse {
+    fn from(page: Page) -> Self {
+        Self {
+            id: page.id,
+            title: page.title,
+            text_html: to_html(&page.text),
+            text_markdown: page.text,
+            created_at: page.created_at,
+            updated_at: page.updated_at,
+        }
+    }
 }
 
 /// List all pages.
@@ -38,7 +67,6 @@ pub struct CreatePage {
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-#[allow(clippy::module_name_repetitions)]
 #[tauri::command]
 #[instrument(skip(pool))]
 pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<ListPageDTO>> {
@@ -55,12 +83,12 @@ pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<ListPageDTO>> {
 ///
 /// Returns error if page with given id does not exist.
 #[tauri::command]
-pub async fn get_page_by_id(id: i64, pool: State<'_, DbPool>) -> Result<String> {
+pub async fn get_page(id: i64, pool: State<'_, DbPool>) -> Result<PageResponse> {
     let page = repo::pages::get(&*pool, id)
         .await
         .with_context(|| "Failed to get page")?;
 
-    Ok(page.text.unwrap_or_default())
+    Ok(page.into())
 }
 
 /// Create new page.
@@ -70,10 +98,13 @@ pub async fn get_page_by_id(id: i64, pool: State<'_, DbPool>) -> Result<String> 
 /// Returns error if there was a problem while creating new page.
 #[tauri::command]
 #[instrument(skip(pool))]
-pub async fn create_page(request: CreatePage, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn create_page(
+    request: CreatePageRequest,
+    pool: State<'_, DbPool>,
+) -> Result<PageResponse> {
     debug!("Creating page");
 
-    let _page = repo::pages::create(
+    let page = repo::pages::create(
         &*pool,
         CreatePageDTO {
             title: request.title,
@@ -82,7 +113,7 @@ pub async fn create_page(request: CreatePage, pool: State<'_, DbPool>) -> Result
     )
     .await?;
 
-    Ok(())
+    Ok(page.into())
 }
 
 /// Update page content by id.
@@ -90,23 +121,23 @@ pub async fn create_page(request: CreatePage, pool: State<'_, DbPool>) -> Result
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page content.
-#[instrument(skip(title, text, pool))]
+#[instrument(skip(pool))]
 #[tauri::command]
 pub async fn update_page(
-    id: i64,
-    title: Option<String>,
-    text: Option<String>,
+    request: UpdatePageRequest,
     pool: State<'_, DbPool>,
-) -> Result<Page> {
-    debug!("Updating page content");
+) -> Result<PageResponse> {
+    debug!("Updating page");
 
-    // if title.is_none() & text.is_none() {
-    //     return EmptyDataForUpdate
-    // }
+    let UpdatePageRequest { id, title, text } = request;
 
-    let updated_page = repo::pages::update_page(&*pool, id, title, text).await?;
+    if title.is_none() && text.is_none() {
+        return Err(Error::EmptyDataForUpdate.into());
+    }
 
-    Ok(updated_page)
+    let updated_page = repo::pages::update(&*pool, id, UpdatePageDTO { title, text }).await?;
+
+    Ok(updated_page.into())
 }
 
 /// Delete page by id.

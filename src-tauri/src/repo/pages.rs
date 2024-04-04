@@ -3,28 +3,17 @@
 
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
-use markdown::to_html;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
-use sqlx::{query, query_as, Executor, Sqlite};
-
+use sqlx::{query, query_as, Executor, QueryBuilder, Sqlite};
 
 use crate::types::Result;
-
-/// Safely render markdown in a page as an untrusted user input.
-fn serialize_text<S>(text: &Option<String>, serializer: S) -> std::result::Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&to_html(text.as_ref().unwrap_or(&String::new())))
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Page {
     pub id: i64,
     pub title: String,
-    #[serde(serialize_with = "serialize_text")]
-    pub text: Option<String>,
+    pub text: String,
     pub created_at: NaiveDateTime,
     pub updated_at: Option<NaiveDateTime>,
 }
@@ -45,7 +34,6 @@ pub struct ListPageDTO {
 
 #[derive(Debug, Default)]
 pub struct UpdatePageDTO {
-    pub id: i64,
     pub title: Option<String>,
     pub text: Option<String>,
 }
@@ -132,59 +120,47 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page text.
-pub async fn update_page<'a, E>(
-    executor: E,
-    id: i64,
-    _title: Option<String>,
-    text: Option<String>,
-) -> Result<Page>
+pub async fn update<'a, E>(executor: E, id: i64, data: UpdatePageDTO) -> Result<Page>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    // let current_datetime = Utc::now();
-    // let mut query = QueryBuilder::new("UPDATE pages SET ");
-    //
-    // if let Some(title) = title {
-    //     query.push(" title = ");
-    //     query.push_bind(title);
-    // }
-    //
-    // if let Some(text) = text {
-    //     if title {
-    //
-    //     }
-    //     query.push(" text = ");
-    //     query.push_bind(text);
-    // }
-    //
-    // query.push(", updated_at = ");
-    // query.push_bind(id);
-    //
-    // query.push(" WHERE id = ");
-    // query.push_bind(id);
-    //
-    // query.push(" RETURNING *");
-    //
-    // query.build().sql().into()
-
+    let UpdatePageDTO { title, text } = data;
     let current_datetime = Utc::now();
-    let page = query_as!(
-        Page,
-        r#"
-        UPDATE pages
-        SET text = $2, updated_at = $3
-        WHERE id = $1
-        RETURNING id as "id!", title, text, created_at, updated_at
-        "#,
-        id,
-        text,
-        current_datetime
-    )
-    .fetch_one(executor)
-    .await
-    .with_context(|| "Failed to update page text")?;
 
-    Ok(page)
+    let mut query = QueryBuilder::new("UPDATE pages SET ");
+    let mut fields = query.separated(", ");
+
+    if let Some(title) = title {
+        fields.push("title = ");
+        fields.push_bind(title);
+    }
+
+    if let Some(text) = text {
+        fields.push("text = ");
+        fields.push_bind(text);
+    }
+
+    fields.push("updated_at = ");
+    fields.push_bind(current_datetime);
+
+    query.push(" WHERE id = ");
+    query.push_bind(id);
+
+    query.push(" RETURNING id as \"id!\", title, text, created_at, updated_at");
+
+    let (id, title, text, created_at, updated_at) = query
+        .build_query_as()
+        .fetch_one(executor)
+        .await
+        .with_context(|| "Failed to update page")?;
+
+    Ok(Page {
+        id,
+        title,
+        text,
+        created_at,
+        updated_at,
+    })
 }
 
 /// Delete page.

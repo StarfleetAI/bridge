@@ -70,7 +70,7 @@ fn main() -> Result<()> {
             commands::tasks::update_task,
             commands::pages::create_page,
             commands::pages::list_pages,
-            commands::pages::get_page_by_id,
+            commands::pages::get_page,
             commands::pages::update_page,
             commands::pages::delete_page,
         ])
