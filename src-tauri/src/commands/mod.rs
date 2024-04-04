@@ -10,3 +10,4 @@ pub mod models;
 pub mod settings;
 pub mod task_results;
 pub mod tasks;
+pub mod pages;

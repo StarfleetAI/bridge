@@ -12,6 +12,7 @@ pub mod messages;
 pub mod models;
 pub mod task_results;
 pub mod tasks;
+pub mod pages;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Pagination {

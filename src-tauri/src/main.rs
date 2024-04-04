@@ -68,6 +68,11 @@ fn main() -> Result<()> {
             commands::tasks::plan_task,
             commands::tasks::revise_task,
             commands::tasks::update_task,
+            commands::pages::create_page,
+            commands::pages::list_pages,
+            commands::pages::get_raw_page_content,
+            commands::pages::update_page_content,
+            commands::pages::delete_page,
         ])
         .setup(setup_handler)
         .run(tauri::generate_context!())
