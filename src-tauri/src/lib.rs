@@ -11,10 +11,9 @@ pub mod docker;
 pub mod embeddings;
 pub mod errors;
 pub mod messages;
+pub mod pages;
 pub mod repo;
 pub mod settings;
 pub mod task_executor;
 pub mod task_planner;
 pub mod types;
-
-pub mod pages;

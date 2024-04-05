@@ -5,10 +5,4 @@
 pub enum Error {
     #[error("There aren't any data for update")]
     EmptyDataForUpdate,
-    #[error("no valid chunk prefix found")]
-    NoValidChunkPrefix,
-    #[error("no tool calls found in message")]
-    NoToolCallsFound,
-    #[error("tool call has no `id`")]
-    NoToolCallId,
 }

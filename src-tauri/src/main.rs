@@ -53,6 +53,11 @@ fn main() -> Result<()> {
             commands::messages::list_messages,
             commands::messages::update_message_content,
             commands::models::list_models,
+            commands::pages::create_page,
+            commands::pages::delete_page,
+            commands::pages::get_page,
+            commands::pages::list_pages,
+            commands::pages::update_page,
             commands::settings::get_settings,
             commands::settings::update_settings,
             commands::task_results::get_task_result_text_data,
@@ -68,11 +73,6 @@ fn main() -> Result<()> {
             commands::tasks::plan_task,
             commands::tasks::revise_task,
             commands::tasks::update_task,
-            commands::pages::create_page,
-            commands::pages::list_pages,
-            commands::pages::get_page,
-            commands::pages::update_page,
-            commands::pages::delete_page,
         ])
         .setup(setup_handler)
         .run(tauri::generate_context!())
