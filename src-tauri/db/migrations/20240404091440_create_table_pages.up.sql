@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS pages (
     title TEXT NOT NULL,
     text TEXT NOT NULL,
     created_at datetime NOT NULL,
-    updated_at datetime
+    updated_at datetime NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS pages_title_idx ON pages (title);

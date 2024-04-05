@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO pages (title, text, created_at)\n        VALUES ($1, $2, $3)\n        RETURNING *\n        ",
+  "query": "\n        UPDATE pages\n        SET title = $2, text = $3, updated_at = $4\n        WHERE id = $1\n        RETURNING id as \"id!\", title, text, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Int64"
       },
@@ -30,15 +30,15 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 4
     },
     "nullable": [
+      true,
       false,
       false,
       false,
-      false,
-      true
+      false
     ]
   },
-  "hash": "e85125c914856c995fe31de530f18c9895a39290cf419f8bfb38e14d148782ac"
+  "hash": "a28b75a9ed57ec84cd445ef59dbb2c83728bbdcd8db1e8808237eff673da3cd4"
 }

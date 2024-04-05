@@ -12,18 +12,18 @@ use tauri::State;
 use tracing::debug;
 use tracing::instrument;
 
-use crate::pages::Error;
+
 use crate::repo;
-use crate::repo::pages::{ListPageDTO, UpdatePageDTO};
+use crate::repo::pages::PageList;
 use crate::{
-    repo::pages::{CreatePageDTO, Page},
+    repo::pages::{CreatePageParams, Page},
     types::{DbPool, Result},
 };
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PagesListResponse {
-    pages: Vec<ListPageDTO>,
+    pages: Vec<PageList>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,8 +35,8 @@ pub struct CreatePageRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdatePageRequest {
     id: i64,
-    title: Option<String>,
-    text: Option<String>,
+    title: String,
+    text: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,7 +46,7 @@ pub struct PageResponse {
     text_markdown: String,
     text_html: String,
     created_at: NaiveDateTime,
-    updated_at: Option<NaiveDateTime>,
+    updated_at: NaiveDateTime,
 }
 
 impl From<Page> for PageResponse {
@@ -69,7 +69,7 @@ impl From<Page> for PageResponse {
 /// Returns error if there was a problem while accessing database.
 #[tauri::command]
 #[instrument(skip(pool))]
-pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<ListPageDTO>> {
+pub async fn list_pages(pool: State<'_, DbPool>) -> Result<Vec<PageList>> {
     debug!("Listing pages");
 
     let pages = repo::pages::list(&*pool).await?;
@@ -106,7 +106,7 @@ pub async fn create_page(
 
     let page = repo::pages::create(
         &*pool,
-        CreatePageDTO {
+        CreatePageParams {
             title: request.title,
             text: request.text,
         },
@@ -129,13 +129,15 @@ pub async fn update_page(
 ) -> Result<PageResponse> {
     debug!("Updating page");
 
-    let UpdatePageRequest { id, title, text } = request;
-
-    if title.is_none() && text.is_none() {
-        return Err(Error::EmptyDataForUpdate.into());
-    }
-
-    let updated_page = repo::pages::update(&*pool, id, UpdatePageDTO { title, text }).await?;
+    let updated_page = repo::pages::update(
+        &*pool,
+        request.id,
+        CreatePageParams {
+            title: request.title,
+            text: request.text,
+        },
+    )
+    .await?;
 
     Ok(updated_page.into())
 }

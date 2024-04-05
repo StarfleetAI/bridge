@@ -5,7 +5,7 @@ use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use sqlx::{query, query_as, Executor, QueryBuilder, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
 use crate::types::Result;
 
@@ -15,27 +15,21 @@ pub struct Page {
     pub title: String,
     pub text: String,
     pub created_at: NaiveDateTime,
-    pub updated_at: Option<NaiveDateTime>,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct CreatePageDTO {
+pub struct CreatePageParams {
     pub title: String,
     pub text: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct ListPageDTO {
+pub struct PageList {
     pub id: i64,
     pub title: String,
     pub created_at: NaiveDateTime,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Default)]
-pub struct UpdatePageDTO {
-    pub title: Option<String>,
-    pub text: Option<String>,
+    pub updated_at: NaiveDateTime,
 }
 
 /// Create page.
@@ -43,7 +37,7 @@ pub struct UpdatePageDTO {
 /// # Errors
 ///
 /// Returns error if there was a problem while creating page.
-pub async fn create<'a, E>(executor: E, params: CreatePageDTO) -> Result<Page>
+pub async fn create<'a, E>(executor: E, params: CreatePageParams) -> Result<Page>
 where
     E: Executor<'a, Database = Sqlite>,
 {
@@ -51,13 +45,13 @@ where
     let page = query_as!(
         Page,
         r#"
-        INSERT INTO pages (title, text, created_at)
-        VALUES ($1, $2, $3)
+        INSERT INTO pages (title, text, created_at, updated_at)
+        VALUES ($1, $2, $3, $3)
         RETURNING *
         "#,
         params.title,
         params.text,
-        current_datetime,
+        current_datetime
     )
     .fetch_one(executor)
     .await
@@ -71,12 +65,12 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while accessing database.
-pub async fn list<'a, E>(executor: E) -> Result<Vec<ListPageDTO>>
+pub async fn list<'a, E>(executor: E) -> Result<Vec<PageList>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
     let pages = query_as!(
-        ListPageDTO,
+        PageList,
         r#"
         SELECT id, title, created_at, updated_at
         FROM pages
@@ -120,47 +114,30 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page text.
-pub async fn update<'a, E>(executor: E, id: i64, data: UpdatePageDTO) -> Result<Page>
+pub async fn update<'a, E>(executor: E, id: i64, data: CreatePageParams) -> Result<Page>
 where
     E: Executor<'a, Database = Sqlite>,
 {
-    let UpdatePageDTO { title, text } = data;
     let current_datetime = Utc::now();
 
-    let mut query = QueryBuilder::new("UPDATE pages SET ");
-    let mut fields = query.separated(", ");
-
-    if let Some(title) = title {
-        fields.push("title = ");
-        fields.push_bind(title);
-    }
-
-    if let Some(text) = text {
-        fields.push("text = ");
-        fields.push_bind(text);
-    }
-
-    fields.push("updated_at = ");
-    fields.push_bind(current_datetime);
-
-    query.push(" WHERE id = ");
-    query.push_bind(id);
-
-    query.push(" RETURNING id as \"id!\", title, text, created_at, updated_at");
-
-    let (id, title, text, created_at, updated_at) = query
-        .build_query_as()
-        .fetch_one(executor)
-        .await
-        .with_context(|| "Failed to update page")?;
-
-    Ok(Page {
+    let page = query_as!(
+        Page,
+        r#"
+        UPDATE pages
+        SET title = $2, text = $3, updated_at = $4
+        WHERE id = $1
+        RETURNING id as "id!", title, text, created_at, updated_at
+        "#,
         id,
-        title,
-        text,
-        created_at,
-        updated_at,
-    })
+        data.title,
+        data.text,
+        current_datetime
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to update tool call id")?;
+
+    Ok(page)
 }
 
 /// Delete page.
