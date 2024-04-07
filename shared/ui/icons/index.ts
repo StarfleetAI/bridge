@@ -59,6 +59,8 @@ export { default as UnlinkIcon } from './UnlinkIcon.vue'
 export { default as UnpinIcon } from './UnpinIcon.vue'
 
 // Async components
+const ChevronLeftIcon = () => import('./ChevronLeftIcon.vue')
+const ChevronRightIcon = () => import('./ChevronRightIcon.vue')
 const ResumeIcon = () => import('./ResumeIcon.vue')
 const StarsIcon = () => import('./StarsIcon.vue')
 const TaskStatusDone = () => import('./TaskStatusDone.vue')
@@ -68,6 +70,8 @@ const TaskStatusInProgress = () => import('./TaskStatusInProgress.vue')
 const TaskStatusToDo = () => import('./TaskStatusToDo.vue')
 const TaskStatusWaiting = () => import('./TaskStatusWaiting.vue')
 export {
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ResumeIcon,
   StarsIcon,
   TaskStatusDone,

@@ -67,7 +67,7 @@ export const useMessagesStore = defineStore('messages', () => {
   }
 
   const updateMessage = (message: Message) => {
-    const index = messages.value[message.chat_id].findIndex((a) => a.id === message.id)
+    const index = messages.value[message.chat_id]?.findIndex((a) => a.id === message.id)
     if (index !== undefined && index !== -1) {
       messages.value[message.chat_id].splice(index, 1, message)
     } else {

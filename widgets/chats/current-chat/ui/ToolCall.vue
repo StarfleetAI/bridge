@@ -14,7 +14,7 @@
     toolCall: ToolCall
     status: Status
     messageId: number
-    currentAgent?: Agent
+    currentAgent: Nullable<Agent>
   }>()
   const { abilities } = storeToRefs(useAbilitiesStore())
   const agentAbilities = computed(() => {
