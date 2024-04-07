@@ -1,3 +1,6 @@
+// Copyright 2024 StarfleetAI
+// SPDX-License-Identifier: Apache-2.0
+
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
