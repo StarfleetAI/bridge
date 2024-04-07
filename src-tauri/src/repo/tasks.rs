@@ -921,7 +921,7 @@ pub async fn assign<'a, E: Executor<'a, Database = Sqlite>>(
 ///
 /// # Errors
 ///
-/// Returns error if there was a problem while fetching tasks.
+/// Returns error if there was a problem while fetching tasks count.
 pub async fn get_total_number_by_status<'a, E: Executor<'a, Database = Sqlite>>(
     executor: E,
     status: Status,
