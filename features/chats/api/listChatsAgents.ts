@@ -3,6 +3,6 @@
 
 import type { ChatsAgents } from '../model'
 
-export const listChatsAgents = (): Promise<ChatsAgents> => {
-  return invoke<ChatsAgents>('list_agents_chats')
+export const listChatsAgents = () => {
+  return useInvoke<ChatsAgents>({ cmd: 'list_agents_chats' })
 }

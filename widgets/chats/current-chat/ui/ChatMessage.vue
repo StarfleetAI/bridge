@@ -117,7 +117,8 @@
   const contentToEdit = ref('')
   const startEditing = async () => {
     isEditing.value = true
-    contentToEdit.value = await getRawMessageContent(props.message.id)
+    const { data } = await getRawMessageContent(props.message.id)
+    contentToEdit.value = data.value || ''
   }
 
   const cancelEditing = () => {
@@ -139,8 +140,8 @@
     return props.message.role === Role.ASSISTANT && props.isLast
   })
   const copyContent = async () => {
-    const rawContent = await getRawMessageContent(props.message.id)
-    navigator.clipboard.writeText(rawContent)
+    const { data } = await getRawMessageContent(props.message.id)
+    navigator.clipboard.writeText(data.value || '')
   }
 </script>
 

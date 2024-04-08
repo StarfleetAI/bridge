@@ -23,7 +23,6 @@ import {
 import { type CreateTask, type GroupedTasks, type ListTasksParams, type UpdateTask } from '../model'
 
 export const useTasksStore = defineStore('tasks', () => {
-  const { errorToast } = useToast()
   const tasks = ref<Task[]>([])
   const selectedTask = ref<Nullable<SelectedTask>>(null)
   const selectedTaskQuery = useRouteQuery<Nullable<number>>('task', () => null, {
@@ -86,15 +85,17 @@ export const useTasksStore = defineStore('tasks', () => {
       if (id) {
         navigateTo({ path: '/tasks', query: { ...route.query, task: id, create: 'false' } })
         const [task, children] = await Promise.all([getTask(id), listChildTasksReq(id)])
-        selectedTask.value = { ...task, children }
-        selectedTaskQuery.value = task.id
+        if (task.data.value) {
+          selectedTask.value = { ...task.data.value, children: children.data.value?.tasks || [] }
+          selectedTaskQuery.value = task.data.value.id
+        }
       } else {
         await navigateTo({ path: '/tasks', query: { ...route.query, create: 'false', task: null } })
         selectedTask.value = null
         selectedTaskQuery.value = null
       }
     } catch (error) {
-      errorToast(String(error))
+      useToast().errorToast(String(error))
     }
   }
   const getDefaultTasksGroupsByStatus = () => {
@@ -110,16 +111,12 @@ export const useTasksStore = defineStore('tasks', () => {
   const tasksGroupsByStatus = ref<GroupedTasks>(getDefaultTasksGroupsByStatus())
 
   const listRootTasks = async (params: ListTasksParams): Promise<void> => {
-    try {
-      const rootTasks = await listRootTasksReq(params)
-      rootTasks.forEach((task) => {
-        if (!tasks.value.find((a) => a.id === task.id)) {
-          tasks.value.push(task)
-        }
-      })
-    } catch (error) {
-      errorToast(String(error))
-    }
+    const { data } = await listRootTasksReq(params)
+    data.value?.tasks.forEach((task) => {
+      if (!tasks.value.find((a) => a.id === task.id)) {
+        tasks.value.push(task)
+      }
+    })
   }
   const selectedGroupCount = computed(() => {
     if (selectedGroup.value) {
@@ -135,23 +132,21 @@ export const useTasksStore = defineStore('tasks', () => {
   })
 
   const listRootTasksByStatus = async (): Promise<void> => {
-    try {
-      const allStatuses = Object.values(TaskStatus)
-      const statuses = selectedGroup.value ? [selectedGroup.value] : allStatuses
+    const allStatuses = Object.values(TaskStatus)
+    const statuses = selectedGroup.value ? [selectedGroup.value] : allStatuses
 
-      const tasksBySelectedStatuses = statuses.map((status) =>
-        listRootTasksByStatusReq({ status, pagination: { page: currentPage.value, per_page: pageSize.value } }),
-      )
+    const tasksBySelectedStatuses = statuses.map((status) =>
+      listRootTasksByStatusReq({ status, pagination: { page: currentPage.value, per_page: pageSize.value } }),
+    )
 
-      const tasksByStatus = await Promise.all(tasksBySelectedStatuses)
+    const tasksByStatus = await Promise.all(tasksBySelectedStatuses)
 
-      tasksGroupsByStatus.value = tasksByStatus.reduce((acc, curr) => {
-        acc[curr.status] = { tasks: curr.tasks, count: curr.count }
-        return acc
-      }, {} as GroupedTasks)
-    } catch (error) {
-      errorToast(String(error))
-    }
+    tasksGroupsByStatus.value = tasksByStatus.reduce((acc, curr) => {
+      if (curr.data.value) {
+        acc[curr.data.value.status] = { tasks: curr.data.value.tasks, count: curr.data.value.count }
+      }
+      return acc
+    }, {} as GroupedTasks)
   }
 
   const updateTaskInGroup = (task: Task) => {
@@ -199,73 +194,57 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   const createTask = async (task: CreateTask): Promise<void> => {
-    try {
-      const newTask = await createTaskReq(task)
-      updateTaskInGroup(newTask)
+    const { data: newTask } = await createTaskReq(task)
+    if (newTask.value) {
+      updateTaskInGroup(newTask.value)
       listRootTasksByStatus()
-      selectTask(newTask.id)
-    } catch (error) {
-      errorToast(String(error))
+      selectTask(newTask.value.id)
     }
   }
 
   const duplicateTask = async (id: number): Promise<void> => {
-    try {
-      const task = await duplicateTaskReq(id)
-      updateTaskInGroup(task)
-      selectTask(task.id)
-    } catch (error) {
-      errorToast(String(error))
+    const { data: task } = await duplicateTaskReq(id)
+    if (task.value) {
+      updateTaskInGroup(task.value)
+      selectTask(task.value.id)
     }
   }
 
   const deleteTask = async (task: Task): Promise<void> => {
-    try {
-      await deleteTaskReq(task.id)
-      await listRootTasksByStatus()
-    } catch (error) {
-      errorToast(String(error))
-    }
+    await deleteTaskReq(task.id)
+    listRootTasksByStatus()
   }
   const updateTask = async (task: UpdateTask): Promise<void> => {
-    try {
-      const updatedTask = await updateTaskReq(task)
-      updateTaskInGroup(updatedTask)
-    } catch (error) {
-      errorToast(String(error))
+    const { data: updatedTask } = await updateTaskReq(task)
+    if (updatedTask.value) {
+      updateTaskInGroup(updatedTask.value)
     }
   }
 
   const reviseTask = async (id: number): Promise<void> => {
-    try {
-      const updatedTask = await reviseTaskReq(id)
-      updateTaskInGroup(updatedTask)
+    const { data: updatedTask } = await reviseTaskReq(id)
+    if (updatedTask.value) {
+      updateTaskInGroup(updatedTask.value)
       if (selectedTask.value?.id === id) {
         selectedTask.value = {
-          ...updatedTask,
+          ...updatedTask.value,
           children: selectedTask.value?.children || [],
         }
       }
-    } catch (error) {
-      errorToast(String(error))
     }
   }
 
   const executeTask = async (id: number): Promise<void> => {
-    try {
-      const updatedTask = await executeTaskReq(id)
-      updateTaskInGroup(updatedTask)
-    } catch (error) {
-      errorToast(String(error))
+    const { data: updatedTask } = await executeTaskReq(id)
+    if (updatedTask.value) {
+      updateTaskInGroup(updatedTask.value)
     }
   }
 
   const planTask = async (id: number): Promise<void> => {
-    try {
-      const updatedTask = await planTaskReq(id)
-      updateTaskInGroup(updatedTask)
-    } catch (error) {
-      errorToast(String(error))
+    const { data: updatedTask } = await planTaskReq(id)
+    if (updatedTask.value) {
+      updateTaskInGroup(updatedTask.value)
     }
   }
 
@@ -282,25 +261,25 @@ export const useTasksStore = defineStore('tasks', () => {
       }
     }
     if (getLastAncestor(task.ancestry) === selectedTask.value?.id) {
-      const children = await listChildTasksReq(selectedTask.value.id)
-      selectedTask.value.children = children || []
+      const { data } = await listChildTasksReq(selectedTask.value.id)
+      selectedTask.value.children = data.value?.tasks || []
     }
     const { listChats, getById: getChatById } = useChatsStore()
     if (task.execution_chat_id && !getChatById(task.execution_chat_id)) {
       listChats()
     }
   }).catch((error) => {
-    errorToast(String(error))
+    useToast().errorToast(String(error))
   })
   const tasksCreatedUnlisten = listen<Task>('tasks:created', async (event) => {
     const task = event.payload
 
     if (getLastAncestor(task.ancestry) === selectedTask.value?.id) {
-      const children = await listChildTasksReq(selectedTask.value.id)
-      selectedTask.value.children = children || []
+      const { data } = await listChildTasksReq(selectedTask.value.id)
+      selectedTask.value.children = data.value?.tasks || []
     }
   }).catch((error) => {
-    errorToast(String(error))
+    useToast().errorToast(String(error))
   })
 
   const $reset = async () => {

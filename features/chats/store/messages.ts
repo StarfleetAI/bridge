@@ -4,11 +4,12 @@
 import { listen } from '@tauri-apps/api/event'
 import { useChatsStore, type EditMessage } from '~/features/chats'
 import { type Message } from '~/entities/chat'
+import { useToast } from '~/shared/lib'
 import {
-  listChatMessages,
   createMessage as createMessageReq,
   deleteMessage as deleteMessageReq,
   editMessage as editMessageReq,
+  listChatMessages as listChatMessagesReq,
 } from '../api'
 
 type ChatId = number
@@ -24,19 +25,24 @@ export const useMessagesStore = defineStore('messages', () => {
     return messages.value[chat_id]?.find((message) => message.id === id)
   }
 
-  const listMessages = async (chatId: number) => {
-    messages.value[chatId] = await listChatMessages(chatId)
+  const listMessages = async (chat_id: number) => {
+    const { data } = await listChatMessagesReq(chat_id)
+    messages.value[chat_id] = data.value?.messages || []
   }
 
   const createMessage = async ({ text, agent_id, chat_id, model_full_name }: CreateMessageParams) => {
     if (!chat_id) {
       const { createChat, updateChatModelFullName } = useChatsStore()
       const newChat = await createChat({ agent_id })
-      await updateChatModelFullName(newChat.id, model_full_name)
-      chat_id = newChat.id
-      await navigateTo({ name: 'chats', query: { id: newChat.id } })
+      if (newChat) {
+        await updateChatModelFullName(newChat.id, model_full_name)
+        chat_id = newChat.id
+        await navigateTo({ name: 'chats', query: { id: newChat.id } })
+      }
     }
-    await createMessageReq({ text, chat_id })
+    if (chat_id) {
+      createMessageReq({ text, chat_id })
+    }
   }
 
   const deleteMessage = async ({ id, chat_id }: Message) => {
@@ -57,11 +63,11 @@ export const useMessagesStore = defineStore('messages', () => {
   }
 
   const editMessage = async (params: EditMessage, chat_id: number) => {
-    const updatedMessage = await editMessageReq(params)
+    const { data } = await editMessageReq(params)
     if (messages.value[chat_id]) {
-      const index = messages.value[chat_id].findIndex((a) => a.id === updatedMessage.id)
-      if (index !== undefined && index !== -1) {
-        messages.value[chat_id].splice(index, 1, updatedMessage)
+      const index = messages.value[chat_id].findIndex((a) => a.id === data.value?.id)
+      if (index !== undefined && index !== -1 && data.value) {
+        messages.value[chat_id].splice(index, 1, data.value)
       }
     }
   }
@@ -78,13 +84,13 @@ export const useMessagesStore = defineStore('messages', () => {
   const msgCreatedUnlisten = listen<Message>('messages:created', (event) => {
     addMessage(event.payload)
   }).catch((e) => {
-    console.log(e)
+    useToast().errorToast(String(e))
   })
   const msgUpdatedUnlisten = listen<Message>('messages:updated', (event) => {
     const msg = event.payload
     updateMessage(msg)
   }).catch((e) => {
-    console.log(e)
+    useToast().errorToast(String(e))
   })
 
   const $reset = async () => {

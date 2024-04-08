@@ -79,6 +79,6 @@
     }
 
     @include hide-scrollbar;
-    @include font-inter-400(16px, 22px, var(--text-secondary));
+    @include font-inter-400(14px, 20px, var(--text-primary));
   }
 </style>

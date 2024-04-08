@@ -6,28 +6,50 @@ import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
 // TODO replace direct calls of invoke in app with useInvoke
-interface ExtendedInvoke<T, E = unknown> {
+interface ExtendedInvoke<T = unknown, E = unknown> {
   cmd: string
   args?: InvokeArgs
-  onSuccess?: (data: T) => void
+  onSuccess?: (data?: T) => void
   onError?: (error: E) => void
+  instantCall?: boolean
 }
-export const useInvoke = async <T = unknown>({ cmd, args, onSuccess, onError }: ExtendedInvoke<T>) => {
-  try {
-    const data = await invoke<T>(cmd, args)
-    if (onSuccess) {
-      onSuccess(data)
+export const useInvoke = async <T = unknown, E = unknown>({
+  cmd,
+  args,
+  onSuccess,
+  onError,
+  instantCall = true,
+}: ExtendedInvoke<T, E>) => {
+  const error = ref<E>()
+  const data = ref<T>()
+  const isLoading = ref(false)
+
+  const execute = async () => {
+    try {
+      isLoading.value = true
+      data.value = await invoke<T>(cmd, args)
+
+      if (onSuccess) {
+        onSuccess(data.value)
+      }
+    } catch (e) {
+      error.value = e as E
+      if (onError) {
+        onError(error.value)
+      }
+      toast(`Error: ${error.value}`, {
+        theme: 'dark',
+        type: 'error',
+        dangerouslyHTMLString: false,
+      })
+    } finally {
+      isLoading.value = false
     }
-    return data
-  } catch (error) {
-    if (onError) {
-      onError(error)
-    }
-    toast(`Error: ${error}`, {
-      theme: 'dark',
-      type: 'error',
-      dangerouslyHTMLString: false,
-    })
-    return error
   }
+
+  if (instantCall) {
+    await execute()
+  }
+
+  return { data, error, isLoading, execute }
 }

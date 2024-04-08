@@ -44,6 +44,10 @@ export default defineNuxtConfig({
         from: '@tauri-apps/api/tauri',
         imports: ['invoke'],
       },
+      {
+        from: '~/shared/lib',
+        imports: ['useInvoke'],
+      },
     ],
   },
 
