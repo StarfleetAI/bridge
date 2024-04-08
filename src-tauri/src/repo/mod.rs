@@ -10,6 +10,7 @@ pub mod agents_chats;
 pub mod chats;
 pub mod messages;
 pub mod models;
+pub mod pages;
 pub mod task_results;
 pub mod tasks;
 

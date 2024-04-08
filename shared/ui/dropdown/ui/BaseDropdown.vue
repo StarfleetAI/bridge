@@ -13,6 +13,7 @@
     }>(),
     {
       placement: 'bottom-end',
+      distance: undefined,
     },
   )
 </script>

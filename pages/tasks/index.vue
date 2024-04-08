@@ -7,19 +7,18 @@
   import { TasksList } from '~/widgets/tasksList'
   import { useTasksStore } from '~/features/task'
   import { BaseContainer } from '~/shared/ui/base'
+
   definePageMeta({
     title: 'Tasks',
   })
 
-  const { isNewTask, selectedTask } = storeToRefs(useTasksStore())
-  const route = useRoute()
-  const taskIdQuery = computed(() => (isNaN(Number(route.query.task)) ? null : Number(route.query.task)))
-  const createTaskQuery = computed(() => route.query.create === 'true')
+  const { isNewTask, isNewTaskQuery, selectedTaskQuery } = storeToRefs(useTasksStore())
+
   const sideContentComponent = computed(() => {
-    if (isNewTask.value || createTaskQuery.value) {
+    if (isNewTask.value || isNewTaskQuery.value) {
       return TaskForm
     }
-    if (selectedTask.value || taskIdQuery.value) {
+    if (selectedTaskQuery.value) {
       return TaskFullItem
     }
     return null

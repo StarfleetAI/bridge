@@ -12,7 +12,7 @@
 
   const StarsIconAsync = defineAsyncComponent(StarsIcon)
   const { agents } = storeToRefs(useAgentsStore())
-  const { listRootTasksByStatus, createTask, selectTask, setIsNewTask } = useTasksStore()
+  const { createTask, setIsNewTask } = useTasksStore()
   const selectedAgent = ref(agents.value[0])
 
   const taskTitle = ref('')
@@ -43,9 +43,7 @@
   }
 
   const handleExecuteTask = async (status: TaskStatus) => {
-    const newTask = await createTask(getTaskEntity(status))
-    listRootTasksByStatus()
-    selectTask(newTask.id)
+    await createTask(getTaskEntity(status))
   }
 
   const handleRemoveFile = (file: File) => {

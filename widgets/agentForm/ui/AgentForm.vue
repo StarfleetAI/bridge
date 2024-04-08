@@ -5,7 +5,6 @@
   import { useAbilitiesStore } from '~/features/ability'
   import { useAgentsStore, useAgentsNavigation, createAgent, updateAgent } from '~/features/agent'
   import { type Ability } from '~/entities/abilities'
-  import { type Agent } from '~/entities/agents'
   import { BaseButton } from '~/shared/ui/base'
   import { CrossIcon, SaveIcon, PlusIcon } from '~/shared/ui/icons'
   import { useModalStore } from '~/shared/ui/modal'
@@ -27,7 +26,7 @@
 
   onMounted(async () => {
     if (isEditAgent.value) {
-      const agent: Agent | undefined = await getById(selectedAgent.value)
+      const agent = getById(selectedAgent.value)
       if (agent) {
         id.value = agent.id
         name.value = agent.name

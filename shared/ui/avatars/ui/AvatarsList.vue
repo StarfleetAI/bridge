@@ -12,18 +12,15 @@
   const containerWidth = computed(() => {
     return `${(props.agents.length - 1) * 16 + 24}px`
   })
-  const goToAgent = (id: number) => {
-    navigateTo({ name: 'agents', query: { agent: id } })
-  }
+  // const goToAgent = (id: number) => {
+  //   navigateTo({ name: 'agents', query: { agent: id } })
+  // }
 </script>
 
 <template>
   <div class="avatar-list">
     <template v-if="agents.length === 1">
-      <div
-        class="avatar-list__single"
-        @click.stop="goToAgent(agents[0].id)"
-      >
+      <div class="avatar-list__single">
         <div class="avatar-list__name">{{ agents[0].name }}</div>
         <!-- <template v-if="agents[0].avatar">
           <img
@@ -106,6 +103,8 @@
     }
 
     &__name {
+      white-space: nowrap;
+
       @include font-inter-500(14px, 20px, var(--text-secondary));
     }
   }
