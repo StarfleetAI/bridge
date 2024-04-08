@@ -10,7 +10,7 @@ use tracing::{instrument, trace};
 use crate::types::Result;
 
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/";
-const GROQ_API_URL: &str = "https://api.groq.com/v1/";
+const GROQ_API_URL: &str = "https://api.groq.com/openai/v1/";
 
 #[derive(
     Serialize, Deserialize, Debug, sqlx::Type, Default, PartialEq, Eq, Clone, Ord, PartialOrd,
