@@ -15,4 +15,5 @@ pub mod repo;
 pub mod settings;
 pub mod task_executor;
 pub mod task_planner;
+pub mod tools;
 pub mod types;

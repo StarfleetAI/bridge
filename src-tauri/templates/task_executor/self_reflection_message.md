@@ -6,4 +6,4 @@ Check the content of your last message and evaluate its quality against the user
 - If the response aligns with what the user expects as a result, call the `sfai_done` function.
 - Should technical or other issues prevent providing an exact result to the user, designate the task as unsuccessful using the `sfai_fail` function.
 - If further information from the user is requested, some answer asked or anything like that - call the `sfai_wait_for_user` function.
-- It is your responsibility to call the functions mentioned above if needed.
+- It is your responsibility to call the functions mentioned above if you decided to.

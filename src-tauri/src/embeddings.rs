@@ -14,7 +14,7 @@ use candle_transformers::models::bert::{BertModel, Config, DTYPE};
 use hf_hub::{api::tokio::Api, Repo, RepoType};
 use regex::Regex;
 use tokenizers::{PaddingParams, Tokenizer};
-use tracing::{debug, error, info, instrument, trace};
+use tracing::{debug, error, info, instrument};
 
 use crate::types::Result;
 
@@ -138,13 +138,11 @@ impl Embeddings {
         for chunk in sentences.chunks(32) {
             let token_ids = self.tokenize_batch(chunk)?;
             let token_type_ids = token_ids.zeros_like().map_err(Error::Candle)?;
-            trace!("running inference on batch {:?}", token_ids.shape());
 
             let embeddings = self
                 .model
                 .forward(&token_ids, &token_type_ids)
                 .map_err(Error::Candle)?;
-            trace!("generated embeddings {:?}", embeddings.shape());
 
             // Apply some avg-pooling by taking the mean embedding value for all tokens (including padding)
             let (_n_sentences, n_tokens, _hidden_size) =
@@ -153,7 +151,6 @@ impl Embeddings {
             #[allow(clippy::cast_precision_loss)]
             let embeddings = (embeddings.sum(1).map_err(Error::Candle)? / (n_tokens as f64))
                 .map_err(Error::Candle)?;
-            trace!("pooled embeddings {:?}", embeddings.shape());
 
             let embeddings = Self::normalize_l2(&embeddings)?;
 
@@ -190,16 +187,13 @@ impl Embeddings {
             .filter(|s| !s.is_empty())
             .collect();
 
+        // TODO: on level 6 and above, we should collapse the sentences to fit in the max_length
+        //       to avoid too many small sentences
+
         Ok(sentences
             .into_iter()
             .flat_map(|sentence| {
-                let length = match self.tokenize(sentence) {
-                    Ok(token_ids) => match token_ids.to_vec1::<f32>() {
-                        Ok(tokens) => tokens.len(),
-                        Err(_) => sentence.len(),
-                    },
-                    Err(_) => sentence.len(),
-                };
+                let length = self.sentence_tokens_len(sentence);
 
                 if length > self.max_length {
                     match self.split_text(sentence, split_level + 1) {
@@ -214,6 +208,16 @@ impl Embeddings {
                 }
             })
             .collect())
+    }
+
+    fn sentence_tokens_len(&self, sentence: &str) -> usize {
+        match self.tokenize(sentence) {
+            Ok(token_ids) => match token_ids.to_vec1::<f32>() {
+                Ok(tokens) => tokens.len(),
+                Err(_) => sentence.len(),
+            },
+            Err(_) => sentence.len(),
+        }
     }
 
     fn tokenize(&self, sentence: &str) -> Result<Tensor> {
