@@ -6,7 +6,15 @@
   import { getTask, getTaskResults, useTasksStore } from '~/features/task'
   import type { Agent } from '~/entities/agents'
   import { AgentSelector } from '~/entities/agents'
-  import { TaskStatusBadge, TaskTitle, TaskSummary, TaskStatus, TaskItemLine, type Task } from '~/entities/tasks'
+  import {
+    TaskStatusBadge,
+    TaskTitle,
+    TaskSummary,
+    TaskStatus,
+    TaskItemLine,
+    type Task,
+    type TaskResults,
+  } from '~/entities/tasks'
   import { getTimeAgo, utcToLocalTime } from '~/shared/lib'
   import { FilesList } from '~/shared/ui/files'
   import { ArrowLeftIcon, AttachmentIcon, ResultIcon } from '~/shared/ui/icons'
@@ -26,10 +34,12 @@
     }
   }
 
-  const taskResults = ref(await getTaskResults(task.value!.id))
+  const taskResults = ref<TaskResults>(task.value ? await getTaskResults(task.value.id) : [])
 
   const updateResults = async () => {
-    taskResults.value = await getTaskResults(task.value!.id)
+    if (task.value) {
+      taskResults.value = await getTaskResults(task.value.id)
+    }
   }
 
   watch(
@@ -64,23 +74,19 @@
   const agentsStore = useAgentsStore()
   const agents = computed(() => agentsStore.agents)
 
-  const agent = ref<Agent>(getAgentById(task.value!.agent_id!)!)
+  const agent = ref<Nullable<Agent>>(task.value ? getAgentById(task.value.agent_id) : null)
 
-  const taskIsEditable = computed(() => {
-    return [TaskStatus.DRAFT, TaskStatus.FAILED, TaskStatus.WAITING_FOR_USER].includes(task.value!.status)
-  })
-
-  const taskTitle = ref(task.value!.title)
+  const taskTitle = ref(task.value?.title || '')
 
   const handleUpdate = async () => {
-    const { id } = await updateTask({
-      id: task.value!.id,
-      title: taskTitle.value,
-      summary: taskSummary.value,
-      agent_id: agent.value.id,
-    })
-
-    return id
+    if (agent.value) {
+      updateTask({
+        id: task.value!.id,
+        title: taskTitle.value,
+        summary: taskSummary.value,
+        agent_id: agent.value?.id,
+      })
+    }
   }
 
   const taskSummary = ref(task.value!.summary)
@@ -94,10 +100,13 @@
   <div class="task-details">
     <div class="task-details__head">
       <div class="task-details__title">
-        <b>Task #{{ task!.id }}</b> {{ createdAt }}
+        <b>Task #{{ task?.id }}</b> {{ createdAt }}
       </div>
 
-      <TaskControls :task="task!" />
+      <TaskControls
+        v-if="task"
+        :task="task"
+      />
     </div>
     <div
       v-if="taskAncestor"
@@ -110,32 +119,31 @@
       </div>
     </div>
     <div class="task-details__body">
-      <!-- TODO: back to parent task -->
-      <!-- <div class="task-details__back">
-        <ArrowLeftIcon /> Define the key requirements from the client for Brand Analytics functionality.
-      </div> -->
       <div class="task-details__top">
         <div class="task-details__status">
-          <TaskStatusBadge :status="task!.status" />
+          <TaskStatusBadge
+            v-if="task"
+            :status="task?.status"
+          />
         </div>
         <AgentSelector
+          v-if="agent"
           v-model="agent"
           :agents="agents"
-          :disabled="!taskIsEditable"
           @update:model-value="handleUpdate"
         />
       </div>
       <div class="task-details__middle">
         <TaskTitle
           v-model="taskTitle"
-          :current-title="task!.title"
-          :task-id="task!.id"
+          :current-title="task?.title"
+          :task-id="task?.id"
           @save="handleUpdate"
         />
 
         <TaskSummary
           v-model="taskSummary"
-          :current-summary="task!.summary"
+          :current-summary="task?.summary"
           @save="handleUpdate"
         />
 

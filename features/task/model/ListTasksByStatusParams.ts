@@ -5,5 +5,5 @@ import type { TaskStatus } from '~/entities/tasks'
 import type { ListTasksParams } from './ListTasksParams'
 
 export interface ListTasksByStatusParams extends ListTasksParams {
-  status?: TaskStatus
+  status: TaskStatus
 }

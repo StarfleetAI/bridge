@@ -5,4 +5,5 @@ import { type TaskStatus, type Task } from '~/entities/tasks'
 
 export interface TasksList<T = TaskStatus> {
   tasks: Task<T>[]
+  count: number
 }

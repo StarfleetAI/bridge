@@ -36,7 +36,7 @@
     "highlightjs-copy": "^1.0.5",
     "husky": "^9.0.10",
     "lint-staged": "^15.2.2",
-    "nuxt": "^3.10.3",
+    "nuxt": "^3.11.2",
     "oidc-client-ts": "^3.0.0",
     "prettier": "^3.2.5",
     "sass": "^1.70.0",
@@ -73,6 +73,7 @@
     "prismjs": "^1.29.0",
     "vite": "^5.2.8",
     "vue-devtools": "^5.1.4",
-    "vue-prism-editor": "alpha"
+    "vue-prism-editor": "alpha",
+    "vue3-toastify": "^0.2.1"
   }
 }

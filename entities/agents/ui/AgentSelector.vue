@@ -9,7 +9,6 @@
   withDefaults(
     defineProps<{
       agents: Agent[]
-      disabled?: boolean
     }>(),
     {
       agents: () => [],
@@ -19,10 +18,9 @@
 </script>
 
 <template>
-  <BaseDropdown :disabled="disabled">
+  <BaseDropdown>
     <div class="selected-agent">
       <ChevronDownIcon
-        v-if="!disabled"
         width="16"
         height="16"
         color="var(--text-secondary)"

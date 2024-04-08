@@ -9,7 +9,7 @@
   const props = defineProps<{
     task: Task
     isSelected: boolean
-    taskAgent?: Person
+    taskAgent: Nullable<Person>
     isChild?: boolean
   }>()
 

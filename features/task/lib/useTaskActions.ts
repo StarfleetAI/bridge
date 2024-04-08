@@ -15,8 +15,7 @@ export const useTaskActions = (task: Ref<Task>) => {
       label: 'Duplicate',
       icon: DuplicateIcon,
       action: async () => {
-        const newTask = await duplicateTask(task.value.id)
-        selectTask(newTask.id)
+        await duplicateTask(task.value.id)
       },
     }
   })

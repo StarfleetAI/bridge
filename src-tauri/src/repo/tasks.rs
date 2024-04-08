@@ -916,3 +916,21 @@ pub async fn assign<'a, E: Executor<'a, Database = Sqlite>>(
 
     Ok(())
 }
+
+/// Get total number of tasks by status
+///
+/// # Errors
+///
+/// Returns error if there was a problem while fetching tasks count.
+pub async fn get_total_number_by_status<'a, E: Executor<'a, Database = Sqlite>>(
+    executor: E,
+    status: Status,
+) -> Result<i32> {
+    Ok(query_scalar!(
+        "SELECT COUNT(*) FROM tasks WHERE status = $1 AND ancestry IS NULL",
+        status
+    )
+    .fetch_one(executor)
+    .await
+    .context("Failed to get total number of tasks")?)
+}
