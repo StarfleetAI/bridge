@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script setup lang="ts">
-  import { useChangeCase } from '@vueuse/integrations/useChangeCase'
+  import { toKebabCase, toSentenceCase } from '~/shared/lib'
   import {
     TaskStatusToDo,
     TaskStatusInProgress,
@@ -44,8 +44,8 @@
     return defineAsyncComponent(Component)
   })
 
-  const statusToKebab = computed(() => useChangeCase(props.status, 'paramCase').value)
-  const statusToNormal = computed(() => useChangeCase(props.status, 'sentenceCase').value)
+  const statusToKebab = computed(() => toKebabCase(props.status))
+  const statusToNormal = computed(() => toSentenceCase(props.status))
   const showComplete = computed(() => {
     return typeof props.complete === 'number' && typeof props.total === 'number'
   })
