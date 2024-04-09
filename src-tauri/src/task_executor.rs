@@ -35,10 +35,6 @@ pub enum Error {
     NoRootTasks,
     #[error("chat #{0} is not an execution chat")]
     NotAnExecutionChat(i64),
-    #[error("failed to render template: {0}")]
-    TemplateRender(#[from] askama::Error),
-    #[error("task execution steps limit ({0}) exceeded")]
-    StepsLimitExceeded(i64),
 }
 
 // TODO: implement graceful shutdown
@@ -199,21 +195,7 @@ async fn execute_task(app_handle: &AppHandle, task: &mut Task) -> Result<Status>
     task.execution_chat_id = Some(chat.id);
     app_handle.emit_all("tasks:updated", &task)?;
 
-    let execution_steps_limit = {
-        let agent = repo::agents::get_for_chat(&*pool, chat.id).await?;
-        let settings_state: State<'_, RwLock<Settings>> = app_handle.state();
-        let settings = settings_state.read().await;
-
-        agent
-            .execution_steps_limit
-            .unwrap_or(settings.agents.execution_steps_limit)
-    };
-
     loop {
-        let messages_count = repo::messages::get_execution_steps_count(&*pool, chat.id).await?;
-        if messages_count >= execution_steps_limit {
-            return Err(Error::StepsLimitExceeded(execution_steps_limit).into());
-        }
         match repo::messages::get_last_message(&*pool, chat.id).await? {
             Some(message) => match message.role {
                 Role::CodeInterpreter | Role::Tool | Role::User => {
@@ -397,7 +379,7 @@ async fn interpret_code(
         Err(err) => {
             return Ok(vec![format!(
                 "Failed to parse code blocks in the message: {err}"
-            )]);
+            )])
         }
     };
 
@@ -552,7 +534,7 @@ async fn send_to_agent(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Res
     let pool: State<'_, DbPool> = app_handle.state();
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
 
-    chats::get_completion(
+    chats::create_completion(
         app_handle,
         chat_id,
         GetCompletionParams {
@@ -571,7 +553,7 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
     let agent = repo::agents::get_for_chat(&*pool, chat_id).await?;
 
     let message = SelfReflectionMessageTemplate {};
-    let content = Some(message.render().map_err(Error::TemplateRender)?);
+    let content = Some(message.render()?);
 
     let messages_post = vec![Message {
         chat_id,
@@ -580,7 +562,7 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
         ..Default::default()
     }];
 
-    chats::get_completion(
+    chats::create_completion(
         app_handle,
         chat_id,
         GetCompletionParams {
@@ -597,29 +579,20 @@ async fn self_reflect(chat_id: i64, app_handle: &AppHandle, task: &Task) -> Resu
 
 fn internal_task_abilities() -> Vec<Ability> {
     // TODO: it's inefficient to use `Ability` here, since we're serializing parameters to JSON
-    //       only to deserialize them back in `chats::get_completion`. Consider using [`Tool`]
+    //       only to deserialize them back in `chats::create_completion`. Consider using [`Tool`]
     //       instead.
     //
     // TODO: It's also slightly inefficient to create these abilities on every iteration.
     //       Consider caching them or something.
     vec![
-        Ability::for_fn(
-            "Mark current task as done",
-            &json!({
-                "name": "sfai_done",
-            }),
-        ),
+        Ability::for_fn("Mark current task as done", &json!({ "name": "sfai_done" })),
         Ability::for_fn(
             "Mark current task as failed",
-            &json!({
-                "name": "sfai_fail",
-            }),
+            &json!({ "name": "sfai_fail" }),
         ),
         Ability::for_fn(
             "Wait for additional user input",
-            &json!({
-                "name": "sfai_wait_for_user",
-            }),
+            &json!({ "name": "sfai_wait_for_user" }),
         ),
     ]
 }
@@ -657,13 +630,13 @@ fn execution_prelude(
         Message {
             chat_id,
             role: Role::System,
-            content: Some(system_message.render().map_err(Error::TemplateRender)?),
+            content: Some(system_message.render()?),
             ..Default::default()
         },
         Message {
             chat_id,
             role: Role::User,
-            content: Some(task_message.render().map_err(Error::TemplateRender)?),
+            content: Some(task_message.render()?),
             ..Default::default()
         },
     ])

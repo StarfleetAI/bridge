@@ -10,12 +10,12 @@ use tracing::debug;
 
 use crate::types::Result;
 
-pub struct Client<'a> {
-    pub api_key: &'a str,
-    pub api_url: &'a str,
+pub struct Client {
+    pub api_key: String,
+    pub api_url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "role")]
 pub enum Message {
     #[serde(rename = "system")]
@@ -144,7 +144,7 @@ pub struct FunctionPropertyValue {
     pub items: Option<FunctionParameters>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 pub struct CreateChatCompletionRequest<'a> {
     pub model: &'a str,
     pub messages: Vec<Message>,
@@ -195,10 +195,13 @@ pub struct Usage {
     pub total_tokens: u32,
 }
 
-impl<'a> Client<'a> {
+impl<'a> Client {
     #[must_use]
     pub fn new(api_key: &'a str, api_url: &'a str) -> Self {
-        Self { api_key, api_url }
+        Self {
+            api_key: api_key.to_string(),
+            api_url: api_url.to_string(),
+        }
     }
 
     /// Creates a streaming chat completion.
@@ -215,7 +218,7 @@ impl<'a> Client<'a> {
         Ok(self
             .post_stream("chat/completions", &request)
             .await
-            .with_context(|| "Failed to make OpenAI API call")?)
+            .with_context(|| "Failed to make inference API call")?)
     }
 
     /// Creates a chat completion.
@@ -230,7 +233,7 @@ impl<'a> Client<'a> {
         Ok(self
             .post("chat/completions", &request)
             .await
-            .with_context(|| "Failed to make OpenAI API call")?)
+            .with_context(|| "Failed to make inference API call")?)
     }
 
     /// Sends a stream POST request, returns the response for further processing.
@@ -249,7 +252,7 @@ impl<'a> Client<'a> {
         let body =
             serde_json::to_value(body).with_context(|| "Failed to serialize request body")?;
 
-        debug!("OpenAI API request: {:?}", body.to_string());
+        debug!("Inference API request: {:?}", body.to_string());
 
         Ok(client
             .post(&url)
@@ -281,7 +284,7 @@ impl<'a> Client<'a> {
 
         let body =
             serde_json::to_value(body).with_context(|| "Failed to serialize request body")?;
-        debug!("OpenAI API request: {:?}", body.to_string());
+        debug!("Inference API request: {:?}", body.to_string());
 
         let response = client
             .post(&url)
@@ -299,7 +302,7 @@ impl<'a> Client<'a> {
             .await
             .with_context(|| "Failed to get response text")?;
 
-        debug!("OpenAI API response: {:?}", response);
+        debug!("Inference API response: {:?}", response);
 
         Ok(serde_json::from_str(&response).with_context(|| "Failed to deserialize response")?)
     }

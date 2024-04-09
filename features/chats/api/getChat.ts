@@ -4,5 +4,5 @@
 import { type Chat } from '~/entities/chat'
 
 export const getChat = async (id: number) => {
-  return invoke<Chat>('get_chat', { id })
+  return useInvoke<Chat>({ cmd: 'get_chat', args: { id } })
 }

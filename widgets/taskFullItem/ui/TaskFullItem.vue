@@ -34,14 +34,19 @@
     }
   }
 
-  const taskResults = ref<TaskResults>(task.value ? await getTaskResults(task.value.id) : [])
+  const taskResults = ref<TaskResults>([])
 
   const updateResults = async () => {
     if (task.value) {
-      taskResults.value = await getTaskResults(task.value.id)
+      const { data } = await getTaskResults(task.value.id)
+      if (data.value) {
+        taskResults.value = data.value
+      }
+    } else {
+      taskResults.value = []
     }
   }
-
+  updateResults()
   watch(
     () => task.value,
     async (newVal) => {
@@ -51,7 +56,10 @@
         agent.value = getAgentById(task.value!.agent_id!)!
         updateResults()
         if (selectedTaskParentId.value) {
-          taskAncestor.value = await getTask(selectedTaskParentId.value)
+          const { data } = await getTask(selectedTaskParentId.value)
+          if (data.value) {
+            taskAncestor.value = data.value
+          }
         } else {
           taskAncestor.value = null
         }
@@ -93,7 +101,10 @@
 
   const taskAncestor = ref<Nullable<Task>>(null)
   if (selectedTaskParentId.value) {
-    taskAncestor.value = await getTask(selectedTaskParentId.value)
+    const { data } = await getTask(selectedTaskParentId.value)
+    if (data.value) {
+      taskAncestor.value = data.value
+    }
   }
 </script>
 <template>

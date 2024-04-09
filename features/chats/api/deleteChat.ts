@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export const deleteChat = (id: number) => {
-  return invoke('delete_chat', { id })
+  return useInvoke({ cmd: 'delete_chat', args: { id } })
 }

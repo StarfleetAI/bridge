@@ -25,9 +25,9 @@ const PROMPT: &str = r#"You are a project manager with the objective of orchestr
 
 ## Planning Guidelines
 
-1. Ensure each task is a discrete, manageable unit of work. Avoid splitting broad concepts like "research" and "understanding" into separate sub-tasks.
+1. Ensure each task is a discrete, manageable unit of work. Avoid splitting broad concepts like "research" and "understanding", "writing" and "executing" scripts or "running a benchmark" and "analyzing results" into separate sub-tasks.
 2. Assign each task to only one agent.
-3. A task can have multiple sub-tasks without any limit on nesting levels.
+3. A task can have multiple sub-tasks.
 4. Parent tasks have visibility over the outcomes of their sub-tasks.
 5. Sub-tasks have visibility over the outcomes of their sibling tasks.
 6. Tasks should be executed in a sequential manner.
@@ -37,6 +37,8 @@ const PROMPT: &str = r#"You are a project manager with the objective of orchestr
 1. Simple tasks like writing a straight-forward script should not be divided into sub-tasks.
 2. Complex tasks, such as those requiring internet data retrieval and script writing, should be split into two sub-tasks: data gathering and script development.
 3. Straightforward queries like "tell me about Ruby on Rails" do not require planning. Avoid unnecessary task creation for such direct questions.
+4. Try to keep the number of sub-tasks to a minimum to avoid task fragmentation.
+5. Keep the number of nesting levels to a minimum.
 
 ## Additional Notes
 
@@ -45,6 +47,8 @@ const PROMPT: &str = r#"You are a project manager with the objective of orchestr
 3. Plan at a single level of depth only.
 4. Do not include tasks for delivering results like "save a file" or "provide a URL."
 5. Keep task titles succinct and to the point.
+6. When planning, you can safely assume that the working environment is set up correctly.
+7. Task summary should have all the relevant information for the agent to complete the task, but avoid unnecessary details.
 
 ## Response Format
 
@@ -57,6 +61,7 @@ pub struct TaskPlanner<'a> {
 #[derive(Debug, Deserialize)]
 pub struct ExecutionPlanTask {
     pub title: String,
+    pub summary: String,
     pub agent_id: i64,
 }
 
@@ -155,7 +160,7 @@ impl<'a> TaskPlanner<'a> {
                 &*pool,
                 CreateParams {
                     title: &sub_task.title,
-                    summary: Some(""),
+                    summary: Some(&sub_task.summary),
                     agent_id: sub_task.agent_id,
                     ancestry: Some(&task.children_ancestry()),
                     ..Default::default()
@@ -202,6 +207,7 @@ impl<'a> TaskPlanner<'a> {
                     plan = Some(ExecutionPlan {
                         tasks: vec![ExecutionPlanTask {
                             title: task.title.clone(),
+                            summary: task.summary.clone(),
                             agent_id: args.agent_id,
                         }],
                     });
@@ -259,7 +265,7 @@ impl<'a> TaskPlanner<'a> {
                 &json!({
                     "name": "sfai_assign_to_agent",
                     "parameters": {
-                        "type":"object",
+                        "type": "object",
                         "properties": {
                             "agent_id": {
                                 "type": "integer",
@@ -274,7 +280,7 @@ impl<'a> TaskPlanner<'a> {
                 &json!({
                     "name": "sfai_plan_task_execution",
                     "parameters": {
-                        "type":"object",
+                        "type": "object",
                         "properties": {
                             "tasks": {
                                 "type": "array",
@@ -284,7 +290,11 @@ impl<'a> TaskPlanner<'a> {
                                     "properties": {
                                         "title": {
                                             "type": "string",
-                                            "description": "Title of the task"
+                                            "description": "Task title"
+                                        },
+                                        "summary": {
+                                            "type": "string",
+                                            "description": "Task summary"
                                         },
                                         "agent_id": {
                                             "type": "integer",

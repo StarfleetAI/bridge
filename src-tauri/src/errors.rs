@@ -3,6 +3,8 @@
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("template render error: {0}")]
+    Template(#[from] askama::Error),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error(transparent)]
@@ -11,6 +13,8 @@ pub enum Error {
     Internal(#[from] anyhow::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error(transparent)]
+    SerdeJson(#[from] serde_json::Error),
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
     #[error(transparent)]

@@ -3,6 +3,6 @@
 
 import type { Message } from '~/entities/chat'
 
-export const editMessage = (request: { id: number; content: string }): Promise<Message> => {
-  return invoke<Message>('update_message_content', { ...request })
+export const editMessage = (request: { id: number; content: string }) => {
+  return useInvoke<Message>({ cmd: 'update_message_content', args: { ...request } })
 }
