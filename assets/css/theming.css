@@ -30,6 +30,10 @@
   --text-primary: #eaecf0;
   --text-secondary: #afb4bf;
   --text-tertiary: #677383;
+
+  /* TOASTIFY */
+  --toastify-color-dark: var(--surface-3) !important;
+  --toastify-text-color-dark: var(--text-primary) !important;
 }
 
 * {

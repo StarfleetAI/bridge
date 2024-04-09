@@ -4,5 +4,5 @@
 import type { Chat } from '~/entities/chat'
 
 export const updateChatTitle = async (request: { id: number; title: string }) => {
-  return invoke<Chat>('update_chat_title', { ...request })
+  return useInvoke<Chat>({ cmd: 'update_chat_title', args: { ...request } })
 }

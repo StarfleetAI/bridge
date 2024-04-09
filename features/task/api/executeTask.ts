@@ -4,5 +4,5 @@
 import type { Task } from '~/entities/tasks'
 
 export const executeTask = (id: number) => {
-  return invoke<Task>('execute_task', { id })
+  return useInvoke<Task>({ cmd: 'execute_task', args: { id } })
 }

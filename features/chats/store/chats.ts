@@ -1,9 +1,9 @@
 // Copyright 2024 StarfleetAI
 // SPDX-License-Identifier: Apache-2.0
-import type { UnlistenFn } from '@tauri-apps/api/event'
 import { listen } from '@tauri-apps/api/event'
 
 import { type Chat } from '~/entities/chat'
+import { useToast } from '~/shared/lib'
 import {
   createChat as createChatReq,
   deleteChat as deleteChatReq,
@@ -33,9 +33,12 @@ export const useChatsStore = defineStore('chats', () => {
   }
 
   const createChat = async (request: CreateChat) => {
-    const chat = await createChatReq(request)
-    chat.agents_ids = [request.agent_id]
-    chats.value.unshift(chat)
+    const { data } = await createChatReq(request)
+    const chat = data.value
+    if (chat) {
+      chat.agents_ids = [request.agent_id]
+      chats.value.unshift(chat)
+    }
     return chat
   }
 
@@ -46,16 +49,13 @@ export const useChatsStore = defineStore('chats', () => {
       chats.value.splice(index, 1)
     }
   }
+
   const updateChat = (chat: Chat) => {
     const index = chats.value.findIndex((a) => a.id === chat.id)
     if (index !== undefined && index !== -1) {
       chats.value[index].title = chat.title
     }
   }
-  const chatsUpdatedUnlisten: Promise<UnlistenFn> = listen('chats:updated', (event) => {
-    const chat = event.payload as Chat
-    updateChat(chat)
-  })
 
   const toggleIsPinned = async (id: number) => {
     await toggleIsPinnedReq(id)
@@ -69,6 +69,13 @@ export const useChatsStore = defineStore('chats', () => {
       chats.value[index].model_full_name = modelFullName
     }
   }
+
+  const chatsUpdatedUnlisten = listen<Chat>('chats:updated', (event) => {
+    const chat = event.payload
+    updateChat(chat)
+  }).catch((error) => {
+    useToast().errorToast(String(error))
+  })
 
   const $reset = async () => {
     chats.value = []

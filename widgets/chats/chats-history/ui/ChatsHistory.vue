@@ -148,6 +148,7 @@
               :class="['history-item__name', { 'is-input': getItemComponent(chat.id) === 'input' }]"
               :value="titleToEdit"
               @keydown.enter="handleSaveTitle"
+              @blur="handleSaveTitle"
               @input="handleInput"
               @keydown.esc="handleCancelEdit"
             >

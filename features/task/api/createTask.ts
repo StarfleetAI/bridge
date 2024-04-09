@@ -5,5 +5,5 @@ import { type Task } from '~/entities/tasks'
 import { type CreateTask } from '../model'
 
 export const createTask = (request: CreateTask) => {
-  return invoke<Task>('create_task', { request })
+  return useInvoke<Task>({ cmd: 'create_task', args: { request } })
 }
