@@ -13,7 +13,7 @@ use tracing::{error, instrument};
 use crate::abilities::{self};
 use crate::chats::GetCompletionParams;
 use crate::repo::models;
-use crate::{chats, repo};
+use crate::{chats, clients, repo};
 use crate::{
     clients::openai::{Client, CreateChatCompletionRequest},
     repo::messages::{CreateParams, ListParams, Message, Role, Status},
@@ -121,7 +121,7 @@ pub async fn create_message(
 
     match chat.kind {
         repo::chats::Kind::Direct => {
-            chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
+            chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
                 .await
                 .context("Failed to get chat completion")?;
 
@@ -208,11 +208,11 @@ async fn generate_chat_title(
 
     let mut req_messages = messages
         .into_iter()
-        .map(crate::clients::openai::Message::try_from)
+        .map(clients::openai::Message::try_from)
         .collect::<std::result::Result<Vec<_>, _>>()?;
 
-    req_messages.push(crate::clients::openai::Message::User {
-        content: "Provide a short title for the current conversation (4-6 words)".to_string(),
+    req_messages.push(clients::openai::Message::User {
+        content: "Provide a short title for the current conversation (4-6 words). Your response must only contain the chat title and nothing else.".to_string(),
         name: None,
     });
 
@@ -236,14 +236,13 @@ async fn generate_chat_title(
         .create_chat_completion(CreateChatCompletionRequest {
             model: &model.name,
             messages: req_messages,
-            stream: false,
-            tools: None,
+            ..Default::default()
         })
         .await
         .context("Failed to create chat completion")?;
 
     let mut title = match &response.choices[0].message {
-        crate::clients::openai::Message::Assistant { content, .. } => match content {
+        clients::openai::Message::Assistant { content, .. } => match content {
             Some(title) => title,
             _ => return Err(anyhow!("Received empty response from LLM").into()),
         },
@@ -315,7 +314,7 @@ pub async fn approve_tool_call(
     message.status = Status::Completed;
     app_handle.emit_all("messages:updated", &message)?;
 
-    chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
+    chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 
@@ -361,7 +360,7 @@ pub async fn deny_tool_call(
     app_handle.emit_all("messages:updated", &message)?;
     app_handle.emit_all("messages:created", &denied_message)?;
 
-    chats::get_completion(&app_handle, message.chat_id, GetCompletionParams::default())
+    chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
         .await
         .context("Failed to get chat completion")?;
 

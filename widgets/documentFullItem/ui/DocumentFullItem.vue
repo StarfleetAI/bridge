@@ -14,7 +14,7 @@
     <div class="document-full-item__body">
       <div class="document-full-item__body-top">
         <div class="document-full-item__info">878kb • 12.09.24, 19:43</div>
-        <AvatarsList :persons="[{ name: 'Alex', avatar: '', link: '' }]" />
+        <AvatarsList :agents="[]" />
       </div>
       <div class="document-full-item__name">
         <div>list012.csv</div>

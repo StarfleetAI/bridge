@@ -5,7 +5,7 @@
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall, getRawMessageContent, useMessagesStore } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
-  import { utcToLocalTime, getTimeAgo, highlightCode } from '~/shared/lib'
+  import { utcToLocalTime, getTimeAgo, highlightCode, BRIDGE_AGENT_ID } from '~/shared/lib'
   import { BaseButton, CopyButton } from '~/shared/ui/base'
   import {
     SystemIcon,
@@ -16,6 +16,7 @@
     EditIcon,
     CopyIcon,
     RetryIcon,
+    BridgeSmallIcon,
   } from '~/shared/ui/icons'
   import ContentEditInput from './ContentEditInput.vue'
   import ToolCall from './ToolCall.vue'
@@ -52,6 +53,9 @@
   const getAuthorAvatar = (message: Message) => {
     if (message.role === 'System') {
       return SystemIcon
+    }
+    if (message.agent_id === BRIDGE_AGENT_ID) {
+      return BridgeSmallIcon
     }
     return NoAvatarIcon
   }
@@ -113,7 +117,8 @@
   const contentToEdit = ref('')
   const startEditing = async () => {
     isEditing.value = true
-    contentToEdit.value = await getRawMessageContent(props.message.id)
+    const { data } = await getRawMessageContent(props.message.id)
+    contentToEdit.value = data.value || ''
   }
 
   const cancelEditing = () => {
@@ -135,8 +140,8 @@
     return props.message.role === Role.ASSISTANT && props.isLast
   })
   const copyContent = async () => {
-    const rawContent = await getRawMessageContent(props.message.id)
-    navigator.clipboard.writeText(rawContent)
+    const { data } = await getRawMessageContent(props.message.id)
+    navigator.clipboard.writeText(data.value || '')
   }
 </script>
 
@@ -230,7 +235,9 @@
               color="green"
               @click="approveToolCall(Number(message.id))"
             >
-              <CheckIcon />
+              <template #icon>
+                <CheckIcon />
+              </template>
               Approve
             </BaseButton>
             <BaseButton
@@ -238,7 +245,9 @@
               color="red"
               @click="denyToolCall(Number(message.id))"
             >
-              <CrossIcon />
+              <template #icon>
+                <CrossIcon />
+              </template>
               Deny
             </BaseButton>
           </div>

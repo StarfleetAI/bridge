@@ -12,14 +12,14 @@ import { type CreateAgent, type UpdateAgent } from '../model'
 
 export const useAgentsStore = defineStore('agents', () => {
   const agents = ref<Agent[]>([])
-  const getById = (id: Nullable<number | string>): Agent | undefined => {
+  const getById = (id: Nullable<number | string>): Nullable<Agent> => {
     if (!id) {
-      return undefined
+      return null
     }
     if (typeof id === 'string') {
       id = parseInt(id, 10)
     }
-    return agents.value.find((a) => a.id === id)
+    return agents.value.find((a) => a.id === id) || null
   }
   const listAgents = async () => {
     const agentsList = await listAgentsReq()

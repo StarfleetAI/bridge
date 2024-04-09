@@ -9,9 +9,9 @@
   import { useAgentsStore } from '~/features/agent'
   import { approveToolCall, denyToolCall } from '~/features/chats'
   import { type Message, Role, type ToolCall as ToolCallType, Status } from '~/entities/chat'
-  import { utcToLocalTime, getTimeAgo, highlightCode } from '~/shared/lib'
+  import { utcToLocalTime, getTimeAgo, highlightCode, BRIDGE_AGENT_ID } from '~/shared/lib'
   import { CopyButton } from '~/shared/ui/base'
-  import { SystemIcon, NoAvatarIcon, CheckIcon, CrossIcon, ChevronDownIcon } from '~/shared/ui/icons'
+  import { SystemIcon, NoAvatarIcon, CheckIcon, CrossIcon, ChevronDownIcon, BridgeSmallIcon } from '~/shared/ui/icons'
 
   const props = defineProps<{
     message: Message
@@ -42,6 +42,9 @@
   const getAuthorAvatar = (message: Message) => {
     if (message.role === 'System') {
       return SystemIcon
+    }
+    if (message.agent_id === BRIDGE_AGENT_ID) {
+      return BridgeSmallIcon
     }
     return NoAvatarIcon
   }

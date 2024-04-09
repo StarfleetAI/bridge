@@ -5,7 +5,6 @@
   import { useAbilitiesStore } from '~/features/ability'
   import { useAgentsStore, useAgentsNavigation, createAgent, updateAgent } from '~/features/agent'
   import { type Ability } from '~/entities/abilities'
-  import { type Agent } from '~/entities/agents'
   import { BaseButton } from '~/shared/ui/base'
   import { CrossIcon, SaveIcon, PlusIcon } from '~/shared/ui/icons'
   import { useModalStore } from '~/shared/ui/modal'
@@ -21,17 +20,21 @@
   const name = ref<string>('')
   const description = ref<string>('')
   const systemMessage = ref<string>('')
+  const isCodeInterpreterEnabled = ref(false)
+  const isWebBrowserEnabled = ref(false)
   const addedAbilities = ref<Ability[]>([])
 
   onMounted(async () => {
     if (isEditAgent.value) {
-      const agent: Agent | undefined = await getById(selectedAgent.value)
+      const agent = getById(selectedAgent.value)
       if (agent) {
         id.value = agent.id
         name.value = agent.name
         description.value = agent.description
         systemMessage.value = agent.system_message
         addedAbilities.value = abilities.value.filter((item) => agent.ability_ids.includes(item.id))
+        isCodeInterpreterEnabled.value = agent.is_code_interpreter_enabled
+        isWebBrowserEnabled.value = agent.is_web_browser_enabled
       }
     }
   })
@@ -46,6 +49,8 @@
         description: description.value,
         system_message: systemMessage.value,
         ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
+        is_code_interpreter_enabled: isCodeInterpreterEnabled.value,
+        is_web_browser_enabled: isWebBrowserEnabled.value,
       })
     } else {
       await createAgent({
@@ -53,6 +58,8 @@
         description: description.value,
         system_message: systemMessage.value,
         ability_ids: addedAbilities.value.length > 0 ? addedAbilities.value.map((item) => item.id) : [],
+        is_code_interpreter_enabled: isCodeInterpreterEnabled.value,
+        is_web_browser_enabled: isWebBrowserEnabled.value,
       })
     }
     finishCreation()
@@ -119,6 +126,20 @@
           v-model="systemMessage"
           class="input-field"
           placeholder="Instructions"
+        />
+      </div>
+      <div class="form-item">
+        <label> Code interpreter </label>
+        <input
+          v-model="isCodeInterpreterEnabled"
+          type="checkbox"
+        />
+      </div>
+      <div class="form-item">
+        <label> Web browser </label>
+        <input
+          v-model="isWebBrowserEnabled"
+          type="checkbox"
         />
       </div>
     </div>

@@ -21,6 +21,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TasksList {
     pub tasks: Vec<Task>,
+    pub count: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -145,7 +146,7 @@ pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksL
     let task = repo::tasks::get(&*pool, id).await?;
     let tasks = repo::tasks::list_direct_children(&*pool, &task).await?;
 
-    Ok(TasksList { tasks })
+    Ok(TasksList { tasks, count: None })
 }
 
 /// List all root tasks.
@@ -158,7 +159,7 @@ pub async fn list_child_tasks(id: i64, pool: State<'_, DbPool>) -> Result<TasksL
 pub async fn list_root_tasks(pool: State<'_, DbPool>, pagination: Pagination) -> Result<TasksList> {
     let tasks = repo::tasks::list_roots(&*pool, pagination).await?;
 
-    Ok(TasksList { tasks })
+    Ok(TasksList { tasks, count: None })
 }
 
 /// List root tasks by status.
@@ -174,8 +175,12 @@ pub async fn list_root_tasks_by_status(
     pagination: Pagination,
 ) -> Result<TasksList> {
     let tasks = repo::tasks::list_roots_by_status(&*pool, status, pagination).await?;
+    let count = repo::tasks::get_total_number_by_status(&*pool, status).await?;
 
-    Ok(TasksList { tasks })
+    Ok(TasksList {
+        tasks,
+        count: Some(count),
+    })
 }
 
 /// Revise task by id.

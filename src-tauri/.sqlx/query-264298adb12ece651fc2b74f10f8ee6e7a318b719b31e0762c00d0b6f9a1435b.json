@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT\n            id as \"id!\",\n            agent_id,\n            origin_chat_id,\n            control_chat_id,\n            execution_chat_id,\n            title,\n            summary,\n            status,\n            ancestry,\n            ancestry_level,\n            created_at,\n            updated_at\n        FROM tasks\n        WHERE ancestry = $1\n        ORDER BY created_at DESC\n        ",
+  "query": "\n        SELECT\n            id as \"id!\",\n            agent_id,\n            origin_chat_id,\n            control_chat_id,\n            execution_chat_id,\n            title,\n            summary,\n            status,\n            ancestry,\n            ancestry_level,\n            created_at,\n            updated_at\n        FROM tasks\n        WHERE ancestry = $1\n        ORDER BY created_at ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -82,5 +82,5 @@
       false
     ]
   },
-  "hash": "c6fffc920011ec6c348307612e1263076321207968b658b532debe958b29d68d"
+  "hash": "264298adb12ece651fc2b74f10f8ee6e7a318b719b31e0762c00d0b6f9a1435b"
 }

@@ -7,7 +7,9 @@ use tauri::{AppHandle, Manager, State};
 use tokio::sync::RwLock;
 use tracing::{debug, error, instrument, trace};
 
+use crate::repo::models::Model;
 use crate::{
+    clients,
     clients::openai::{
         Client, CreateChatCompletionRequest, Function, FunctionCall, Tool, ToolCall, ToolType,
     },
@@ -39,7 +41,7 @@ pub struct GetCompletionParams {
 // TODO: refactor this function.
 #[instrument(skip(app_handle, params))]
 #[allow(clippy::too_many_lines)]
-pub async fn get_completion(
+pub async fn create_completion(
     app_handle: &AppHandle,
     chat_id: i64,
     params: GetCompletionParams,
@@ -126,10 +128,118 @@ pub async fn get_completion(
 
     // Send request to LLM
     let client = Client::new(api_key, model.api_url_or_default());
+
+    create_completion_stream(
+        app_handle,
+        req_messages,
+        &mut message,
+        tools,
+        &model,
+        client,
+    )
+    .await?;
+
+    if message.status == Status::Writing {
+        fail_message(app_handle, &pool, &mut message).await?;
+
+        return Err(anyhow!("Failed to get completion").into());
+    }
+
+    Ok(())
+}
+
+#[allow(dead_code)]
+async fn create_completion_sync<'a>(
+    app_handle: &'a AppHandle,
+    messages: Vec<clients::openai::Message>,
+    message: &'a mut Message,
+    tools: Option<Vec<Tool>>,
+    model: &'a Model,
+    client: Client,
+) -> Result<()> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
+    let response = match client
+        .create_chat_completion(CreateChatCompletionRequest {
+            model: &model.name,
+            messages,
+            tools,
+            ..Default::default()
+        })
+        .await
+        .context("Failed to create chat completion")
+    {
+        Ok(response) => response,
+        Err(err) => {
+            fail_message(app_handle, &pool, message).await?;
+
+            return Err(err.into());
+        }
+    };
+
+    let choice = response.choices.first().context("Failed to get choice")?;
+
+    if let clients::openai::Message::Assistant {
+        content,
+        tool_calls,
+        ..
+    } = &choice.message
+    {
+        message.content = content.clone();
+        if let Some(tool_calls) = &tool_calls {
+            message.tool_calls = Some(serde_json::to_string(tool_calls)?);
+        }
+        message.status = match message.tool_calls {
+            Some(_) => Status::WaitingForToolCall,
+            None => Status::Completed,
+        };
+
+        if let Err(err) = repo::messages::update_with_completion_result(
+            &*pool,
+            UpdateWithCompletionResultParams {
+                id: message.id,
+                status: message.status,
+                content: message.content.clone(),
+                tool_calls: message.tool_calls.clone(),
+                ..Default::default()
+            },
+        )
+        .await
+        .context("Failed to update assistant message")
+        {
+            fail_message(app_handle, &pool, message).await?;
+
+            return Err(err.into());
+        };
+
+        if let Err(err) = app_handle.emit_all("messages:updated", &message) {
+            fail_message(app_handle, &pool, message).await?;
+
+            return Err(err.into());
+        }
+    } else {
+        fail_message(app_handle, &pool, message).await?;
+
+        return Err(anyhow!("Unexpected message type").into());
+    }
+
+    Ok(())
+}
+
+async fn create_completion_stream<'a>(
+    app_handle: &'a AppHandle,
+    messages: Vec<clients::openai::Message>,
+    message: &'a mut Message,
+    tools: Option<Vec<Tool>>,
+    model: &'a Model,
+    client: Client,
+) -> Result<()> {
+    let pool: State<'_, DbPool> = app_handle.state();
+
     let mut response = match client
         .create_chat_completion_stream(CreateChatCompletionRequest {
             model: &model.name,
-            messages: req_messages,
+            messages,
             stream: true,
             tools,
         })
@@ -138,7 +248,7 @@ pub async fn get_completion(
     {
         Ok(response) => response,
         Err(err) => {
-            fail_message(app_handle, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, message).await?;
 
             return Err(err.into());
         }
@@ -149,7 +259,7 @@ pub async fn get_completion(
     while let Some(chunk) = match response.chunk().await.context("Failed to get chunk") {
         Ok(chunk) => chunk,
         Err(err) => {
-            fail_message(app_handle, &pool, &mut message).await?;
+            fail_message(app_handle, &pool, message).await?;
 
             return Err(err.into());
         }
@@ -202,12 +312,12 @@ pub async fn get_completion(
                 .await
                 .context("Failed to update assistant message")
                 {
-                    fail_message(app_handle, &pool, &mut message).await?;
+                    fail_message(app_handle, &pool, message).await?;
 
                     return Err(err.into());
                 };
             } else {
-                match apply_completion_chunk(&mut message, chunk) {
+                match apply_completion_chunk(message, chunk) {
                     Err(errors::Error::Messages(
                         messages::Error::ChunkDeserialization(_)
                         | messages::Error::NoValidChunkPrefix,
@@ -217,7 +327,7 @@ pub async fn get_completion(
                         chunk_remainder = chunk.to_string();
                     }
                     Err(err) => {
-                        fail_message(app_handle, &pool, &mut message).await?;
+                        fail_message(app_handle, &pool, message).await?;
 
                         return Err(err);
                     }
@@ -226,17 +336,11 @@ pub async fn get_completion(
             }
 
             if let Err(err) = app_handle.emit_all("messages:updated", &message) {
-                fail_message(app_handle, &pool, &mut message).await?;
+                fail_message(app_handle, &pool, message).await?;
 
                 return Err(err.into());
             };
         }
-    }
-
-    if message.status == Status::Writing {
-        fail_message(app_handle, &pool, &mut message).await?;
-
-        return Err(anyhow!("Failed to get completion").into());
     }
 
     Ok(())

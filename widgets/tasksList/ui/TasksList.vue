@@ -2,17 +2,24 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 <script lang="ts" setup>
+  import { useAgentsStore } from '~/features/agent'
   import { useTasksStore } from '~/features/task'
   import type { TasksGroupName } from '~/features/task'
-  import { TaskItemLine, TaskStatus } from '~/entities/tasks'
+  import { TaskItemLine, TaskStatus, type Task } from '~/entities/tasks'
   import { BaseButton } from '~/shared/ui/base'
-  import { PlusIcon } from '~/shared/ui/icons'
+  import { ArrowLeftIcon, PlusIcon } from '~/shared/ui/icons'
+  import { BasePagination as BasePaginationAsync } from '~/shared/ui/pagination'
   import type { TasksListView } from '../model'
 
+  const BasePagination = defineAsyncComponent(BasePaginationAsync)
+
   const view = ref<TasksListView>('list')
-  const { listRootTasksByStatus, selectTask, setIsNewTask } = useTasksStore()
+
+  const { listRootTasksByStatus, selectTask, setIsNewTask, setGroup, setPage } = useTasksStore()
+  const { tasksGroupsByStatus, isNewTask, selectedTask, selectedGroup, currentPage, totalPages } =
+    storeToRefs(useTasksStore())
+
   await listRootTasksByStatus()
-  const { tasksGroupsByStatus, isNewTask } = storeToRefs(useTasksStore())
   // const toggleView = (value: TasksListView) => {
   //   view.value = value
   // }
@@ -32,6 +39,25 @@
       case TaskStatus.FAILED:
         return 'Failed'
     }
+  }
+  const isSelected = (task: Task) => {
+    return (
+      task.id === selectedTask.value?.id || selectedTask.value?.ancestry?.split('/').includes(`${task.id}`) || false
+    )
+  }
+  const agentsStore = useAgentsStore()
+
+  const tasksListRef = ref<HTMLDivElement>()
+  const navigateToGroup = async (group: Nullable<TaskStatus>) => {
+    await setGroup(group)
+    tasksListRef.value?.scroll({ top: 0 })
+  }
+
+  const handlePageUpdate = async (page: number) => {
+    setPage(page)
+    await listRootTasksByStatus()
+    await nextTick()
+    tasksListRef.value?.scroll({ top: 0 })
   }
 </script>
 
@@ -56,24 +82,45 @@
       </div>
       <div class="tasks-list__views" />
     </div>
-    <div class="tasks-list__groups">
+    <div
+      ref="tasksListRef"
+      class="tasks-list__groups"
+    >
       <div
-        v-for="(tasks, status) in tasksGroupsByStatus"
+        v-for="(group, status) in tasksGroupsByStatus"
         :key="status"
         class="tasks-list__group"
       >
-        <template v-if="tasks.length">
-          <div class="tasks-list__group-name">
-            <b>{{ getGroupName(status) }}</b> {{ tasks.length }}
+        <template v-if="group.tasks.length">
+          <div
+            class="tasks-list__group-name"
+            @click="navigateToGroup(status)"
+          >
+            <ArrowLeftIcon
+              v-if="selectedGroup"
+              color="var(--text-secondary)"
+              @click.stop="navigateToGroup(null)"
+            />
+            <b>{{ getGroupName(status) }}</b>
+            {{ group.count }}
           </div>
           <div :class="{ 'tasks-list__group--list': view === 'list', 'tasks-list__group--grid': view === 'grid' }">
             <TaskItemLine
-              v-for="task in tasks"
+              v-for="task in group.tasks"
               :key="task.id"
               :task="task"
+              :is-selected="isSelected(task)"
+              :task-agent="agentsStore.getById(task.agent_id)"
               @click="selectTask(task.id)"
             />
           </div>
+          <BasePagination
+            v-if="selectedGroup && totalPages > 1"
+            v-model="currentPage"
+            :max-page-visible="5"
+            :total-pages="totalPages"
+            @update:model-value="handlePageUpdate"
+          />
         </template>
       </div>
     </div>
@@ -127,6 +174,11 @@
   .tasks-list__group-name {
     padding: 16px 0;
 
+    b {
+      color: var(--text-secondary);
+    }
+
     @include font-inter-400(14px, 20px, var(--text-tertiary));
+    @include flex($align: center, $gap: 8px);
   }
 </style>

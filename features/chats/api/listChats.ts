@@ -6,8 +6,14 @@ import { type ChatsList } from '../model'
 import { listChatsAgents } from './listChatsAgents'
 
 export const listChats = async (isPinned?: boolean): Promise<Chat[]> => {
-  const [chatsRes, chatsAgents] = await Promise.all([invoke<ChatsList>('list_chats', { isPinned }), listChatsAgents()])
-  const { chats } = chatsRes
-  chats.forEach((chat) => (chat.agents_ids = chatsAgents[chat.id] || []))
-  return chats
+  const [chatsRes, chatsAgents] = await Promise.all([
+    useInvoke<ChatsList>({ cmd: 'list_chats', args: { isPinned } }),
+    listChatsAgents(),
+  ])
+  const { data } = chatsRes
+  const { data: agents } = chatsAgents
+  data.value?.chats.forEach((chat) => {
+    chat.agents_ids = agents.value ? agents.value[chat.id] : []
+  })
+  return data.value?.chats || []
 }
