@@ -7,7 +7,6 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use markdown::to_html;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tauri::State;
 
 use tracing::debug;
@@ -17,7 +16,7 @@ use crate::embeddings::Embeddings;
 use crate::repo;
 use crate::repo::pages::PageList;
 use crate::{
-    repo::pages::{CreatePageParams, Page},
+    repo::pages::{Page, PageParams},
     types::{DbPool, Result},
 };
 
@@ -110,7 +109,7 @@ pub async fn create_page(
 
     let page = repo::pages::create(
         &pool,
-        CreatePageParams {
+        PageParams {
             title: &request.title,
             text: &request.text,
             embeddings,
@@ -134,13 +133,16 @@ pub async fn update_page(
 ) -> Result<PageResponse> {
     debug!("Updating page");
 
+    let embeddings = Embeddings::init("123", 1024).await?;
+    let embeddings = embeddings.embed(&request.text)?;
+
     let updated_page = repo::pages::update(
-        &*pool,
+        &pool,
         request.id,
-        CreatePageParams {
+        PageParams {
             title: &request.title,
             text: &request.text,
-            embeddings: HashMap::new(),
+            embeddings,
         },
     )
     .await?;

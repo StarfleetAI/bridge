@@ -28,7 +28,7 @@ pub struct PageEmbeddings {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct CreatePageParams<'a> {
+pub struct PageParams<'a> {
     pub title: &'a str,
     pub text: &'a str,
     pub embeddings: HashMap<&'a str, Vec<f32>>,
@@ -47,7 +47,7 @@ pub struct PageList {
 /// # Errors
 ///
 /// Returns error if there was a problem while creating page.
-pub async fn create(executor: &DbPool, params: CreatePageParams<'_>) -> Result<Page> {
+pub async fn create(executor: &DbPool, params: PageParams<'_>) -> Result<Page> {
     let current_datetime = Utc::now();
 
     let mut transaction = executor.begin().await?;
@@ -86,10 +86,7 @@ pub async fn create(executor: &DbPool, params: CreatePageParams<'_>) -> Result<P
 }
 
 fn embeddings_to_blob(embeddings: Vec<f32>) -> Vec<u8> {
-    embeddings
-        .into_iter()
-        .flat_map(f32::to_le_bytes)
-        .collect()
+    embeddings.into_iter().flat_map(f32::to_le_bytes).collect()
 }
 
 /// List all pages.
@@ -146,11 +143,10 @@ where
 /// # Errors
 ///
 /// Returns error if there was a problem while updating page text.
-pub async fn update<'a, E>(executor: E, id: i64, data: CreatePageParams<'_>) -> Result<Page>
-where
-    E: Executor<'a, Database = Sqlite>,
-{
+pub async fn update(executor: &DbPool, id: i64, params: PageParams<'_>) -> Result<Page> {
     let current_datetime = Utc::now();
+
+    let mut transaction = executor.begin().await?;
 
     let page = query_as!(
         Page,
@@ -161,13 +157,34 @@ where
         RETURNING id as "id!", title, text, created_at, updated_at
         "#,
         id,
-        data.title,
-        data.text,
+        params.title,
+        params.text,
         current_datetime
     )
-    .fetch_one(executor)
+    .fetch_one(transaction.as_mut())
     .await
     .with_context(|| "Failed to update tool call id")?;
+
+    query!("DELETE FROM page_embeddings WHERE page_id = $1", id)
+        .execute(transaction.as_mut())
+        .await
+        .with_context(|| "Failed to update tool call id")?;
+
+    let mut query_builder = QueryBuilder::<Sqlite>::new(
+        "INSERT INTO page_embeddings (page_id, text, embeddings) VALUES ",
+    );
+    let mut separated_builder = query_builder.separated(", ");
+    for (text, embeddings) in params.embeddings {
+        let embeddings = embeddings_to_blob(embeddings);
+        separated_builder.push("( ");
+        separated_builder.push_bind_unseparated(page.id);
+        separated_builder.push_bind(text);
+        separated_builder.push_bind(embeddings);
+        separated_builder.push_unseparated(" )");
+    }
+    query_builder.build().execute(transaction.as_mut()).await?;
+
+    transaction.commit().await?;
 
     Ok(page)
 }
