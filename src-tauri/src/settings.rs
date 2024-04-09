@@ -16,6 +16,7 @@ const DEFAULT_EMBEDDINGS_MODEL: &str = "sentence-transformers/all-MiniLM-L6-v2";
 const DEFAULT_MODEL: &str = "OpenAI/gpt-3.5-turbo";
 const SETTINGS_FILE: &str = "settings.json";
 const DEFAULT_EXECUTION_STEPS_LIMIT: i64 = 12;
+const DEFAULT_PLANNING_DEPTH_LIMIT: u8 = 5;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Embeddings {
@@ -38,12 +39,14 @@ impl Default for Embeddings {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tasks {
     pub execution_concurrency: u16,
+    pub planning_depth_limit: u8,
 }
 
 impl Default for Tasks {
     fn default() -> Self {
         Self {
             execution_concurrency: 1,
+            planning_depth_limit: DEFAULT_PLANNING_DEPTH_LIMIT,
         }
     }
 }
