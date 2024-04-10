@@ -39,6 +39,7 @@ impl Default for Embeddings {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tasks {
     pub execution_concurrency: u16,
+    #[serde(default = "default_planning_depth_limit")]
     pub planning_depth_limit: u8,
 }
 
@@ -49,6 +50,10 @@ impl Default for Tasks {
             planning_depth_limit: DEFAULT_PLANNING_DEPTH_LIMIT,
         }
     }
+}
+
+fn default_planning_depth_limit() -> u8 {
+    DEFAULT_PLANNING_DEPTH_LIMIT
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
