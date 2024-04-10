@@ -155,6 +155,18 @@ impl<'a> TaskPlanner<'a> {
             return Ok(());
         }
 
+        let planning_depth_limit = &settings_guard.tasks.planning_depth_limit;
+
+        if task.ancestry_level >= i64::from(*planning_depth_limit) {
+            info!(
+                "The nesting level limit {} of tasks for scheduling has been reached. \
+                Further planning of subtasks is stopped. \
+                Current task id:{}, title:{}, ancestry_level:{}",
+                planning_depth_limit, task.id, task.title, task.ancestry_level
+            );
+            return Ok(());
+        }
+
         for sub_task in plan.tasks {
             let mut task = repo::tasks::create(
                 &*pool,
