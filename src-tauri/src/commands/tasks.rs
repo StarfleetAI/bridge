@@ -112,7 +112,7 @@ pub async fn execute_task(id: i64, pool: State<'_, DbPool>) -> Result<Task> {
     let task = repo::tasks::get(&*pool, id).await?;
 
     // Delete all the task progress and the results if task is being re-executed
-    if (Status::Failed, Status::Done).contains(task.status) {
+    if matches!(task.status, Status::Failed | Status::Done) {
         repo::task_results::delete_for_task(&*pool, id).await?;
         repo::messages::delete_for_chat(
             &*pool,
