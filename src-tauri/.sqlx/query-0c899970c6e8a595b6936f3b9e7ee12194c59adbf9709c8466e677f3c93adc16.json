@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM page_embeddings WHERE page_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "0c899970c6e8a595b6936f3b9e7ee12194c59adbf9709c8466e677f3c93adc16"
+}

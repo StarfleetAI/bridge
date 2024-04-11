@@ -8,15 +8,17 @@ use chrono::NaiveDateTime;
 use markdown::to_html;
 use serde::{Deserialize, Serialize};
 use tauri::State;
+use tokio::sync::RwLock;
 
 use tracing::debug;
 use tracing::instrument;
 
-
+use crate::embeddings::Embeddings;
 use crate::repo;
-use crate::repo::pages::PageList;
+use crate::repo::pages::CreatePageEmbeddingsParams;
 use crate::{
-    repo::pages::{CreatePageParams, Page},
+    repo::pages::{CreatePageParams, Page, PageList, UpdatePageParams},
+    settings::Settings,
     types::{DbPool, Result},
 };
 
@@ -91,6 +93,13 @@ pub async fn get_page(id: i64, pool: State<'_, DbPool>) -> Result<PageResponse> 
     Ok(page.into())
 }
 
+fn vector_representation_to_blob(vector_representation: Vec<f32>) -> Vec<u8> {
+    vector_representation
+        .into_iter()
+        .flat_map(f32::to_le_bytes)
+        .collect()
+}
+
 /// Create new page.
 ///
 /// # Errors
@@ -101,18 +110,43 @@ pub async fn get_page(id: i64, pool: State<'_, DbPool>) -> Result<PageResponse> 
 pub async fn create_page(
     request: CreatePageRequest,
     pool: State<'_, DbPool>,
+    settings: State<'_, RwLock<Settings>>,
 ) -> Result<PageResponse> {
     debug!("Creating page");
 
+    let mut transaction = pool
+        .begin()
+        .await
+        .with_context(|| "Failed to begin transaction")?;
+
+    let settings_guard = settings.read().await;
+
+    let embedding_engine = Embeddings::init(&settings_guard.embeddings.model, 512).await?;
+    let vectorized_page = embedding_engine.embed(&request.text)?;
+
     let page = repo::pages::create(
-        &*pool,
+        &mut *transaction,
         CreatePageParams {
-            title: request.title,
-            text: request.text,
+            title: &request.title,
+            text: &request.text,
         },
     )
     .await?;
 
+    for (word, vectorized_word) in vectorized_page {
+        let blob_representation = vector_representation_to_blob(vectorized_word);
+        repo::pages::create_page_embedding(
+            &mut *transaction,
+            CreatePageEmbeddingsParams {
+                page_id: page.id,
+                text: word.to_string(),
+                embeddings: blob_representation,
+            },
+        )
+        .await?;
+    }
+
+    transaction.commit().await?;
     Ok(page.into())
 }
 
@@ -126,19 +160,42 @@ pub async fn create_page(
 pub async fn update_page(
     request: UpdatePageRequest,
     pool: State<'_, DbPool>,
+    settings: State<'_, RwLock<Settings>>,
 ) -> Result<PageResponse> {
     debug!("Updating page");
+    let mut transaction = pool.begin().await?;
+
+    let settings_guard = settings.read().await;
+
+    let embedding_engine = Embeddings::init(&settings_guard.embeddings.model, 512).await?;
+    let vectorized_page = embedding_engine.embed(&request.text)?;
 
     let updated_page = repo::pages::update(
-        &*pool,
+        &mut *transaction,
         request.id,
-        CreatePageParams {
-            title: request.title,
-            text: request.text,
+        UpdatePageParams {
+            title: &request.title,
+            text: &request.text,
         },
     )
     .await?;
 
+    repo::pages::delete_page_embedding(&mut *transaction, updated_page.id).await?;
+
+    for (word, vectorized_word) in vectorized_page {
+        let blob_representation = vector_representation_to_blob(vectorized_word);
+        repo::pages::create_page_embedding(
+            &mut *transaction,
+            CreatePageEmbeddingsParams {
+                page_id: updated_page.id,
+                text: word.to_string(),
+                embeddings: blob_representation,
+            },
+        )
+        .await?;
+    }
+
+    transaction.commit().await?;
     Ok(updated_page.into())
 }
 

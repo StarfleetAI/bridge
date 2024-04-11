@@ -62,7 +62,8 @@ impl Embeddings {
     /// # Errors
     ///
     /// Will return an error if the model can't be initialized.
-    pub async fn init(model_name: String, max_length: usize) -> Result<Self> {
+    pub async fn init(model_name: impl Into<String>, max_length: usize) -> Result<Self> {
+        let model_name = model_name.into();
         let device = Self::device()?;
         info!(
             "Initializing embeddings with model: `{}` on device: `{:?}`",
