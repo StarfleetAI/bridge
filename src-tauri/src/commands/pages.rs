@@ -12,7 +12,6 @@ use tauri::State;
 use tracing::debug;
 use tracing::instrument;
 
-
 use crate::repo;
 use crate::repo::pages::PageList;
 use crate::{
