@@ -4,11 +4,10 @@
 use anyhow::Context;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
-use sqlx::{query, query_as, Executor, QueryBuilder, Sqlite};
+use sqlx::{query, query_as, Executor, Sqlite};
 
-use crate::types::{DbPool, Result};
+use crate::types::Result;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Page {
@@ -19,19 +18,16 @@ pub struct Page {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct PageEmbeddings {
-    pub id: i64,
-    pub page_id: i64,
-    pub text: String,
-    pub embeddings: Vec<u8>,
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct CreatePageParams<'a> {
+    pub title: &'a str,
+    pub text: &'a str,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct PageParams<'a> {
+pub struct UpdatePageParams<'a> {
     pub title: &'a str,
     pub text: &'a str,
-    pub embeddings: HashMap<&'a str, Vec<f32>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -42,16 +38,31 @@ pub struct PageList {
     pub updated_at: NaiveDateTime,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct PageEmbedding {
+    pub id: i64,
+    pub page_id: i64,
+    pub text: String,
+    pub embeddings: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct CreatePageEmbeddingsParams {
+    pub page_id: i64,
+    pub text: String,
+    pub embeddings: Vec<u8>,
+}
+
 /// Create page.
 ///
 /// # Errors
 ///
 /// Returns error if there was a problem while creating page.
-pub async fn create(executor: &DbPool, params: PageParams<'_>) -> Result<Page> {
+pub async fn create<'a, E>(executor: E, params: CreatePageParams<'_>) -> Result<Page>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
     let current_datetime = Utc::now();
-
-    let mut transaction = executor.begin().await?;
-
     let page = query_as!(
         Page,
         r#"
@@ -63,30 +74,41 @@ pub async fn create(executor: &DbPool, params: PageParams<'_>) -> Result<Page> {
         params.text,
         current_datetime
     )
-    .fetch_one(transaction.as_mut())
+    .fetch_one(executor)
     .await
     .with_context(|| "Failed to create page")?;
 
-    let mut query_builder = QueryBuilder::<Sqlite>::new(
-        "INSERT INTO page_embeddings (page_id, text, embeddings) VALUES ",
-    );
-    let mut separated_builder = query_builder.separated(", ");
-    for (text, embeddings) in params.embeddings {
-        let embeddings = embeddings_to_blob(embeddings);
-        separated_builder.push("( ");
-        separated_builder.push_bind_unseparated(page.id);
-        separated_builder.push_bind(text);
-        separated_builder.push_bind(embeddings);
-        separated_builder.push_unseparated(" )");
-    }
-    query_builder.build().execute(transaction.as_mut()).await?;
-
-    transaction.commit().await?;
     Ok(page)
 }
 
-fn embeddings_to_blob(embeddings: Vec<f32>) -> Vec<u8> {
-    embeddings.into_iter().flat_map(f32::to_le_bytes).collect()
+/// Create page embedding.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while creating page embedding.
+pub async fn create_page_embedding<'a, E>(
+    executor: E,
+    params: CreatePageEmbeddingsParams,
+) -> Result<PageEmbedding>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    let page_embedding = query_as!(
+        PageEmbedding,
+        r#"
+        INSERT INTO page_embeddings (page_id, text, embeddings)
+        VALUES ($1, $2, $3)
+        RETURNING *
+        "#,
+        params.page_id,
+        params.text,
+        params.embeddings
+    )
+    .fetch_one(executor)
+    .await
+    .with_context(|| "Failed to save page embedding")?;
+
+    Ok(page_embedding)
 }
 
 /// List all pages.
@@ -138,15 +160,16 @@ where
     Ok(page)
 }
 
-/// Update page text.
+/// Update page.
 ///
 /// # Errors
 ///
-/// Returns error if there was a problem while updating page text.
-pub async fn update(executor: &DbPool, id: i64, params: PageParams<'_>) -> Result<Page> {
+/// Returns error if there was a problem while updating page.
+pub async fn update<'a, E>(executor: E, id: i64, params: UpdatePageParams<'_>) -> Result<Page>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
     let current_datetime = Utc::now();
-
-    let mut transaction = executor.begin().await?;
 
     let page = query_as!(
         Page,
@@ -161,32 +184,28 @@ pub async fn update(executor: &DbPool, id: i64, params: PageParams<'_>) -> Resul
         params.text,
         current_datetime
     )
-    .fetch_one(transaction.as_mut())
+    .fetch_one(executor)
     .await
     .with_context(|| "Failed to update tool call id")?;
 
-    query!("DELETE FROM page_embeddings WHERE page_id = $1", id)
-        .execute(transaction.as_mut())
-        .await
-        .with_context(|| "Failed to update tool call id")?;
-
-    let mut query_builder = QueryBuilder::<Sqlite>::new(
-        "INSERT INTO page_embeddings (page_id, text, embeddings) VALUES ",
-    );
-    let mut separated_builder = query_builder.separated(", ");
-    for (text, embeddings) in params.embeddings {
-        let embeddings = embeddings_to_blob(embeddings);
-        separated_builder.push("( ");
-        separated_builder.push_bind_unseparated(page.id);
-        separated_builder.push_bind(text);
-        separated_builder.push_bind(embeddings);
-        separated_builder.push_unseparated(" )");
-    }
-    query_builder.build().execute(transaction.as_mut()).await?;
-
-    transaction.commit().await?;
-
     Ok(page)
+}
+
+/// Delete page embedding.
+///
+/// # Errors
+///
+/// Returns error if there was a problem while deleting page embedding.
+pub async fn delete_page_embedding<'a, E>(executor: E, id: i64) -> Result<()>
+where
+    E: Executor<'a, Database = Sqlite>,
+{
+    query!("DELETE FROM page_embeddings WHERE page_id = $1", id)
+        .execute(executor)
+        .await
+        .with_context(|| "Failed to delete page")?;
+
+    Ok(())
 }
 
 /// Delete page.

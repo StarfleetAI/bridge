@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS page_embeddings (
     page_id INTEGER NOT NULL,
     text TEXT NOT NULL,
     embeddings BLOB NOT NULL,
-    FOREIGN KEY (page_id) REFERENCES pages(id)
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS page_embeddings_text_idx ON page_embeddings (text);
