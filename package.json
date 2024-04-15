@@ -39,7 +39,7 @@
     "nuxt": "^3.11.2",
     "oidc-client-ts": "^3.0.0",
     "prettier": "^3.2.5",
-    "sass": "^1.70.0",
+    "sass": "^1.75.0",
     "stylelint": "^16.3.1",
     "stylelint-config-recommended-scss": "^14.0.0",
     "stylelint-config-recommended-vue": "^1.5.0",
