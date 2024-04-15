@@ -15,7 +15,7 @@ rust-version = "1.77"
 tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 askama = "0.12.1"
 async-recursion = "1.1.0"
 bollard = "0.16.1"
