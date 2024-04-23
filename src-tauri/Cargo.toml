@@ -16,7 +16,7 @@ tauri-build = { version = "1.5.1", features = [] }
 anyhow = "1.0.81"
 async-trait = "0.1.80"
 bridge-common = { version = "0.1.0" }
-chrono = { version = "0.4.35", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
 dotenvy = "0.15.7"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 futures-util = "0.3.30"
