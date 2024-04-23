@@ -4,6 +4,7 @@
 import { listen } from '@tauri-apps/api/event'
 import { useChatsStore, type EditMessage } from '~/features/chats'
 import { type Message } from '~/entities/chat'
+import type { BridgeEvent } from '~/entities/events'
 import { useToast } from '~/shared/lib'
 import {
   createMessage as createMessageReq,
@@ -13,12 +14,14 @@ import {
 } from '../api'
 
 type ChatId = number
+
 interface CreateMessageParams {
   text: string
   agent_id: number
   chat_id?: number
   model_full_name: Nullable<string>
 }
+
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<Record<ChatId, Message[]>>({})
   const getById = ({ id, chat_id }: Message) => {
@@ -37,11 +40,17 @@ export const useMessagesStore = defineStore('messages', () => {
       if (newChat) {
         await updateChatModelFullName(newChat.id, model_full_name)
         chat_id = newChat.id
-        await navigateTo({ name: 'chats', query: { id: newChat.id } })
+        await navigateTo({
+          name: 'chats',
+          query: { id: newChat.id },
+        })
       }
     }
     if (chat_id) {
-      createMessageReq({ text, chat_id })
+      createMessageReq({
+        text,
+        chat_id,
+      })
     }
   }
 
@@ -81,13 +90,13 @@ export const useMessagesStore = defineStore('messages', () => {
     }
   }
 
-  const msgCreatedUnlisten = listen<Message>('messages:created', (event) => {
-    addMessage(event.payload)
+  const msgCreatedUnlisten = listen<BridgeEvent<Message>>('messages:created', (event) => {
+    addMessage(event.payload.data)
   }).catch((e) => {
     useToast().errorToast(String(e))
   })
-  const msgUpdatedUnlisten = listen<Message>('messages:updated', (event) => {
-    const msg = event.payload
+  const msgUpdatedUnlisten = listen<BridgeEvent<Message>>('messages:updated', (event) => {
+    const msg = event.payload.data
     updateMessage(msg)
   }).catch((e) => {
     useToast().errorToast(String(e))

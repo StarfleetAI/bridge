@@ -5,9 +5,10 @@
 
 use std::collections::HashMap;
 
+use bridge_common::repo;
 use tauri::State;
 
-use crate::{repo, types::DbPool, types::Result};
+use crate::{types::DbPool, types::Result};
 
 /// List agents for chats.
 ///
@@ -16,6 +17,6 @@ use crate::{repo, types::DbPool, types::Result};
 /// Returns error if there was a problem while accessing database.
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
-pub async fn list_agents_chats(pool: State<'_, DbPool>) -> Result<HashMap<i64, Vec<i64>>> {
-    repo::agents_chats::list(&*pool).await
+pub async fn list_agents_chats(pool: State<'_, DbPool>) -> Result<HashMap<i32, Vec<i32>>> {
+    Ok(repo::agents_chats::list(&*pool, crate::CID).await?)
 }

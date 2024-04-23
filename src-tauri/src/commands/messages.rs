@@ -4,27 +4,24 @@
 #![allow(clippy::used_underscore_binding)]
 
 use anyhow::{anyhow, Context};
+use bridge_common::channel::{Channel, Event};
+use bridge_common::chats::CreateCompletionParams;
+use bridge_common::repo;
+use bridge_common::repo::messages::{CreateParams, ListParams};
+use bridge_common::settings::Settings;
+use bridge_common::types::messages::{Message, Role, Status};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 use tokio::sync::RwLock;
-use tracing::{debug, trace};
+use tracing::{debug, trace, warn};
 use tracing::{error, instrument};
 
-use crate::abilities::{self};
-use crate::chats::GetCompletionParams;
-use crate::repo::models;
-use crate::{chats, clients, repo};
-use crate::{
-    clients::openai::{Client, CreateChatCompletionRequest},
-    repo::messages::{CreateParams, ListParams, Message, Role, Status},
-    settings::Settings,
-    types::{DbPool, Result},
-};
+use crate::types::{DbPool, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ListMessages {
-    pub chat_id: i64,
+    pub chat_id: i32,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -35,7 +32,7 @@ pub struct MessagesList {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateMessage {
-    pub chat_id: i64,
+    pub chat_id: i32,
     pub text: String,
 }
 
@@ -52,6 +49,7 @@ pub async fn list_messages(request: ListMessages, pool: State<'_, DbPool>) -> Re
 
     let messages = repo::messages::list(
         &*pool,
+        crate::CID,
         ListParams {
             chat_id: request.chat_id,
         },
@@ -67,10 +65,10 @@ pub async fn list_messages(request: ListMessages, pool: State<'_, DbPool>) -> Re
 ///
 /// Returns error if there was a problem while inserting new message.
 #[tauri::command]
-#[instrument(skip(app_handle, pool, settings))]
+#[instrument(skip_all)]
 pub async fn create_message(
-    app_handle: AppHandle,
     request: CreateMessage,
+    channel: State<'_, Channel>,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
@@ -79,29 +77,41 @@ pub async fn create_message(
     let mut tx = pool.begin().await.context("Failed to begin transaction")?;
 
     // Retrieve the last message for the chat
-    let last_message_id = repo::messages::get_last_message_id(&mut *tx, request.chat_id)
-        .await?
-        .context("Failed to get last message id")?;
-    let mut last_message = repo::messages::get(&mut *tx, last_message_id).await?;
+    let last_message_id =
+        repo::messages::get_last_message_id(&mut *tx, crate::CID, request.chat_id)
+            .await?
+            .context("Failed to get last message id")?;
+    let mut last_message = repo::messages::get(&mut *tx, crate::CID, last_message_id).await?;
 
     // If last message status is waiting for tool call, deny it
     if last_message.status == Status::WaitingForToolCall {
         // Update the message status to ToolCallDenied
-        repo::messages::update_status(&mut *tx, last_message_id, Status::ToolCallDenied).await?;
+        repo::messages::update_status(
+            &mut *tx,
+            crate::CID,
+            last_message_id,
+            Status::ToolCallDenied,
+        )
+        .await?;
         // Create a new message indicating the tool call was denied
         let denied_messages =
-            repo::messages::create_tool_call_denied(&mut tx, &last_message).await?;
+            repo::messages::create_tool_call_denied(&mut *tx, crate::CID, &last_message).await?;
 
         last_message.status = Status::ToolCallDenied;
-        app_handle.emit_all("messages:updated", &last_message)?;
+        channel
+            .emit(crate::UID, Event::MessageUpdated(&last_message))
+            .await?;
 
         for denied_message in denied_messages {
-            app_handle.emit_all("messages:created", &denied_message)?;
+            channel
+                .emit(crate::UID, Event::MessageCreated(&denied_message))
+                .await?;
         }
     }
 
     let message = repo::messages::create(
         &mut *tx,
+        crate::CID,
         CreateParams {
             chat_id: request.chat_id,
             status: Status::Completed,
@@ -115,31 +125,52 @@ pub async fn create_message(
 
     tx.commit().await.context("Failed to commit transaction")?;
 
-    app_handle.emit_all("messages:created", &message)?;
+    channel
+        .emit(crate::UID, Event::MessageCreated(&message))
+        .await?;
 
-    let chat = repo::chats::get(&*pool, message.chat_id).await?;
+    let sett = settings.read().await.clone();
+
+    let chat = repo::chats::get(&*pool, crate::CID, message.chat_id).await?;
+    let model = bridge_common::models::get_for_chat(&pool, crate::CID, &sett, &chat).await?;
+
+    // TODO: refactor error
+    let api_key = sett
+        .api_keys
+        .get(&model.provider)
+        .with_context(|| format!("Failed to get api key for provider: {:?}", model.provider))?;
 
     match chat.kind {
-        repo::chats::Kind::Direct => {
-            chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
-                .await
-                .context("Failed to get chat completion")?;
+        bridge_common::types::chats::Kind::Direct => {
+            bridge_common::chats::create_completion(
+                &pool,
+                &channel,
+                crate::CID,
+                crate::UID,
+                chat.id,
+                CreateCompletionParams::default(),
+                &model,
+                api_key,
+                &crate::USER_AGENT,
+            )
+            .await
+            .context("Failed to get chat completion")?;
 
-            generate_chat_title(request.chat_id, &app_handle, pool, settings).await?;
+            generate_chat_title(request.chat_id, channel, pool, settings).await?;
         }
-        repo::chats::Kind::Execution => {
-            let task = repo::tasks::get_by_execution_chat_id(&*pool, chat.id)
+        bridge_common::types::chats::Kind::Execution => {
+            let task = repo::tasks::get_by_execution_chat_id(&*pool, crate::CID, chat.id)
                 .await
                 .context("Failed to `get_by_execution_chat_id`")?;
 
-            if task.status != repo::tasks::Status::InProgress
-                || task.status != repo::tasks::Status::ToDo
+            if task.status != bridge_common::types::tasks::Status::InProgress
+                || task.status != bridge_common::types::tasks::Status::ToDo
             {
-                let task = repo::tasks::execute(&*pool, task.id).await?;
-                app_handle.emit_all("tasks:updated", &task)?;
+                let task = repo::tasks::execute(&*pool, crate::CID, task.id).await?;
+                channel.emit(crate::UID, Event::TaskUpdated(&task)).await?;
             }
         }
-        repo::chats::Kind::Control => {
+        bridge_common::types::chats::Kind::Control => {
             error!("Control chats are not yet supported");
         }
     }
@@ -159,16 +190,14 @@ pub async fn create_message(
 /// # Errors
 ///
 /// Returns error if there was a problem while generating chat title.
-#[instrument(skip(app_handle, pool, settings))]
+#[instrument(skip_all)]
 async fn generate_chat_title(
-    chat_id: i64,
-    app_handle: &AppHandle,
+    chat_id: i32,
+    channel: State<'_, Channel>,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
 ) -> Result<()> {
-    debug!("Generating chat title");
-
-    let mut chat = repo::chats::get(&*pool, chat_id).await?;
+    let mut chat = repo::chats::get(&*pool, crate::CID, chat_id).await?;
     trace!("Chat: {:?}", chat);
 
     if !chat.title.is_empty() {
@@ -176,92 +205,50 @@ async fn generate_chat_title(
         return Ok(());
     }
 
+    debug!("Generating chat title");
+
     let settings_guard = settings.read().await;
 
-    let messages = repo::messages::list(&*pool, ListParams { chat_id }).await?;
+    let messages = repo::messages::list(&*pool, crate::CID, ListParams { chat_id }).await?;
 
-    if messages.len() < 3 {
-        debug!("Chat has less than 3 messages");
-        return Ok(());
-    }
-
-    let user_message = messages.iter().find(|message| message.role == Role::User);
-    let assistant_message = messages
-        .iter()
-        .find(|message| message.role == Role::Assistant);
-
-    if user_message.is_none() || assistant_message.is_none() {
-        debug!("Chat has no user or assistant messages");
-        return Ok(());
-    }
-
-    let last_message = messages.last().unwrap();
-
-    if last_message.role != Role::Assistant {
-        debug!("Last message in the chat is not from assistant");
-        return Ok(());
-    }
-
-    // TODO: would be nice to skip `tool_output` messages here. This requires cleaning up
-    //       the `tool_calls` in assistant messages.
-    trace!("Messages so far: {:?}", messages);
-
-    let mut req_messages = messages
-        .into_iter()
-        .map(clients::openai::Message::try_from)
-        .collect::<std::result::Result<Vec<_>, _>>()?;
-
-    req_messages.push(clients::openai::Message::User {
-        content: "Provide a short title for the current conversation (4-6 words). Your response must only contain the chat title and nothing else.".to_string(),
-        name: None,
-    });
-
-    let model_full_name = match chat.model_full_name {
-        Some(ref name) => name,
-        None => &settings_guard.default_model,
-    };
-
-    let model = models::get(&*pool, model_full_name)
-        .await
-        .context("Failed to get model")?;
+    let model =
+        bridge_common::models::get_for_chat(&pool, crate::CID, &settings_guard, &chat).await?;
 
     let api_key = settings_guard
         .api_keys
         .get(&model.provider)
         .with_context(|| format!("Failed to get api key for provider: {:?}", model.provider))?;
 
-    // Send request to LLM
-    let client = Client::new(api_key, model.api_url_or_default());
-    let response = client
-        .create_chat_completion(CreateChatCompletionRequest {
-            model: &model.name,
-            messages: req_messages,
-            ..Default::default()
-        })
-        .await
-        .context("Failed to create chat completion")?;
+    let title = match bridge_common::messages::generate_chat_title(
+        messages,
+        &model,
+        api_key,
+        &crate::USER_AGENT,
+    )
+    .await
+    {
+        Ok(title) => title,
+        Err(e) => {
+            return match e {
+                bridge_common::errors::Error::Messages(e) => match e {
+                    bridge_common::messages::Error::TooFewMessages(_)
+                    | bridge_common::messages::Error::NoSuitableMessages
+                    | bridge_common::messages::Error::LastMessageNotFromAssistant => {
+                        warn!("Failed: {}", e);
 
-    let mut title = match &response.choices[0].message {
-        clients::openai::Message::Assistant { content, .. } => match content {
-            Some(title) => title,
-            _ => return Err(anyhow!("Received empty response from LLM").into()),
-        },
-        _ => return Err(anyhow!("Failed to get title from LLM").into()),
-    }
-    .to_string();
+                        Ok(())
+                    }
+                    _ => Err(bridge_common::errors::Error::Messages(e).into()),
+                },
+                _ => Err(e.into()),
+            }
+        }
+    };
 
-    // Clean up title
-    if title.starts_with('"') && title.ends_with('"') {
-        title = title
-            .trim_start_matches('"')
-            .trim_end_matches('"')
-            .to_string();
-    }
+    repo::chats::update_title(&*pool, crate::CID, chat_id, &title).await?;
+    chat = repo::chats::get(&*pool, crate::CID, chat_id).await?;
 
-    repo::chats::update_title(&*pool, chat_id, &title).await?;
-    chat = repo::chats::get(&*pool, chat_id).await?;
-
-    app_handle.emit_all("chats:updated", &chat)?;
+    channel.emit(crate::UID, Event::ChatUpdated(&chat)).await?;
 
     Ok(())
 }
@@ -273,17 +260,18 @@ async fn generate_chat_title(
 /// Returns error if there was a problem while performing tool call.
 // TODO(ri-nat): refactor this function.
 #[allow(clippy::too_many_lines)]
-#[instrument(skip(pool, settings, app_handle))]
+#[instrument(skip_all)]
 #[tauri::command]
 pub async fn approve_tool_call(
     message_id: i64,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
+    channel: State<'_, Channel>,
     app_handle: AppHandle,
 ) -> Result<()> {
     debug!("Approving tool call");
 
-    let mut message = repo::messages::get(&*pool, message_id).await?;
+    let mut message = repo::messages::get(&*pool, crate::CID, message_id).await?;
 
     // Check if message is waiting for tool call
     if message.status != Status::WaitingForToolCall {
@@ -291,34 +279,69 @@ pub async fn approve_tool_call(
     }
 
     // Check if message is a last message in chat
-    let last_message_id = repo::messages::get_last_message_id(&*pool, message.chat_id)
+    let last_message_id = repo::messages::get_last_message_id(&*pool, crate::CID, message.chat_id)
         .await?
         .context("Failed to get last message id")?;
 
     // If it's not, mark message as completed and return error
     if message.id != last_message_id {
         // Mark message as completed
-        repo::messages::update_status(&*pool, message.id, Status::Completed).await?;
+        repo::messages::update_status(&*pool, crate::CID, message.id, Status::Completed).await?;
 
         // Emit event.
         message.status = Status::Completed;
-        app_handle.emit_all("messages:updated", &message)?;
+        channel
+            .emit(crate::UID, Event::MessageUpdated(&message))
+            .await?;
 
         return Err(anyhow!("Message is not a last message in chat").into());
     }
 
+    let app_local_data_dir = app_handle
+        .path_resolver()
+        .app_local_data_dir()
+        .expect("Failed to get app local data dir");
+
     // Execute abilities
-    abilities::execute_for_message(&message, &app_handle).await?;
+    bridge_common::abilities::execute_for_message(
+        &pool,
+        &channel,
+        crate::CID,
+        crate::UID,
+        &app_local_data_dir,
+        &message,
+    )
+    .await?;
 
     // Emit event
     message.status = Status::Completed;
-    app_handle.emit_all("messages:updated", &message)?;
+    channel
+        .emit(crate::UID, Event::MessageUpdated(&message))
+        .await?;
 
-    chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
-        .await
-        .context("Failed to get chat completion")?;
+    let sett = settings.read().await.clone();
 
-    generate_chat_title(message.chat_id, &app_handle, pool, settings).await?;
+    let model = bridge_common::models::get_default(&pool, crate::CID, &sett).await?;
+    let api_key = sett
+        .api_keys
+        .get(&model.provider)
+        .with_context(|| format!("Failed to get api key for provider: {:?}", model.provider))?;
+
+    bridge_common::chats::create_completion(
+        &pool,
+        &channel,
+        crate::CID,
+        crate::UID,
+        message.chat_id,
+        CreateCompletionParams::default(),
+        &model,
+        api_key,
+        &crate::USER_AGENT,
+    )
+    .await
+    .context("Failed to get chat completion")?;
+
+    generate_chat_title(message.chat_id, channel, pool, settings).await?;
 
     Ok(())
 }
@@ -328,18 +351,18 @@ pub async fn approve_tool_call(
 /// # Errors
 ///
 /// Returns error if message with given id does not exist.
-#[instrument(skip(app_handle, pool, settings))]
+#[instrument(skip_all)]
 #[tauri::command]
 pub async fn deny_tool_call(
     message_id: i64,
     pool: State<'_, DbPool>,
     settings: State<'_, RwLock<Settings>>,
-    app_handle: AppHandle,
+    channel: State<'_, Channel>,
 ) -> Result<()> {
     debug!("Denying tool call");
 
     let mut tx = pool.begin().await.context("Failed to begin transaction")?;
-    let mut message = repo::messages::get(&mut *tx, message_id).await?;
+    let mut message = repo::messages::get(&mut *tx, crate::CID, message_id).await?;
 
     // Ensure the message is waiting for a tool call
     if message.status != Status::WaitingForToolCall {
@@ -347,24 +370,53 @@ pub async fn deny_tool_call(
     }
 
     // Update the message status to ToolCallDenied
-    repo::messages::update_status(&mut *tx, message.id, Status::ToolCallDenied).await?;
+    repo::messages::update_status(&mut *tx, crate::CID, message.id, Status::ToolCallDenied).await?;
 
     // Create a new message indicating the tool call was denied
-    let denied_message = repo::messages::create_tool_call_denied(&mut tx, &message).await?;
+    let denied_messages =
+        repo::messages::create_tool_call_denied(&mut *tx, crate::CID, &message).await?;
 
     // Commit the transaction
     tx.commit().await.context("Failed to commit transaction")?;
 
     message.status = Status::ToolCallDenied;
 
-    app_handle.emit_all("messages:updated", &message)?;
-    app_handle.emit_all("messages:created", &denied_message)?;
+    channel
+        .emit(crate::UID, Event::MessageUpdated(&message))
+        .await?;
 
-    chats::create_completion(&app_handle, message.chat_id, GetCompletionParams::default())
+    for denied_message in denied_messages {
+        channel
+            .emit(crate::UID, Event::MessageCreated(&denied_message))
+            .await?;
+    }
+
+    let chat = repo::chats::get(&*pool, crate::CID, message.chat_id).await?;
+
+    let sett = settings.read().await.clone();
+    let model = bridge_common::models::get_for_chat(&pool, crate::CID, &sett, &chat)
         .await
-        .context("Failed to get chat completion")?;
+        .context("Failed to get model for chat")?;
+    let api_key = sett
+        .api_keys
+        .get(&model.provider)
+        .with_context(|| format!("Failed to get api key for provider: {:?}", model.provider))?;
 
-    generate_chat_title(message.chat_id, &app_handle, pool, settings).await?;
+    bridge_common::chats::create_completion(
+        &pool,
+        &channel,
+        crate::CID,
+        crate::UID,
+        message.chat_id,
+        CreateCompletionParams::default(),
+        &model,
+        api_key,
+        &crate::USER_AGENT,
+    )
+    .await
+    .context("Failed to get chat completion")?;
+
+    generate_chat_title(message.chat_id, channel, pool, settings).await?;
 
     Ok(())
 }
@@ -374,12 +426,14 @@ pub async fn deny_tool_call(
 /// # Errors
 ///
 /// Returns error if there was a problem while deleting message.
-#[instrument(skip(pool))]
+#[instrument(skip_all)]
 #[tauri::command]
 pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
     debug!("Deleting message");
 
-    repo::messages::delete(&*pool, id).await
+    repo::messages::delete(&*pool, crate::CID, id).await?;
+
+    Ok(())
 }
 
 /// Update message content by id.
@@ -387,7 +441,7 @@ pub async fn delete_message(id: i64, pool: State<'_, DbPool>) -> Result<()> {
 /// # Errors
 ///
 /// Returns error if there was a problem while updating message content.
-#[instrument(skip(content, pool))]
+#[instrument(skip_all)]
 #[tauri::command]
 pub async fn update_message_content(
     id: i64,
@@ -397,7 +451,7 @@ pub async fn update_message_content(
     debug!("Updating message content");
 
     let mut tx = pool.begin().await.context("Failed to begin transaction")?;
-    let message = repo::messages::get(&mut *tx, id).await?;
+    let message = repo::messages::get(&mut *tx, crate::CID, id).await?;
 
     if message.role != Role::System && message.role != Role::User {
         return Err(anyhow!(
@@ -407,7 +461,8 @@ pub async fn update_message_content(
         .into());
     }
 
-    let updated_message = repo::messages::update_message_content(&mut *tx, id, &content).await?;
+    let updated_message =
+        repo::messages::update_message_content(&mut *tx, crate::CID, id, &content).await?;
 
     tx.commit().await.context("Failed to commit transaction")?;
 
@@ -421,7 +476,7 @@ pub async fn update_message_content(
 /// Returns error if message with given id does not exist.
 #[tauri::command]
 pub async fn get_raw_message_content(id: i64, pool: State<'_, DbPool>) -> Result<String> {
-    let message = repo::messages::get(&*pool, id)
+    let message = repo::messages::get(&*pool, crate::CID, id)
         .await
         .with_context(|| "Failed to get message")?;
 

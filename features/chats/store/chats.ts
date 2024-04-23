@@ -3,6 +3,7 @@
 import { listen } from '@tauri-apps/api/event'
 
 import { type Chat } from '~/entities/chat'
+import type { BridgeEvent } from '~/entities/events'
 import { useToast } from '~/shared/lib'
 import {
   createChat as createChatReq,
@@ -70,8 +71,8 @@ export const useChatsStore = defineStore('chats', () => {
     }
   }
 
-  const chatsUpdatedUnlisten = listen<Chat>('chats:updated', (event) => {
-    const chat = event.payload
+  const chatsUpdatedUnlisten = listen<BridgeEvent<Chat>>('chats:updated', (event) => {
+    const chat = event.payload.data
     updateChat(chat)
   }).catch((error) => {
     useToast().errorToast(String(error))

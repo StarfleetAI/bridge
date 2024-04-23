@@ -5,6 +5,7 @@ import { listen } from '@tauri-apps/api/event'
 import { useRouteQuery } from '@vueuse/router'
 // eslint-disable-next-line boundaries/element-types
 import { useChatsStore } from '~/features/chats'
+import type { BridgeEvent } from '~/entities/events'
 import { TaskStatus, type Task, type SelectedTask } from '~/entities/tasks'
 import { usePagination, useToast } from '~/shared/lib'
 import {
@@ -73,9 +74,23 @@ export const useTasksStore = defineStore('tasks', () => {
     isNewTask.value = val
     isNewTaskQuery.value = val
     if (val) {
-      navigateTo({ path: '/tasks', query: { ...route.query, create: 'true', task: null } })
+      navigateTo({
+        path: '/tasks',
+        query: {
+          ...route.query,
+          create: 'true',
+          task: null,
+        },
+      })
     } else {
-      navigateTo({ path: '/tasks', query: { ...route.query, create: 'false', task: null } })
+      navigateTo({
+        path: '/tasks',
+        query: {
+          ...route.query,
+          create: 'false',
+          task: null,
+        },
+      })
     }
   }
   const selectTask = async (id: Nullable<number>) => {
@@ -83,14 +98,31 @@ export const useTasksStore = defineStore('tasks', () => {
       isNewTask.value = false
       isNewTaskQuery.value = false
       if (id) {
-        navigateTo({ path: '/tasks', query: { ...route.query, task: id, create: 'false' } })
+        navigateTo({
+          path: '/tasks',
+          query: {
+            ...route.query,
+            task: id,
+            create: 'false',
+          },
+        })
         const [task, children] = await Promise.all([getTask(id), listChildTasksReq(id)])
         if (task.data.value) {
-          selectedTask.value = { ...task.data.value, children: children.data.value?.tasks || [] }
+          selectedTask.value = {
+            ...task.data.value,
+            children: children.data.value?.tasks || [],
+          }
           selectedTaskQuery.value = task.data.value.id
         }
       } else {
-        await navigateTo({ path: '/tasks', query: { ...route.query, create: 'false', task: null } })
+        await navigateTo({
+          path: '/tasks',
+          query: {
+            ...route.query,
+            create: 'false',
+            task: null,
+          },
+        })
         selectedTask.value = null
         selectedTaskQuery.value = null
       }
@@ -100,12 +132,30 @@ export const useTasksStore = defineStore('tasks', () => {
   }
   const getDefaultTasksGroupsByStatus = () => {
     return {
-      Draft: { tasks: [], count: 0 },
-      ToDo: { tasks: [], count: 0 },
-      WaitingForUser: { tasks: [], count: 0 },
-      InProgress: { tasks: [], count: 0 },
-      Done: { tasks: [], count: 0 },
-      Failed: { tasks: [], count: 0 },
+      Draft: {
+        tasks: [],
+        count: 0,
+      },
+      ToDo: {
+        tasks: [],
+        count: 0,
+      },
+      WaitingForUser: {
+        tasks: [],
+        count: 0,
+      },
+      InProgress: {
+        tasks: [],
+        count: 0,
+      },
+      Done: {
+        tasks: [],
+        count: 0,
+      },
+      Failed: {
+        tasks: [],
+        count: 0,
+      },
     }
   }
   const tasksGroupsByStatus = ref<GroupedTasks>(getDefaultTasksGroupsByStatus())
@@ -136,14 +186,23 @@ export const useTasksStore = defineStore('tasks', () => {
     const statuses = selectedGroup.value ? [selectedGroup.value] : allStatuses
 
     const tasksBySelectedStatuses = statuses.map((status) =>
-      listRootTasksByStatusReq({ status, pagination: { page: currentPage.value, per_page: pageSize.value } }),
+      listRootTasksByStatusReq({
+        status,
+        pagination: {
+          page: currentPage.value,
+          per_page: pageSize.value,
+        },
+      }),
     )
 
     const tasksByStatus = await Promise.all(tasksBySelectedStatuses)
 
     tasksGroupsByStatus.value = tasksByStatus.reduce((acc, curr) => {
       if (curr.data.value) {
-        acc[curr.data.value.status] = { tasks: curr.data.value.tasks, count: curr.data.value.count }
+        acc[curr.data.value.status] = {
+          tasks: curr.data.value.tasks,
+          count: curr.data.value.count,
+        }
       }
       return acc
     }, {} as GroupedTasks)
@@ -248,8 +307,8 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  const taskUpdatedUnlisten = listen<Task>('tasks:updated', async (event) => {
-    const task = event.payload
+  const taskUpdatedUnlisten = listen<BridgeEvent<Task>>('tasks:updated', async (event) => {
+    const task = event.payload.data
 
     if (!task.ancestry) {
       updateTaskInGroup(task)
@@ -271,8 +330,8 @@ export const useTasksStore = defineStore('tasks', () => {
   }).catch((error) => {
     useToast().errorToast(String(error))
   })
-  const tasksCreatedUnlisten = listen<Task>('tasks:created', async (event) => {
-    const task = event.payload
+  const tasksCreatedUnlisten = listen<BridgeEvent<Task>>('tasks:created', async (event) => {
+    const task = event.payload.data
 
     if (getLastAncestor(task.ancestry) === selectedTask.value?.id) {
       const { data } = await listChildTasksReq(selectedTask.value.id)

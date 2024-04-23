@@ -3,42 +3,16 @@
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("template render error: {0}")]
-    Template(#[from] askama::Error),
-    #[error(transparent)]
-    Database(#[from] sqlx::Error),
-    #[error(transparent)]
-    DatabaseMigrate(#[from] sqlx::migrate::MigrateError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error(transparent)]
-    SerdeJson(#[from] serde_json::Error),
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
     #[error(transparent)]
     TokioJoin(#[from] tokio::task::JoinError),
-
     #[error(transparent)]
-    Browser(#[from] crate::browser::Error),
+    Common(#[from] bridge_common::errors::Error),
     #[error(transparent)]
-    Docker(#[from] crate::docker::Error),
-    #[error("embeddings error: {0}")]
-    Embeddings(#[from] crate::embeddings::Error),
-    #[error(transparent)]
-    Executor(#[from] crate::task_executor::Error),
-    #[error(transparent)]
-    Messages(#[from] crate::messages::Error),
-    #[error(transparent)]
-    Settings(#[from] crate::settings::Error),
-    #[error(transparent)]
-    Planner(#[from] crate::task_planner::Error),
-    #[error(transparent)]
-    Pages(#[from] crate::pages::Error),
-
-    #[error("ability is used by agents")]
-    AbilityIsUsedByAgents,
+    Sqlx(#[from] sqlx::Error),
 }
 
 impl serde::Serialize for Error {
