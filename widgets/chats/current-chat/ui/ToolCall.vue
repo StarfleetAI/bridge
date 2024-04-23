@@ -24,7 +24,7 @@
     return agentAbilities?.value?.find((item) => {
       let parsedParameters: Record<string, unknown> = {}
       try {
-        parsedParameters = JSON.parse(item.parameters_json)
+        parsedParameters = item.parameters_json
       } catch (error) {
         console.error(error)
       }
@@ -34,7 +34,7 @@
   const parsedFunctionArguments = computed(() => {
     try {
       const parsedArgs = JSON.parse(props.toolCall.function.arguments)
-      const abilityParams = JSON.parse(ability.value.parameters_json)
+      const abilityParams = ability.value.parameters_json
 
       if (!abilityParams) {
         return {}

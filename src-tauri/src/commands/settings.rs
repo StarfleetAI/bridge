@@ -3,11 +3,11 @@
 
 #![allow(clippy::used_underscore_binding)]
 
-use tauri::{AppHandle, State};
+use bridge_common::{repo, settings::Settings};
+use tauri::State;
 use tokio::sync::RwLock;
 
-use crate::settings::Settings;
-use crate::types::Result;
+use crate::types::{DbPool, Result};
 
 /// Get the current settings.
 ///
@@ -33,21 +33,13 @@ pub async fn get_settings(settings: State<'_, RwLock<Settings>>) -> Result<Setti
 #[tauri::command]
 pub async fn update_settings(
     settings: State<'_, RwLock<Settings>>,
+    pool: State<'_, DbPool>,
     new_settings: Settings,
-    app_handle: AppHandle,
 ) -> Result<()> {
     let mut st = settings.write().await;
     *st = new_settings;
 
-    let app_local_data_dir = app_handle
-        .path_resolver()
-        .app_local_data_dir()
-        .expect("Failed to get app local data dir")
-        .to_str()
-        .expect("Failed to convert app local data dir to string")
-        .to_string();
-
-    st.save_to_disk(&app_local_data_dir).await?;
+    repo::settings::update(&*pool, crate::CID, &st).await?;
 
     Ok(())
 }

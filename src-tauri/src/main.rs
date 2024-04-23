@@ -5,13 +5,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use anyhow::Context;
+use bridge_common::{channel::Channel, repo};
 use dotenvy::dotenv;
 use tauri::{async_runtime::block_on, generate_handler, App, LogicalSize, Manager};
 use tokio::sync::RwLock;
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
 
-use bridge::{commands, database, settings::Settings, task_executor, types::Result};
+use bridge::{channel::TauriChannel, commands, database, task_executor, types::Result};
 
 fn main() -> Result<()> {
     let _ = fix_path_env::fix();
@@ -98,14 +99,16 @@ fn setup_handler(app: &mut App) -> std::result::Result<(), Box<dyn std::error::E
     std::fs::create_dir_all(&app_local_data_dir)
         .with_context(|| format!("Failed to create app local data dir: {app_local_data_dir}"))?;
 
-    let settings = block_on(async { Settings::load_from_disk(&app_local_data_dir).await })?;
-    app_handle.manage(RwLock::new(settings));
+    let channel: Channel = Box::new(TauriChannel::new(app_handle.clone()));
+    app_handle.manage(channel);
 
     set_main_window_min_size(app)?;
 
-    let pool = block_on(async { database::new_pool(&app_local_data_dir).await })?;
+    let pool = block_on(async { bridge_common::database::new_pool().await })?;
+    block_on(async { database::seed(&pool).await })?;
 
-    block_on(async { database::prepare(&pool).await })?;
+    let settings = block_on(async { repo::settings::get(&pool, bridge::CID).await })?;
+    app_handle.manage(RwLock::new(settings));
 
     app_handle.manage(pool);
 

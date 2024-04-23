@@ -6,31 +6,29 @@
 use std::collections::BTreeMap;
 
 use anyhow::Context;
-use chrono::NaiveDateTime;
+use bridge_common::repo::{
+    self,
+    agents::{CreateParams, UpdateParams},
+};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
-use crate::{
-    repo::{
-        self,
-        agents::{CreateParams, UpdateParams},
-    },
-    types::{DbPool, Result},
-};
+use crate::types::{DbPool, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Agent {
-    pub id: i64,
+    pub id: i32,
     pub name: String,
     pub description: String,
     pub system_message: String,
-    pub ability_ids: Vec<i64>,
+    pub ability_ids: Vec<i32>,
     pub is_enabled: bool,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
-    pub execution_steps_limit: Option<i64>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub execution_steps_limit: Option<i32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -44,22 +42,22 @@ pub struct CreateAgent {
     pub name: String,
     pub description: String,
     pub system_message: String,
-    pub ability_ids: Vec<i64>,
+    pub ability_ids: Vec<i32>,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
-    pub execution_steps_limit: Option<i64>,
+    pub execution_steps_limit: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateAgent {
-    pub id: i64,
+    pub id: i32,
     pub name: String,
     pub description: String,
     pub system_message: String,
-    pub ability_ids: Vec<i64>,
+    pub ability_ids: Vec<i32>,
     pub is_code_interpreter_enabled: bool,
     pub is_web_browser_enabled: bool,
-    pub execution_steps_limit: Option<i64>,
+    pub execution_steps_limit: Option<i32>,
 }
 
 /// List all agents.
@@ -70,11 +68,11 @@ pub struct UpdateAgent {
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
 pub async fn list_agents(pool: State<'_, DbPool>) -> Result<AgentsList> {
-    let rows = repo::agents::list(&*pool).await?;
+    let rows = repo::agents::list(&*pool, crate::CID).await?;
 
-    let ability_rows = repo::agent_abilities::list(&*pool).await?;
+    let ability_rows = repo::agent_abilities::list(&*pool, crate::CID).await?;
 
-    let mut abilities: BTreeMap<i64, Vec<i64>> = BTreeMap::new();
+    let mut abilities: BTreeMap<i32, Vec<i32>> = BTreeMap::new();
     for row in ability_rows {
         abilities
             .entry(row.agent_id)
@@ -116,6 +114,7 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
 
     let agent = repo::agents::create(
         &mut *tx,
+        crate::CID,
         CreateParams {
             name: request.name,
             description: request.description,
@@ -127,7 +126,7 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
     .await?;
 
     for ability_id in &request.ability_ids {
-        repo::agent_abilities::create(&mut *tx, agent.id, *ability_id).await?;
+        repo::agent_abilities::create(&mut *tx, crate::CID, agent.id, *ability_id).await?;
     }
 
     tx.commit()
@@ -156,11 +155,13 @@ pub async fn create_agent(request: CreateAgent, pool: State<'_, DbPool>) -> Resu
 /// Returns error if any error occurs while accessing database.
 #[tauri::command]
 pub async fn update_agent_is_enabled(
-    id: i64,
+    id: i32,
     is_enabled: bool,
     pool: State<'_, DbPool>,
 ) -> Result<()> {
-    repo::agents::update_is_enabled(&*pool, id, is_enabled).await
+    repo::agents::update_is_enabled(&*pool, crate::CID, id, is_enabled).await?;
+
+    Ok(())
 }
 
 /// Update agent by id.
@@ -178,6 +179,7 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
 
     let agent = repo::agents::update(
         &mut *tx,
+        crate::CID,
         UpdateParams {
             id: request.id,
             name: request.name,
@@ -190,9 +192,9 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
     .await?;
 
     // TODO(ri-nat): Be more clever here
-    repo::agent_abilities::delete_for_agent(&mut *tx, request.id).await?;
+    repo::agent_abilities::delete_for_agent(&mut *tx, crate::CID, request.id).await?;
     for ability_id in &request.ability_ids {
-        repo::agent_abilities::create(&mut *tx, request.id, *ability_id).await?;
+        repo::agent_abilities::create(&mut *tx, crate::CID, request.id, *ability_id).await?;
     }
 
     tx.commit()
@@ -221,14 +223,14 @@ pub async fn update_agent(request: UpdateAgent, pool: State<'_, DbPool>) -> Resu
 /// Returns error if agent with given id does not exist.
 /// Returns error if any error occurs during transaction.
 #[tauri::command]
-pub async fn delete_agent(id: i64, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_agent(id: i32, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    repo::agent_abilities::delete_for_agent(&mut *tx, id).await?;
-    repo::agents::delete(&mut *tx, id).await?;
+    repo::agent_abilities::delete_for_agent(&mut *tx, crate::CID, id).await?;
+    repo::agents::delete(&mut *tx, crate::CID, id).await?;
 
     tx.commit()
         .await

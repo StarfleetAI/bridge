@@ -60,7 +60,7 @@
   })
 
   const toolCalls = computed<ToolCallType[]>(() => {
-    return props.message.tool_calls ? JSON.parse(props.message.tool_calls) : ([] as ToolCallType[])
+    return props.message.tool_calls ? props.message.tool_calls : ([] as ToolCallType[])
   })
 
   const messageRef = ref<HTMLDivElement>()

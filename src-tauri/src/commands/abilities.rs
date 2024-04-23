@@ -4,18 +4,15 @@
 #![allow(clippy::used_underscore_binding)]
 
 use anyhow::Context;
-use askama::Template;
+use bridge_common::{
+    abilities::{get_function_definition, preprocess_code},
+    repo,
+    types::abilities::Ability,
+};
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use tracing::debug;
 
-use crate::{
-    clients::openai::{Function, Tool},
-    docker,
-    errors::Error,
-    repo::{self, abilities::Ability},
-    types::{DbPool, Result},
-};
+use crate::types::{DbPool, Result};
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,7 +29,7 @@ pub struct CreateAbility {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateAbility {
-    pub id: i64,
+    pub id: i32,
     pub name: String,
     pub description: String,
     pub code: String,
@@ -43,52 +40,6 @@ pub struct GetFunctionParameters {
     pub code: String,
 }
 
-#[derive(Template)]
-#[template(path = "python/get_function_definition.py", escape = "none")]
-struct GetFunctionDefinitionTemplate<'a> {
-    code: &'a str,
-}
-
-/// Get function definition by its code.
-///
-/// # Errors
-///
-/// Returns error if there was a problem when determining function parameters.
-// TODO: work correctly if there are imports in the code
-pub async fn get_function_definition(code: &str) -> Result<Function> {
-    let template = GetFunctionDefinitionTemplate { code };
-
-    // TODO: seems a little bit inefficient to run a container only to get a function definition.
-    //       Consider using some Python parser library to get type hints on a Rust side.
-    let output = docker::run_python_code(
-        &template
-            .render()
-            .context("Failed to render `get_function_definition` script")?,
-        None,
-    )
-    .await?;
-
-    debug!("Function definition script output: {:?}", output);
-
-    let tool: Tool = serde_json::from_str(&output)
-        .with_context(|| "Failed to parse function definition script output")?;
-
-    Ok(tool.function)
-}
-
-/// Preprocess code: trim leading and trailing whitespaces around the code, remove trailing whitespaces
-/// from each line.
-fn preprocess_code(code: &str) -> String {
-    let mut result = String::new();
-
-    for line in code.lines() {
-        result.push_str(line.trim_end());
-        result.push('\n');
-    }
-
-    result.trim().to_string()
-}
-
 /// List all abilities.
 ///
 /// # Errors
@@ -97,7 +48,7 @@ fn preprocess_code(code: &str) -> String {
 #[allow(clippy::module_name_repetitions)]
 #[tauri::command]
 pub async fn list_abilities(pool: State<'_, DbPool>) -> Result<AbilitiesList> {
-    let abilities = repo::abilities::list(&*pool).await?;
+    let abilities = repo::abilities::list(&*pool, crate::CID).await?;
 
     Ok(AbilitiesList { abilities })
 }
@@ -111,20 +62,18 @@ pub async fn list_abilities(pool: State<'_, DbPool>) -> Result<AbilitiesList> {
 pub async fn create_ability(request: CreateAbility, pool: State<'_, DbPool>) -> Result<Ability> {
     let code = preprocess_code(&request.code);
 
-    let params = get_function_definition(&code)
+    let parameters_json = get_function_definition(&code)
         .await
         .with_context(|| format!("Failed to get function parameters for code: {code}"))?;
 
-    let params_json = serde_json::to_string(&params)
-        .with_context(|| "Failed to serialize function parameters to json")?;
-
     let ability = repo::abilities::create(
         &*pool,
+        crate::CID,
         repo::abilities::CreateParams {
             name: request.name,
             description: request.description,
             code,
-            parameters_json: params_json,
+            parameters_json,
         },
     )
     .await?;
@@ -142,21 +91,19 @@ pub async fn create_ability(request: CreateAbility, pool: State<'_, DbPool>) -> 
 pub async fn update_ability(request: UpdateAbility, pool: State<'_, DbPool>) -> Result<Ability> {
     let code = preprocess_code(&request.code);
 
-    let params = get_function_definition(&code)
+    let parameters_json = get_function_definition(&code)
         .await
         .with_context(|| format!("Failed to get function parameters for code: {code}"))?;
 
-    let params_json = serde_json::to_string(&params)
-        .with_context(|| "Failed to serialize function parameters to json")?;
-
     let ability = repo::abilities::update(
         &*pool,
+        crate::CID,
         repo::abilities::UpdateParams {
             id: request.id,
             name: request.name,
             description: request.description,
             code,
-            parameters_json: params_json,
+            parameters_json,
         },
     )
     .await?;
@@ -170,19 +117,21 @@ pub async fn update_ability(request: UpdateAbility, pool: State<'_, DbPool>) -> 
 ///
 /// Returns error if ability with given id does not exist.
 #[tauri::command]
-pub async fn delete_ability(id: i64, pool: State<'_, DbPool>) -> Result<()> {
+pub async fn delete_ability(id: i32, pool: State<'_, DbPool>) -> Result<()> {
     let mut tx = pool
         .begin()
         .await
         .with_context(|| "Failed to begin transaction")?;
 
-    let agents_count = repo::agent_abilities::get_agents_count(&mut *tx, id).await?;
+    let agents_count = repo::agent_abilities::get_agents_count(&mut *tx, crate::CID, id).await?;
 
     if agents_count > 0 {
-        return Err(Error::AbilityIsUsedByAgents);
+        return Err(crate::errors::Error::from(
+            bridge_common::errors::Error::from(bridge_common::abilities::Error::IsUsedByAgents),
+        ));
     }
 
-    repo::abilities::delete(&mut *tx, id).await?;
+    repo::abilities::delete(&mut *tx, crate::CID, id).await?;
 
     tx.commit()
         .await
